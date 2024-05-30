@@ -3,8 +3,8 @@
   "display": "standalone",
   "icons": [
     {
-      "purpose": "any maskable",
-      "sizes": "64x65",
+      "purpose": "any",
+      "sizes": "128x131",
       "src": "/logo.webp",
       "type": "image/webp"
     }
