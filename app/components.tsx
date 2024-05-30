@@ -1,5 +1,4 @@
-// eslint-disable-next-line import/no-unresolved
-import '../../../../../node_modules/flag-icons/css/flag-icons.min.css';
+import 'flag-icons/css/flag-icons.min.css';
 
 import { Moon, Settings, Sun } from 'lucide-react';
 import Link from 'next/link';
