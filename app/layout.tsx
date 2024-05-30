@@ -1,22 +1,26 @@
 'use client';
-import { Inter } from 'next/font/google';
+
 import './globals.css';
-import { cn } from '@/lib/utils';
-import { AppMode, AppModeProvider } from '@/context/AppModeContext';
-import { useState } from 'react';
-import { MainNav, SettingsSheet } from './components';
+
+import { Inter } from 'next/font/google';
 import Head from 'next/head';
+import { useState } from 'react';
+
+import { AppMode, AppModeProvider } from '@/context/AppModeContext';
+import { cn } from '@/lib/utils';
+
+import { MainNav, SettingsSheet } from './components';
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
 });
 
-export default function RootLayout({
+const RootLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
+}>) => {
   const [appMode, setAppMode] = useState<AppMode>('light');
 
   return (
@@ -122,4 +126,6 @@ export default function RootLayout({
       </AppModeProvider>
     </html>
   );
-}
+};
+
+export default RootLayout;

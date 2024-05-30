@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -13,9 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAppMode } from '@/context/AppModeContext';
-import Link from 'next/link';
 
-export default function Auth() {
+const Auth = () => {
   const appModeContext = useAppMode();
 
   return (
@@ -101,7 +102,7 @@ export default function Auth() {
               </div>
               <div className="mt-4 text-center text-sm">
                 Already have an account?{' '}
-                <Link href="#" className="underline">
+                <Link href="/" className="underline">
                   Sign in
                 </Link>
               </div>
@@ -111,4 +112,6 @@ export default function Auth() {
       </Tabs>
     </div>
   );
-}
+};
+
+export default Auth;

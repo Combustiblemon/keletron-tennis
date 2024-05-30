@@ -24,14 +24,7 @@
     "ecmaVersion": 2020,
     "sourceType": "module"
   },
-  "plugins": [
-    "react",
-    "@typescript-eslint",
-    "simple-import-sort",
-    "sort-keys-fix",
-    "typescript-sort-keys",
-    "sort-destructure-keys"
-  ],
+  "plugins": ["react", "@typescript-eslint", "simple-import-sort"],
   "root": true,
   "rules": {
     "@typescript-eslint/explicit-function-return-type": "off",
@@ -65,7 +58,10 @@
       "error",
       { "blankLine": "always", "next": "if", "prev": "*" }
     ],
-    "prettier/prettier": ["error", { "singleQuote": true, "trailingComma": "es5" }],
+    "prettier/prettier": [
+      "error",
+      { "singleQuote": true, "trailingComma": "es5" }
+    ],
     "react/function-component-definition": [
       "error",
       {

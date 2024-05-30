@@ -1,11 +1,12 @@
-import { cn } from '@/lib/utils';
 import React from 'react';
 
-export function TypographyH1({
+import { cn } from '@/lib/utils';
+
+export const TypographyH1 = ({
   className,
   children,
   ...rest
-}: React.HTMLProps<HTMLHeadingElement>) {
+}: React.HTMLProps<HTMLHeadingElement>) => {
   return (
     <h1
       className={cn(
@@ -17,13 +18,13 @@ export function TypographyH1({
       {children}
     </h1>
   );
-}
+};
 
-export function TypographyH2({
+export const TypographyH2 = ({
   className,
   children,
   ...rest
-}: React.HTMLProps<HTMLHeadingElement>) {
+}: React.HTMLProps<HTMLHeadingElement>) => {
   return (
     <h2
       className={cn(
@@ -35,13 +36,13 @@ export function TypographyH2({
       {children}
     </h2>
   );
-}
+};
 
-export function TypographyH3({
+export const TypographyH3 = ({
   className,
   children,
   ...rest
-}: React.HTMLProps<HTMLHeadingElement>) {
+}: React.HTMLProps<HTMLHeadingElement>) => {
   return (
     <h2
       className={cn(
@@ -53,13 +54,13 @@ export function TypographyH3({
       {children}
     </h2>
   );
-}
+};
 
-export function TypographyH4({
+export const TypographyH4 = ({
   className,
   children,
   ...rest
-}: React.HTMLProps<HTMLHeadingElement>) {
+}: React.HTMLProps<HTMLHeadingElement>) => {
   return (
     <h2
       className={cn(
@@ -71,13 +72,13 @@ export function TypographyH4({
       {children}
     </h2>
   );
-}
+};
 
-export function TypographyParagraph({
+export const TypographyParagraph = ({
   className,
   children,
   ...rest
-}: React.HTMLProps<HTMLParagraphElement>) {
+}: React.HTMLProps<HTMLParagraphElement>) => {
   return (
     <p
       className={cn(`leading-7 [&:not(:first-child)]:mt-6`, className)}
@@ -86,13 +87,13 @@ export function TypographyParagraph({
       {children}
     </p>
   );
-}
+};
 
-export function TypographyAnchor({
+export const TypographyAnchor = ({
   className,
   children,
   ...rest
-}: React.HTMLProps<HTMLAnchorElement>) {
+}: React.HTMLProps<HTMLAnchorElement>) => {
   return (
     <a
       className={cn(
@@ -104,13 +105,13 @@ export function TypographyAnchor({
       {children}
     </a>
   );
-}
+};
 
-export function TypographyBlockquote({
+export const TypographyBlockquote = ({
   className,
   children,
   ...rest
-}: React.HTMLProps<HTMLQuoteElement>) {
+}: React.HTMLProps<HTMLQuoteElement>) => {
   return (
     <blockquote
       className={cn(`mt-6 border-l-2 pl-6 italic`, className)}
@@ -119,49 +120,49 @@ export function TypographyBlockquote({
       {children}
     </blockquote>
   );
-}
+};
 
-export function TypographyUlist({
+export const TypographyUlist = ({
   className,
   children,
   ...rest
-}: React.HTMLProps<HTMLUListElement>) {
+}: React.HTMLProps<HTMLUListElement>) => {
   return (
     <ul className={cn(`my-6 ml-6 list-disc [&>li]:mt-2`, className)} {...rest}>
       {children}
     </ul>
   );
-}
+};
 
-export function TypographyLead({
+export const TypographyLead = ({
   children,
   className,
   ...rest
-}: React.HTMLProps<HTMLParagraphElement>) {
+}: React.HTMLProps<HTMLParagraphElement>) => {
   return (
     <p className={cn(`text-xl text-muted-foreground`, className)} {...rest}>
       {children}
     </p>
   );
-}
+};
 
-export function TypographyLarge({
+export const TypographyLarge = ({
   children,
   className,
   ...rest
-}: React.HTMLProps<HTMLDivElement>) {
+}: React.HTMLProps<HTMLDivElement>) => {
   return (
     <div className={cn(`text-lg font-semibold`, className)} {...rest}>
       {children}
     </div>
   );
-}
+};
 
-export function TypographySmall({
+export const TypographySmall = ({
   children,
   className,
   ...rest
-}: React.HTMLProps<HTMLElement>) {
+}: React.HTMLProps<HTMLElement>) => {
   return (
     <small
       className={cn(`text-sm font-medium leading-none`, className)}
@@ -170,16 +171,16 @@ export function TypographySmall({
       {children}
     </small>
   );
-}
+};
 
-export function TypographyMuted({
+export const TypographyMuted = ({
   children,
   className,
   ...rest
-}: React.HTMLProps<HTMLParagraphElement>) {
+}: React.HTMLProps<HTMLParagraphElement>) => {
   return (
     <p className={cn(`text-sm text-muted-foreground`, className)} {...rest}>
       {children}
     </p>
   );
-}
+};

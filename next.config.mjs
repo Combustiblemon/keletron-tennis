@@ -1,5 +1,5 @@
 // @ts-check
-import withPWAInit from '@ducanh2912/next-pwa';
+import withPWAInit from 'next-pwa';
 
 const withWPA = withPWAInit({
   dest: 'public',
@@ -9,10 +9,7 @@ const withWPA = withPWAInit({
   reloadOnOnline: true,
 });
 
-/** @type {import('next').NextConfig} */
-const NextConfig = {
+export default withWPA({
   reactStrictMode: true,
   swcMinify: true,
-};
-
-export default withWPA(NextConfig);
+});

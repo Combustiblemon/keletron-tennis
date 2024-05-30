@@ -1,8 +1,17 @@
-import Link from 'next/link';
-import { Moon, Settings, Sun } from 'lucide-react';
+// eslint-disable-next-line import/no-unresolved
+import '../../../../../node_modules/flag-icons/css/flag-icons.min.css';
 
-import '/node_modules/flag-icons/css/flag-icons.min.css';
-import { cn } from '@/lib/utils';
+import { Moon, Settings, Sun } from 'lucide-react';
+import Link from 'next/link';
+
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -11,24 +20,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { useAppMode } from '@/context/AppModeContext';
 import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { useAppMode } from '@/context/AppModeContext';
+import { cn } from '@/lib/utils';
 
-export function MainNav({
+export const MainNav = ({
   className,
   entries = [],
   ...props
 }: React.HTMLAttributes<HTMLElement> & {
   entries?: { href: string; label: string }[];
-}) {
+}) => {
   return (
     <nav
       className={cn('flex items-center space-x-4 lg:space-x-6', className)}
@@ -45,9 +47,9 @@ export function MainNav({
       ))}
     </nav>
   );
-}
+};
 
-export function SettingsSheet() {
+export const SettingsSheet = () => {
   const appModeContext = useAppMode();
 
   return (
@@ -91,4 +93,4 @@ export function SettingsSheet() {
       </SheetContent>
     </Sheet>
   );
-}
+};
