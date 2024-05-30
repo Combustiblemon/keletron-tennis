@@ -1,0 +1,17 @@
+{
+  "background_color": "#FFFFFF",
+  "display": "standalone",
+  "icons": [
+    {
+      "purpose": "any maskable",
+      "sizes": "64x65",
+      "src": "/logo.webp",
+      "type": "image/webp"
+    }
+  ],
+  "name": "Keletron tennis club",
+  "orientation": "portrait",
+  "short_name": "Keletron",
+  "start_url": "/",
+  "theme_color": "#FFFFFF"
+}
