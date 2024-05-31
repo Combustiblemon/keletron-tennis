@@ -4,8 +4,8 @@
   "icons": [
     {
       "purpose": "any",
-      "sizes": "128x131",
-      "src": "/logo.webp",
+      "sizes": "144x147",
+      "src": "/logo-big.webp",
       "type": "image/webp"
     }
   ],
