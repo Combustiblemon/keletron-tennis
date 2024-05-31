@@ -3,10 +3,10 @@
   "display": "standalone",
   "icons": [
     {
-      "purpose": "any",
-      "sizes": "144x147",
-      "src": "/logo-big.webp",
-      "type": "image/webp"
+      "purpose": "any maskable",
+      "sizes": "268x269",
+      "src": "/logo-android.png",
+      "type": "image/png"
     }
   ],
   "name": "Keletron tennis club",
