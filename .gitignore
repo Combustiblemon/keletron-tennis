@@ -36,3 +36,8 @@ yarn-error.log*
 next-env.d.ts
 
 certificates
+public/sw.js
+public/sw.js.map
+public/swe-worker-development.js
+public/workbox-e639beba.js
+public/workbox-e639beba.js.map
