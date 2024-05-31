@@ -1,3 +1,5 @@
+'use client';
+
 import 'flag-icons/css/flag-icons.min.css';
 
 import { Moon, Settings, Sun } from 'lucide-react';
@@ -67,6 +69,7 @@ export const SettingsSheet = () => {
           <div className="flex gap-2">
             <Sun size={24} color="hsl(var(--muted-foreground))" />
             <Switch
+              defaultChecked={appModeContext.mode === 'dark'}
               onCheckedChange={(state) =>
                 appModeContext.setMode(state ? 'dark' : 'light')
               }
