@@ -1,33 +1,12 @@
-'use client';
+import { ColorSchemeScript } from '@mantine/core';
+import { Head, Html, Main, NextScript } from 'next/document';
 
-import './globals.css';
-
-import { Inter } from 'next/font/google';
-import Head from 'next/head';
-import { useState } from 'react';
-
-import { AppMode, AppModeProvider } from '@/context/AppModeContext';
-import { cn } from '@/lib/utils';
-
-import { MainNav, SettingsSheet } from './components';
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-sans',
-});
-
-const RootLayout = ({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) => {
-  const [appMode, setAppMode] = useState<AppMode>('light');
-
+const Document = () => {
   return (
-    <html lang="en">
+    <Html lang="en" className="h-screen w-screen overflow-hidden">
       <Head>
+        <ColorSchemeScript defaultColorScheme="auto" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>Keletron tennis club</title>
         <meta name="description" content="Keletron tennis club" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="mask-icon" href="/logo.webp" color="#FFFFFF" />
@@ -98,34 +77,12 @@ const RootLayout = ({
           sizes="640x1136"
         /> */}
       </Head>
-      <AppModeProvider changeModeCallback={(mode) => setAppMode(mode)}>
-        <body
-          className={cn(
-            'min-h-screen bg-background font-sans antialiased',
-            inter.variable,
-            appMode
-          )}
-        >
-          <div className="flex items-center p-6 border-b-2 justify-between">
-            <h2 className="scroll-m-20 pr-10 text-3xl font-semibold tracking-tight first:mt-0">
-              Keletron tennis
-            </h2>
-            <div className="flex items-center gap-4">
-              <MainNav
-                entries={[
-                  { href: '/homepage', label: 'Homepage' },
-                  { href: '/courts', label: 'Courts' },
-                  { href: '/tournaments', label: 'Tournaments' },
-                ]}
-              />
-              <SettingsSheet />
-            </div>
-          </div>
-          {children}
-        </body>
-      </AppModeProvider>
-    </html>
+      <body>
+        <Main />
+        <NextScript />
+      </body>
+    </Html>
   );
 };
 
-export default RootLayout;
+export default Document;
