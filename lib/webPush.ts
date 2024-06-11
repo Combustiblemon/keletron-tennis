@@ -66,16 +66,11 @@ const firebaseCloudMessagingBuilder = () => {
           onMessage(messaging, (payload) => {
             console.log('firebase message received. ', payload);
 
-            new ServiceWorkerRegistration().showNotification(
-              payload.notification?.title || '',
-              {
-                body: payload.notification?.body || '',
-              }
-            );
-
-            // new Notification(payload.notification?.title || '', {
-            //   body: payload.notification?.body || '',
-            // });
+            navigator.serviceWorker.getRegistrations().then((registrations) => {
+              registrations[0].showNotification('test', {
+                body: 'test body',
+              });
+            });
           });
 
           if (FCMToken) {
