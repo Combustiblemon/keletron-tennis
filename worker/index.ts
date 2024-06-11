@@ -21,7 +21,8 @@ const firebaseConfig = JSON.parse(
 const firebaseApp = initializeApp(firebaseConfig);
 const messaging = getMessaging(firebaseApp);
 
-onBackgroundMessage(messaging, (payload) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+onBackgroundMessage(messaging, (payload: any) => {
   console.log(
     '[firebase-messaging-sw.js] Received background message ',
     payload
