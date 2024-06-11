@@ -36,8 +36,13 @@ yarn-error.log*
 next-env.d.ts
 
 certificates
-public/sw.js
-public/sw.js.map
-public/swe-worker-development.js
-public/workbox-e639beba.js
-public/workbox-e639beba.js.map
+**/public/workbox-*.js
+**/public/sw.js
+**/public/worker-*.js
+keletron-tennis-firebase-adminsdk**.json
+public/firebase-messaging-sw.js
+
+
+**/**.js.map
+service-account-file.json
+service-account-file-backup.json
