@@ -66,14 +66,22 @@ const firebaseCloudMessagingBuilder = () => {
           onMessage(messaging, (payload) => {
             console.log('firebase message received. ', payload);
 
-            new Notification(payload.notification?.title || '', {
-              body: payload.notification?.body || '',
-            });
+            new ServiceWorkerRegistration().showNotification(
+              payload.notification?.title || '',
+              {
+                body: payload.notification?.body || '',
+              }
+            );
+
+            // new Notification(payload.notification?.title || '', {
+            //   body: payload.notification?.body || '',
+            // });
           });
 
           if (FCMToken) {
             // return the FCM token after saving it
             saveTokenToIndexedDB(FCMToken);
+            console.log('FCM Token: ', FCMToken);
             return FCMToken;
           }
         }
