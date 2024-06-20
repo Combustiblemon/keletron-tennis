@@ -27,7 +27,11 @@ const Document = () => {
           sizes="167x167"
           href="/icons/touch-icon-ipad-retina.png"
         /> */}
-        <link rel="manifest" href="/manifest.json" />
+        <link
+          rel="manifest"
+          crossOrigin="use-credentials"
+          href="/manifest.json"
+        />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:url" content="https://yourdomain.com" />
         <meta name="twitter:title" content="My awesome PWA app" />

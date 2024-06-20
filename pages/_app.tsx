@@ -1,3 +1,5 @@
+/* eslint-disable no-lonely-if */
+/* eslint-disable no-new */
 import '../styles/globals.css';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
@@ -12,11 +14,17 @@ import '@mantine/nprogress/styles.css';
 
 import { MantineProvider } from '@mantine/core';
 import type { AppProps } from 'next/app';
+import { useEffect } from 'react';
 
 import { Navbar } from '@/components/MobileNavbar/Navbar';
+import { firebaseCloudMessaging } from '@/lib/webPush';
 import { theme } from '@/styles/theme';
 
 const App = ({ Component, pageProps }: AppProps) => {
+  useEffect(() => {
+    firebaseCloudMessaging.init();
+  }, []);
+
   return (
     <MantineProvider theme={theme}>
       <Navbar
