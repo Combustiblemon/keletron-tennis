@@ -80,7 +80,8 @@
     "react/react-in-jsx-scope": "off",
     "react/require-default-props": "off",
     "simple-import-sort/exports": "error",
-    "simple-import-sort/imports": "error"
+    "simple-import-sort/imports": "error",
+    "no-unreachable": "warn"
   },
   "settings": {
     "import/resolver": {

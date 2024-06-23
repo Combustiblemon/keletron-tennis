@@ -16,6 +16,7 @@ import { MantineProvider } from '@mantine/core';
 import type { AppProps } from 'next/app';
 import { useEffect } from 'react';
 
+import HeadInfo from '@/components/HeadInfo/HeadInfo';
 import { Navbar } from '@/components/MobileNavbar/Navbar';
 import { firebaseCloudMessaging } from '@/lib/webPush';
 import { theme } from '@/styles/theme';
@@ -27,6 +28,7 @@ const App = ({ Component, pageProps }: AppProps) => {
 
   return (
     <MantineProvider theme={theme}>
+      <HeadInfo title="Keletron Tennis Club" />
       <Navbar
         navItems={[
           { title: 'Home', href: '/' },

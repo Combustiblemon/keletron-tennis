@@ -8,7 +8,7 @@ import {
   onMessage,
 } from 'firebase/messaging';
 
-import { db } from './dbUtils';
+import { db } from './indexDBUtils';
 
 const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_KEY || '';
 
