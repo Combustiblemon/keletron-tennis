@@ -36,3 +36,18 @@ export const onSuccess = <Data, Endpoint extends string>(
     ...(operation ? { operation } : {}),
   };
 };
+
+export enum Errors {
+  INVALID_CREDENTIALS = 'invalid_credentials',
+  LOGIN_ERROR = 'login_error',
+  INTERNAL_SERVER_ERROR = 'internal_server_error',
+  USER_EXISTS = 'user_exists',
+  USER_NOT_FOUND = 'user_not_found',
+  PASSWORDS_DO_NOT_MATCH = 'passwords_do_not_match',
+  INVALID_EMAIL = 'invalid_email',
+  INVALID_RESET_KEY = 'invalid_reset_key',
+  RESET_KEY_EXPIRED = 'reset_key_expired',
+  RESET_KEY_NOT_FOUND = 'reset_key_not_found',
+  INVALID_RESET_REQUEST = 'invalid_reset_request',
+  INVALID_PASSWORD = 'invalid_password',
+}

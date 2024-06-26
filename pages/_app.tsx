@@ -13,33 +13,41 @@ import '@mantine/spotlight/styles.css';
 import '@mantine/nprogress/styles.css';
 
 import { MantineProvider } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 import type { AppProps } from 'next/app';
+import { SessionProvider } from 'next-auth/react';
 import { useEffect } from 'react';
 
 import HeadInfo from '@/components/HeadInfo/HeadInfo';
 import { Navbar } from '@/components/MobileNavbar/Navbar';
+import { LanguageProvider } from '@/context/LanguageContext';
 import { firebaseCloudMessaging } from '@/lib/webPush';
 import { theme } from '@/styles/theme';
 
-const App = ({ Component, pageProps }: AppProps) => {
+const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
   useEffect(() => {
     firebaseCloudMessaging.init();
   }, []);
 
   return (
-    <MantineProvider theme={theme}>
-      <HeadInfo title="Keletron Tennis Club" />
-      <Navbar
-        navItems={[
-          { title: 'Home', href: '/' },
-          { title: 'About', href: '/about' },
-          { title: 'Contact', href: '/contact' },
-          { title: 'Login', href: '/auth' },
-        ]}
-      >
-        <Component {...pageProps} />
-      </Navbar>
-    </MantineProvider>
+    <LanguageProvider defaultLanguage="el">
+      <SessionProvider session={session}>
+        <MantineProvider theme={theme}>
+          <Notifications position="bottom-center" zIndex={1000} />
+          <HeadInfo title="Keletron Tennis Club" />
+          <Navbar
+            navItems={[
+              { title: 'Home', href: '/' },
+              { title: 'About', href: '/about' },
+              { title: 'Contact', href: '/contact' },
+              { title: 'Login', href: '/auth' },
+            ]}
+          >
+            <Component {...pageProps} />
+          </Navbar>
+        </MantineProvider>
+      </SessionProvider>
+    </LanguageProvider>
   );
 };
 
