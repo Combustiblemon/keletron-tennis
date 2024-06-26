@@ -1,4 +1,4 @@
-import { MongoClient, MongoClientOptions, ServerApiVersion } from 'mongodb';
+import { MongoClient } from 'mongodb';
 import mongoose, { Mongoose } from 'mongoose';
 
 declare global {
