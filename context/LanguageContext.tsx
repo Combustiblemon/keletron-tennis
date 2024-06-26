@@ -1,11 +1,18 @@
 'use client';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 export type Language = 'el' | 'en';
 
 export type LanguageModeContext = {
-  mode: Language;
-  setMode: (mode: Language) => void;
+  language: Language;
+  setLanguage: (mode: Language) => void;
 };
 
 const LanguageContext = createContext<LanguageModeContext | undefined>(
@@ -14,19 +21,23 @@ const LanguageContext = createContext<LanguageModeContext | undefined>(
 
 export const LanguageProvider = ({
   children,
-  changeModeCallback,
+  changeLanguageCallback,
+  defaultLanguage,
 }: {
+  defaultLanguage: Language;
   children: React.ReactNode;
-  changeModeCallback: (mode: Language) => void;
+  changeLanguageCallback?: (mode: Language) => void;
 }) => {
-  const [mode, setMode] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>(defaultLanguage);
 
   useEffect(() => {
-    changeModeCallback(mode);
-  }, [mode]);
+    changeLanguageCallback?.(language);
+  }, [language, changeLanguageCallback]);
 
   return (
-    <LanguageContext.Provider value={{ mode, setMode }}>
+    <LanguageContext.Provider
+      value={useMemo(() => ({ language, setLanguage }), [language])}
+    >
       {children}
     </LanguageContext.Provider>
   );
@@ -34,6 +45,7 @@ export const LanguageProvider = ({
 
 export function useLanguage() {
   const context = useContext(LanguageContext);
+
   if (context === undefined) {
     throw new Error('useLanguage must be used within an LanguageProvider');
   }
