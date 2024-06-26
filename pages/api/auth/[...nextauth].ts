@@ -17,10 +17,14 @@ import UserModel, { Users, UserSanitized } from '@/models/User';
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   await dbConnect();
 
+  // @ts-expect-error types are wrong and i don't care
   return NextAuth(req, res, {
     session: {
       strategy: 'jwt',
     },
+    adapter: MongoDBAdapter(mongodbClientPromise, {
+      databaseName: 'node-auth',
+    }),
     jwt: { encode, decode },
     pages: {
       signIn: '/auth?type=login',

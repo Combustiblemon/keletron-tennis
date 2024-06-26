@@ -11,7 +11,7 @@ import {
   JWT_REFRESH_TOKEN_NAME,
   REFRESH_TOKEN_EXPIRATION_TIME_TEXT,
 } from '@/constants';
-import { AccessTokenValues, DecodedAccessToken } from '@/types/api/auth';
+import type { AccessTokenValues, DecodedAccessToken } from '@/types/api/auth';
 
 export const getJwtTokenValues = (token: string): AccessTokenValues => {
   // if token is present we decoded it and return the decoded token
