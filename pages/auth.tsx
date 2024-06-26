@@ -16,7 +16,7 @@ import { useForm } from '@mantine/form';
 import { upperFirst, useDisclosure, useToggle } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { useRouter } from 'next/router';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 
 import { Errors } from '@/lib/api/common';
@@ -180,14 +180,6 @@ const AuthenticationForm = (props: PaperProps) => {
       <Text size="lg" fw={500}>
         Συνδεθείτε στο λογαριασμό σας
       </Text>
-
-      <Button
-        onClick={() => {
-          signOut();
-        }}
-      >
-        log out
-      </Button>
 
       <Divider my="lg" />
 
