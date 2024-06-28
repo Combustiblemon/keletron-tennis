@@ -48,7 +48,7 @@ const AuthenticationForm = (props: PaperProps) => {
 
         if (!val) {
           error = t('generic.form.errors.required');
-        } else if (/^\S+@\S+$/.test(val)) {
+        } else if (/^\S+@\S+$/.test(val) === false) {
           error = t('auth.form.emailInput.invalid');
         }
 
@@ -106,8 +106,11 @@ const AuthenticationForm = (props: PaperProps) => {
     setIsLoading();
 
     if (type === 'register' && values.password !== values.repeatPassword) {
-      form.setFieldError('password', 'Passwords do not match');
-      form.setFieldError('repeatPassword', 'Passwords do not match');
+      form.setFieldError('password', tError(Errors.PASSWORDS_DO_NOT_MATCH));
+      form.setFieldError(
+        'repeatPassword',
+        tError(Errors.PASSWORDS_DO_NOT_MATCH)
+      );
       return;
     }
 
@@ -137,7 +140,7 @@ const AuthenticationForm = (props: PaperProps) => {
 
     if (res?.error) {
       notifications.show({
-        message: tError(Errors.UNEXPECTED_ERROR),
+        message: tError(res.error as Errors),
         color: 'red',
       });
     }
@@ -153,30 +156,6 @@ const AuthenticationForm = (props: PaperProps) => {
 
     setIsLoaded();
   });
-
-  const googleAuth = async () => {
-    setIsLoading();
-
-    const res = await signIn('google', { redirect: false });
-
-    if (res?.error) {
-      notifications.show({
-        message: tError(Errors.UNEXPECTED_ERROR),
-        color: 'red',
-      });
-    }
-
-    if (res?.ok) {
-      notifications.show({
-        message: t(`auth.${type}Success`),
-        color: 'green',
-      });
-
-      router.push('/');
-    }
-
-    setIsLoaded();
-  };
 
   if (status === 'authenticated') {
     router.push('/');
@@ -194,12 +173,6 @@ const AuthenticationForm = (props: PaperProps) => {
         <Text size="lg" fw={500}>
           {t(`auth.${type}`)}
         </Text>
-
-        {type === 'login' && (
-          <GoogleButton onClick={googleAuth}>
-            {t(`auth.googleLogin.${type}`)}
-          </GoogleButton>
-        )}
       </Stack>
 
       <Divider my="lg" />
