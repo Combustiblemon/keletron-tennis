@@ -38,6 +38,7 @@ export const onSuccess = <Data, Endpoint extends string>(
 };
 
 export enum Errors {
+  UNEXPECTED_ERROR = 'unexpected_error',
   INVALID_CREDENTIALS = 'invalid_credentials',
   LOGIN_ERROR = 'login_error',
   INTERNAL_SERVER_ERROR = 'internal_server_error',

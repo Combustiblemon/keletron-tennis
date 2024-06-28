@@ -49,6 +49,7 @@ export function useLanguage() {
   if (context === undefined) {
     throw new Error('useLanguage must be used within an LanguageProvider');
   }
+
   return context;
 }
 

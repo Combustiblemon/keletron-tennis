@@ -24,7 +24,12 @@
     "ecmaVersion": 2020,
     "sourceType": "module"
   },
-  "plugins": ["react", "@typescript-eslint", "simple-import-sort"],
+  "plugins": [
+    "react",
+    "@typescript-eslint",
+    "simple-import-sort",
+    "eslint-plugin-query"
+  ],
   "root": true,
   "rules": {
     "@typescript-eslint/explicit-function-return-type": "off",
