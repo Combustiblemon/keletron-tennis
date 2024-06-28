@@ -15,8 +15,8 @@ import '@mantine/nprogress/styles.css';
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import type { AppProps } from 'next/app';
-import { SessionProvider } from 'next-auth/react';
-import { useEffect } from 'react';
+import { SessionProvider, useSession } from 'next-auth/react';
+import { useEffect, useState } from 'react';
 
 import HeadInfo from '@/components/HeadInfo/HeadInfo';
 import { Navbar } from '@/components/MobileNavbar/Navbar';
@@ -34,15 +34,8 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
       <SessionProvider session={session}>
         <MantineProvider theme={theme}>
           <Notifications position="bottom-center" zIndex={1000} />
-          <HeadInfo title="Keletron Tennis Club" />
-          <Navbar
-            navItems={[
-              { title: 'Home', href: '/' },
-              { title: 'About', href: '/about' },
-              { title: 'Contact', href: '/contact' },
-              { title: 'Login', href: '/auth' },
-            ]}
-          >
+          <HeadInfo title="Keletron Tennis Academy" />
+          <Navbar>
             <Component {...pageProps} />
           </Navbar>
         </MantineProvider>

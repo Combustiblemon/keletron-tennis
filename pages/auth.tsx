@@ -20,29 +20,75 @@ import { signIn, useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 
 import { Errors } from '@/lib/api/common';
+import { i18n, useTranslation } from '@/lib/i18n/i18n';
+import { GoogleButton } from '@/components/GoogleButton/GoogleButton';
 
 const AuthenticationForm = (props: PaperProps) => {
   const router = useRouter();
   const { status } = useSession();
+  const { t, tError } = useTranslation();
 
   const [isLoading, { close: setIsLoaded, open: setIsLoading }] =
     useDisclosure(false);
-  const [type, toggleType] = useToggle(['login', 'register']);
+  const [type, toggleType] = useToggle<'login' | 'register'>([
+    'login',
+    'register',
+  ]);
   const form = useForm({
     initialValues: {
       email: '',
       name: '',
       password: '',
       repeatPassword: '',
-      terms: true,
     },
 
     validate: {
-      email: (val) => (/^\S+@\S+$/.test(val) ? null : 'Invalid email'),
-      password: (val) =>
-        val.length <= 6
-          ? 'Password should include at least 6 characters'
-          : null,
+      email: (val) => {
+        let error = null;
+
+        if (!val) {
+          error = t('generic.form.errors.required');
+        } else if (/^\S+@\S+$/.test(val)) {
+          error = t('auth.form.emailInput.invalid');
+        }
+
+        return error;
+      },
+      password: (val) => {
+        let error = null;
+
+        if (!val) {
+          error = t('generic.form.errors.required');
+        } else if (val.length < 6) {
+          error = t('auth.form.passwordInput.minLength');
+        }
+
+        return error;
+      },
+      repeatPassword: (val) => {
+        if (type === 'login') return null;
+
+        let error = null;
+
+        if (!val) {
+          error = t('generic.form.errors.required');
+        } else if (val.length < 6) {
+          error = t('auth.form.passwordInput.minLength');
+        }
+
+        return error;
+      },
+      name: (val) => {
+        if (type === 'login') return null;
+
+        let error = null;
+
+        if (!val) {
+          error = t('generic.form.errors.required');
+        }
+
+        return error;
+      },
     },
   });
 
@@ -59,33 +105,9 @@ const AuthenticationForm = (props: PaperProps) => {
   const handleSubmit = form.onSubmit(async (values) => {
     setIsLoading();
 
-    if (!values.password || values.password.length < 6) {
-      form.setFieldError(
-        'password',
-        'Password should include at least 6 characters'
-      );
-      return;
-    }
-
-    if (
-      type === 'register' &&
-      (!values.repeatPassword || values.repeatPassword.length < 6)
-    ) {
-      form.setFieldError(
-        'repeatPassword',
-        'Password should include at least 6 characters'
-      );
-      return;
-    }
-
     if (type === 'register' && values.password !== values.repeatPassword) {
       form.setFieldError('password', 'Passwords do not match');
       form.setFieldError('repeatPassword', 'Passwords do not match');
-      return;
-    }
-
-    if (type === 'register' && !values.terms) {
-      form.setFieldError('terms', 'You should accept terms and conditions');
       return;
     }
 
@@ -113,48 +135,16 @@ const AuthenticationForm = (props: PaperProps) => {
         break;
     }
 
-    switch (res?.error) {
-      case Errors.INVALID_CREDENTIALS:
-        notifications.show({
-          message: 'Invalid email or password',
-          color: 'red',
-        });
-        break;
-
-      case Errors.LOGIN_ERROR:
-        notifications.show({
-          message: 'Login error, please check your credentials and try again',
-          color: 'red',
-        });
-        break;
-
-      case Errors.INTERNAL_SERVER_ERROR:
-        notifications.show({
-          message: 'Internal server error, please try again later',
-          color: 'red',
-        });
-        break;
-
-      case Errors.USER_EXISTS:
-        notifications.show({
-          message: 'User with this email already exists',
-          color: 'red',
-        });
-        break;
-
-      default:
-        if (res?.error) {
-          notifications.show({
-            message: 'An unexpected error occurred, please try again later',
-            color: 'red',
-          });
-        }
-        break;
+    if (res?.error) {
+      notifications.show({
+        message: tError(Errors.UNEXPECTED_ERROR),
+        color: 'red',
+      });
     }
 
     if (res?.ok) {
       notifications.show({
-        message: 'You have successfully logged in',
+        message: t(`auth.${type}Success`),
         color: 'green',
       });
 
@@ -163,6 +153,30 @@ const AuthenticationForm = (props: PaperProps) => {
 
     setIsLoaded();
   });
+
+  const googleAuth = async () => {
+    setIsLoading();
+
+    const res = await signIn('google', { redirect: false });
+
+    if (res?.error) {
+      notifications.show({
+        message: tError(Errors.UNEXPECTED_ERROR),
+        color: 'red',
+      });
+    }
+
+    if (res?.ok) {
+      notifications.show({
+        message: t(`auth.${type}Success`),
+        color: 'green',
+      });
+
+      router.push('/');
+    }
+
+    setIsLoaded();
+  };
 
   if (status === 'authenticated') {
     router.push('/');
@@ -176,10 +190,17 @@ const AuthenticationForm = (props: PaperProps) => {
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
       />
+      <Stack gap={'lg'}>
+        <Text size="lg" fw={500}>
+          {t(`auth.${type}`)}
+        </Text>
 
-      <Text size="lg" fw={500}>
-        Συνδεθείτε στο λογαριασμό σας
-      </Text>
+        {type === 'login' && (
+          <GoogleButton onClick={googleAuth}>
+            {t(`auth.googleLogin.${type}`)}
+          </GoogleButton>
+        )}
+      </Stack>
 
       <Divider my="lg" />
 
@@ -188,35 +209,37 @@ const AuthenticationForm = (props: PaperProps) => {
           {type === 'register' && (
             <TextInput
               required
-              label="Name"
-              placeholder="Your name"
+              label={t('auth.form.nameInput.label')}
+              placeholder={t('auth.form.nameInput.placeholder')}
               value={form.values.name}
               onChange={(event) =>
-                form.setFieldValue('name', event.currentTarget.value)
+                form.setFieldValue('name', event.currentTarget.value.trim())
               }
+              error={form.errors.name}
               radius="md"
             />
           )}
 
           <TextInput
             required
-            label="Email"
+            label={t('auth.form.emailInput.label')}
             placeholder="hello@example.com"
             value={form.values.email}
+            type="text"
             onChange={(event) =>
-              form.setFieldValue('email', event.currentTarget.value)
+              form.setFieldValue('email', event.currentTarget.value.trim())
             }
-            error={form.errors.email && 'Invalid email'}
+            error={form.errors.email}
             radius="md"
           />
 
           <PasswordInput
             required
-            label="Password"
-            placeholder="Your password"
+            label={t('auth.form.passwordInput.label')}
+            placeholder={t('auth.form.passwordInput.placeholder')}
             value={form.values.password}
             onChange={(event) =>
-              form.setFieldValue('password', event.currentTarget.value)
+              form.setFieldValue('password', event.currentTarget.value.trim())
             }
             error={form.errors.password}
             radius="md"
@@ -226,26 +249,17 @@ const AuthenticationForm = (props: PaperProps) => {
             <>
               <PasswordInput
                 required
-                label="Repeat password"
-                placeholder="Your password"
+                label={t('auth.form.repeatPasswordInput.label')}
+                placeholder={t('auth.form.repeatPasswordInput.placeholder')}
                 value={form.values.repeatPassword}
                 onChange={(event) =>
                   form.setFieldValue(
                     'repeatPassword',
-                    event.currentTarget.value
+                    event.currentTarget.value.trim()
                   )
                 }
                 error={form.errors.password}
                 radius="md"
-              />
-
-              <Checkbox
-                label="I accept terms and conditions"
-                checked={form.values.terms}
-                onChange={(event) =>
-                  form.setFieldValue('terms', event.currentTarget.checked)
-                }
-                error={form.errors.terms}
               />
             </>
           )}
@@ -259,9 +273,7 @@ const AuthenticationForm = (props: PaperProps) => {
             onClick={() => toggleType()}
             size="xs"
           >
-            {type === 'register'
-              ? 'Already have an account? Login'
-              : "Don't have an account? Register"}
+            {t(`auth.${type}Prompt`)}
           </Anchor>
           <Button type="submit" radius="xl" loading={isLoading}>
             {upperFirst(type)}
