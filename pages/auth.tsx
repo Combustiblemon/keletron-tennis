@@ -169,6 +169,7 @@ const AuthenticationForm = (props: PaperProps) => {
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
       />
+
       <Stack gap={'lg'}>
         <Text size="lg" fw={500}>
           {t(`auth.${type}`)}

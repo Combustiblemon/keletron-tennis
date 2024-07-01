@@ -3,7 +3,6 @@ import {
   Burger,
   Divider,
   Group,
-  Stack,
   UnstyledButton,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
@@ -26,7 +25,8 @@ export type NavItem =
       onClick: () => void;
       href?: never;
     }
-  | 'divider';
+  | 'divider'
+  | null;
 
 function getNavItems(
   items: Array<NavItem>,
@@ -34,6 +34,10 @@ function getNavItems(
   router: AppRouterInstance
 ) {
   return items.map((item, index) => {
+    if (!item) {
+      return;
+    }
+
     if (item === 'divider') {
       // eslint-disable-next-line react/no-array-index-key
       return <Divider key={`divider-${index}`} />;
@@ -73,6 +77,14 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const navItems: NavItem[] = useMemo(
     () => [
       { title: 'Home', href: '/' },
+      ...[
+        status === 'authenticated'
+          ? {
+              title: 'Reservations',
+              href: '/reservations',
+            }
+          : null,
+      ],
       'divider',
       { title: 'Settings', href: '/settings' },
       { title: 'About', href: '/about' },

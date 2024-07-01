@@ -2,45 +2,82 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
-import { onError, onSuccess } from '@/lib/api/common';
-import { getUser, isAdmin, isLoggedIn } from '@/lib/api/utils';
+import { Errors, onError, onSuccess } from '@/lib/api/common';
 import Court from '@/models/Court';
 
 import dbConnect from '../../../lib/api/dbConnect';
 import Reservation, { ReservationValidator } from '../../../models/Reservation';
+import signale from 'signale';
+import { authUserHelpers } from '../auth/[...nextauth]';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { method } = req;
+  const {
+    method,
+    query: { date },
+  } = req;
 
   await dbConnect();
+
+  const { user, isAdmin, isLoggedIn } = await authUserHelpers(req, res);
 
   switch (method) {
     case 'GET':
       try {
-        if (!isAdmin()) {
+        if (!isLoggedIn) {
           return res
             .status(401)
-            .json(onError(new Error('Unauthorized'), 'reservations', 'GET'));
+            .json(
+              onError(new Error(Errors.UNAUTHORIZED), 'reservations', 'GET')
+            );
         }
 
+        let lookupDate: Date | undefined;
+        let lookupDate2: Date | undefined;
+
+        try {
+          if (Array.isArray(date)) {
+            lookupDate = new Date(z.date().parse(date[0]));
+            lookupDate2 = new Date(z.date().parse(date[1]));
+          } else {
+            lookupDate = new Date(z.date().parse(date));
+          }
+        } catch {
+          lookupDate = new Date();
+        }
+
+        let gtDate = new Date(lookupDate);
+        gtDate.setHours(0, 0, 0, 0);
+
+        let ltDate = new Date(lookupDate2 || lookupDate);
+        ltDate.setHours(23, 59, 0, 0);
+
         /* find all the data in our database */
-        const reservations = await Reservation.find({}).lean();
+        const reservations = await Reservation.find({
+          $and: [
+            { datetime: { $gt: gtDate.toISOString() } },
+            { datetime: { $lt: ltDate.toISOString() } },
+          ],
+          ...(user.role !== 'ADMIN' ? { owner: user._id } : {}),
+        }).lean();
 
         res.status(200).json(onSuccess(reservations, 'reservations', 'GET'));
       } catch (error) {
+        signale.error(error);
         res.status(400).json(onError(error as Error, 'reservations', 'GET'));
       }
       break;
     case 'POST':
-      // create a new court
+      // create a new reservation
       try {
-        if (!isLoggedIn()) {
+        if (!isLoggedIn) {
           return res
             .status(401)
-            .json(onError(new Error('Unauthorized'), 'reservations', 'POST'));
+            .json(
+              onError(new Error(Errors.UNAUTHORIZED), 'reservations', 'POST')
+            );
         }
 
         const validator = ReservationValidator.pick({
@@ -48,7 +85,8 @@ export default async function handler(
           court: true,
           datetime: true,
           people: true,
-          ...(isAdmin() ? { owner: true } : {}),
+          duration: true,
+          ...(isAdmin ? { owner: true } : {}),
         });
 
         let data: z.infer<typeof validator>;
@@ -61,12 +99,14 @@ export default async function handler(
             .json(onError(error as Error, 'reservations', 'POST'));
         }
 
-        if (!(await Court.exists({ _id: data.court }))) {
+        const court = await Court.findOne({ _id: data.court });
+
+        if (!court) {
           return res
             .status(404)
             .json(
               onError(
-                new Error('Court does not exist'),
+                new Error(Errors.RESOURCE_NOT_FOUND),
                 'reservations',
                 'POST',
                 { _id: data.court }
@@ -74,7 +114,48 @@ export default async function handler(
             );
         }
 
-        const reservation = await Reservation.create(data);
+        const courtReservations = await Reservation.find({
+          datetime: { $regex: `^${data.datetime.substring(0, 10)}` },
+          court: court._id,
+        });
+
+        const startTime = new Date(data.datetime);
+        const endTime = new Date(data.datetime);
+        endTime.setMinutes(endTime.getMinutes() + data.duration);
+
+        // check if the new reservation conflicts with an existing one
+        if (
+          !courtReservations.every((res) => {
+            const sTime = new Date(res.datetime);
+            const eTime = new Date(res.datetime);
+            eTime.setMinutes(eTime.getMinutes() + res.duration);
+
+            let validDate = true;
+
+            if (sTime < startTime && startTime < eTime) {
+              validDate = false;
+            }
+
+            if (validDate && sTime < endTime && endTime < eTime) {
+              validDate = false;
+            }
+
+            return validDate;
+          })
+        ) {
+          return res.status(400).json(
+            onError(new Error('time_conflict'), 'reservations', 'POST', {
+              _id: data.court,
+            })
+          );
+        }
+
+        const reservation = await Reservation.create({
+          ...data,
+          owner: isAdmin ? data.owner : user._id,
+        });
+
+        // TODO: send notification to the admins
 
         res.status(201).json(onSuccess(reservation, 'reservations', 'POST'));
       } catch (error) {
@@ -84,13 +165,13 @@ export default async function handler(
 
     case 'DELETE':
       try {
-        if (!isLoggedIn()) {
+        if (!isLoggedIn) {
           return res
             .status(401)
-            .json(onError(new Error('Unauthorized'), 'reservations', 'DELETE'));
+            .json(
+              onError(new Error(Errors.UNAUTHORIZED), 'reservations', 'DELETE')
+            );
         }
-
-        const user = getUser();
 
         const { ids } = req.body;
 
@@ -112,17 +193,33 @@ export default async function handler(
 
         const reservations = await Reservation.find({
           _id: { $in: ids },
-          ...(isAdmin() ? {} : { owner: user.id }),
+          ...(isAdmin ? {} : { owner: user.id }),
         });
 
         for (let i = 0; i < reservations.length; i += 1) {
           const reservation = reservations[i];
 
-          if (!isAdmin() && reservation.owner !== user.id) {
+          if (!isAdmin && reservation.owner !== user.id) {
             return res
               .status(401)
               .json(
-                onError(new Error('Unauthorized'), 'reservations', 'DELETE')
+                onError(
+                  new Error(Errors.UNAUTHORIZED),
+                  'reservations',
+                  'DELETE'
+                )
+              );
+          }
+
+          if (new Date(reservation.datetime) < new Date()) {
+            return res
+              .status(400)
+              .json(
+                onError(
+                  new Error('Cannot delete past reservations'),
+                  'reservations',
+                  'DELETE'
+                )
               );
           }
         }
@@ -130,6 +227,8 @@ export default async function handler(
         const deletedCount = await Reservation.deleteMany({
           _id: { $in: reservations.map((r) => r._id) },
         });
+
+        // TODO: send notification to the admins
 
         res.status(200).json(onSuccess(deletedCount, 'reservations', 'DELETE'));
       } catch (error) {
@@ -140,6 +239,6 @@ export default async function handler(
     default:
       return res
         .status(400)
-        .json(onError(new Error('Invalid method'), 'reservations'));
+        .json(onError(new Error(Errors.INTERNAL_SERVER_ERROR), 'reservations'));
   }
 }

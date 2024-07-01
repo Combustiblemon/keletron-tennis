@@ -76,7 +76,7 @@ const firebaseCloudMessagingBuilder = () => {
           if (FCMToken) {
             // return the FCM token after saving it
             saveTokenToIndexedDB(FCMToken);
-            // console.log('FCM Token: ', FCMToken);
+            // // console.log('FCM Token: ', FCMToken);
 
             return FCMToken;
           }

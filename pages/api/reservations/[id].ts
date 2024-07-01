@@ -1,13 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
-import { onError, onSuccess } from '@/lib/api/common';
+import { Errors, onError, onSuccess } from '@/lib/api/common';
 
 import dbConnect from '../../../lib/api/dbConnect';
-import { getUser, isAdmin, isLoggedIn } from '../../../lib/api/utils';
 import Reservation, {
   ReservationValidatorPartial,
 } from '../../../models/Reservation';
+import { authUserHelpers } from '../auth/[...nextauth]';
 
 // eslint-disable-next-line consistent-return
 export default async function handler(
@@ -21,25 +21,35 @@ export default async function handler(
 
   await dbConnect();
 
+  const { user, isAdmin, isLoggedIn } = await authUserHelpers(req, res);
+
   switch (method) {
     case 'GET' /* Get a model by its ID */:
       try {
-        if (!isLoggedIn()) {
+        if (!isLoggedIn) {
           return res
             .status(401)
-            .json(onError(new Error('Unauthorized'), 'reservations/id', 'GET'));
+            .json(
+              onError(new Error(Errors.UNAUTHORIZED), 'reservations/id', 'GET')
+            );
         }
 
-        const user = getUser();
+        const ids = (id as string).split(',');
 
-        const reservation = await Reservation.findById(id);
+        if (!ids.length) {
+          return res.status(200).json(onSuccess([], 'reservations/id', 'GET'));
+        }
 
-        if (!reservation) {
+        const reservations = await Reservation.find({
+          id: { $in: ids },
+        });
+
+        if (reservations.length !== ids.length) {
           return res
             .status(404)
             .json(
               onError(
-                new Error('No resrvation found'),
+                new Error('No reservation found'),
                 'reservations/id',
                 'GET'
               )
@@ -47,16 +57,19 @@ export default async function handler(
         }
 
         if (
-          reservation.owner !== user.id &&
-          !reservation.people.includes(user.id) &&
-          !isAdmin()
+          !isAdmin &&
+          reservations.some(
+            (reservation) =>
+              reservation.owner !== user._id &&
+              !reservation.people.includes(user._id || '')
+          )
         ) {
           return res
             .status(401)
             .json(onError(new Error('Unauthorized'), 'reservations/id', 'GET'));
         }
 
-        res.status(200).json(onSuccess(reservation, 'reservations/id', 'GET'));
+        res.status(200).json(onSuccess(reservations, 'reservations/id', 'GET'));
       } catch (error) {
         res.status(400).json(onError(error as Error, 'reservations/id', 'GET'));
       }
@@ -64,7 +77,7 @@ export default async function handler(
 
     case 'PUT' /* Edit a model by its ID */:
       try {
-        if (!isLoggedIn()) {
+        if (!isLoggedIn) {
           return res
             .status(401)
             .json(onError(new Error('Unauthorized'), 'reservations/id', 'PUT'));
@@ -95,11 +108,13 @@ export default async function handler(
             );
         }
 
-        if (reservation.owner !== getUser().id && !isAdmin()) {
+        if (reservation.owner !== user.id && isAdmin) {
           return res
             .status(401)
             .json(onError(new Error('Unauthorized'), 'reservations/id', 'PUT'));
         }
+
+        // TODO: send notification to the admins if the reservation is edited
 
         reservation.set(data);
 
@@ -108,56 +123,6 @@ export default async function handler(
         res.status(200).json(onSuccess(reservation, 'reservations/id', 'PUT'));
       } catch (error) {
         res.status(400).json(onError(error as Error, 'reservations/id', 'PUT'));
-      }
-      break;
-
-    case 'DELETE' /* Delete a model by its ID */:
-      try {
-        if (!isLoggedIn()) {
-          return res
-            .status(401)
-            .json(
-              onError(new Error('Unauthorized'), 'reservations/id', 'DELETE')
-            );
-        }
-
-        if (!id) {
-          return res
-            .status(404)
-            .json(onError(new Error('No ID'), 'reservations/id', 'DELETE'));
-        }
-
-        const reservation = await Reservation.findOne({ _id: id });
-
-        if (!reservation) {
-          return res
-            .status(404)
-            .json(
-              onError(
-                new Error('No reservation found'),
-                'reservations/id',
-                'DELETE'
-              )
-            );
-        }
-
-        if (reservation.owner !== getUser().id && !isAdmin()) {
-          return res
-            .status(401)
-            .json(
-              onError(new Error('Unauthorized'), 'reservations/id', 'DELETE')
-            );
-        }
-
-        await reservation.deleteOne();
-
-        res
-          .status(200)
-          .json(onSuccess(reservation, 'reservations/id', 'DELETE'));
-      } catch (error) {
-        res
-          .status(400)
-          .json(onError(error as Error, 'reservations/id', 'DELETE'));
       }
       break;
 

@@ -1,11 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
-import { onError, onSuccess } from '@/lib/api/common';
+import { Errors, onError, onSuccess } from '@/lib/api/common';
 
 import dbConnect from '../../../lib/api/dbConnect';
-import { isAdmin } from '../../../lib/api/utils';
 import Court, { CourtValidatorPartial } from '../../../models/Court';
+import { authUserHelpers } from '../auth/[...nextauth]';
 
 // eslint-disable-next-line consistent-return
 export default async function handler(
@@ -19,15 +19,25 @@ export default async function handler(
 
   await dbConnect();
 
+  const { isAdmin, isLoggedIn } = await authUserHelpers(req, res);
+
   switch (method) {
     case 'GET' /* Get a model by its ID */:
       try {
+        if (!isLoggedIn) {
+          res
+            .status(400)
+            .json(onError(new Error(Errors.UNAUTHORIZED), 'courts/id', 'GET'));
+        }
+
         const court = await Court.findById(id);
 
         if (!court) {
           return res
             .status(404)
-            .json(onError(new Error('No court found'), 'courts/id', 'GET'));
+            .json(
+              onError(new Error(Errors.RESOURCE_NOT_FOUND), 'courts/id', 'GET')
+            );
         }
 
         res.status(200).json(onSuccess(court, 'courts/id', 'GET'));
@@ -38,7 +48,7 @@ export default async function handler(
 
     case 'PUT' /* Edit a model by its ID */:
       try {
-        if (!isAdmin()) {
+        if (!isAdmin) {
           return res
             .status(401)
             .json(onError(new Error('Unauthorized'), 'courts/id', 'PUT'));
@@ -73,7 +83,7 @@ export default async function handler(
 
     case 'DELETE' /* Delete a model by its ID */:
       try {
-        if (!isAdmin()) {
+        if (!isAdmin) {
           return res
             .status(401)
             .json(onError(new Error('Unauthorized'), 'courts/id', 'DELETE'));
