@@ -41,7 +41,7 @@ export const onSuccess = <Data, Endpoint extends string>(
   return {
     success: true as const,
     endpoint,
-    data,
+    data: data ?? ({} as Data),
     ...(operation ? { operation } : {}),
   };
 };

@@ -6,15 +6,22 @@ import { decode, encode } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import { z } from 'zod';
+import { nanoid } from 'nanoid';
 
 import { Errors, onError } from '@/lib/api/common';
 import dbConnect from '@/lib/api/dbConnect';
 import UserModel, { Users, UserSanitized } from '@/models/User';
+import {
+  subscribeToTopic,
+  subscribeUser,
+  unsubscribeUser,
+} from '@/lib/api/notifications';
+import { use } from 'react';
 
 type AuthUserHelpersReturnType = (
   | {
       isLoggedIn: true;
-      user: User;
+      user: NonNullable<User>;
     }
   | {
       isLoggedIn: false;
@@ -32,15 +39,27 @@ export const authUserHelpers = async (
   const authOpts = authOptions(req, res);
   const session = await getServerSession(req, res, authOpts);
 
-  const isLoggedIn = !!session;
-
+  const isLoggedIn = !!session && !!session?.user;
   return {
     isLoggedIn,
-    isAdmin: isLoggedIn && session?.user.role === 'ADMIN',
-    isUser: isLoggedIn && session?.user.role === 'USER',
+    isAdmin: isLoggedIn && session?.user?.role === 'ADMIN',
+    isUser: isLoggedIn && session?.user?.role === 'USER',
     user: isLoggedIn ? session.user : undefined,
   } as AuthUserHelpersReturnType;
 };
+
+const registerValidator = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  name: z.string().max(60),
+  FCMToken: z.string().optional(),
+});
+
+const loginValidator = registerValidator.pick({
+  email: true,
+  password: true,
+  FCMToken: true,
+});
 
 export const authOptions = (
   req: NextApiRequest,
@@ -67,23 +86,20 @@ export const authOptions = (
       credentials: {
         email: { type: 'email' },
         password: { type: 'password' },
+        FCMToken: { type: 'text' },
       },
+      type: 'credentials',
       async authorize(credentials) {
-        let data: { email: string; password: string };
+        let data: z.infer<typeof loginValidator>;
 
         try {
-          data = z
-            .object({
-              email: z.string().email(),
-              password: z.string().min(6),
-            })
-            .parse(credentials);
+          data = loginValidator.parse(credentials);
         } catch (error) {
           console.error('Error parsing credentials', error);
           throw new Error(Errors.INVALID_CREDENTIALS);
         }
 
-        const { email, password } = data;
+        const { email, password, FCMToken } = data;
 
         let user: Users | null;
 
@@ -115,12 +131,24 @@ export const authOptions = (
 
         // If no error and we have user data, return it
         if (user) {
-          return {
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            _id: user._id as string,
-          };
+          try {
+            user.session = nanoid();
+
+            await user.save();
+
+            return {
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              _id: user._id as string,
+              FCMToken,
+              session: user.session,
+            };
+          } catch (err) {
+            console.error(err);
+
+            return null;
+          }
         }
 
         // Return null if user data could not be retrieved
@@ -133,24 +161,20 @@ export const authOptions = (
         email: { type: 'email' },
         password: { type: 'password' },
         name: { type: 'text' },
+        FCMToken: { type: 'text' },
       },
+      type: 'credentials',
       async authorize(credentials) {
-        let data: { email: string; password: string; name: string };
+        let data: z.infer<typeof registerValidator>;
 
         try {
-          data = z
-            .object({
-              email: z.string().email(),
-              password: z.string().min(6),
-              name: z.string().max(60),
-            })
-            .parse(credentials);
+          data = registerValidator.parse(credentials);
         } catch (error) {
           console.error('Error parsing credentials', error);
           throw new Error(Errors.INVALID_CREDENTIALS);
         }
 
-        const { email, password, name } = data;
+        const { email, password, name, FCMToken } = data;
 
         let userExists: boolean;
 
@@ -178,6 +202,8 @@ export const authOptions = (
               email,
               password,
               role: 'USER',
+              FCMToken,
+              session: nanoid(),
             })
           ).sanitize();
         } catch (error) {
@@ -198,6 +224,8 @@ export const authOptions = (
             email: user.email,
             role: user.role,
             _id: user._id as string,
+            FCMToken: user.FCMToken,
+            session: user.session,
           };
         }
 
@@ -206,24 +234,76 @@ export const authOptions = (
       },
     }),
   ],
-  callbacks: {
-    session({ session, user, token }) {
-      if (token) {
-        session.user = {
-          role: token.role || 'USER',
-          name: token.name || '',
-          email: token.email || '',
-          _id: token._id || '',
-        };
+  events: {
+    signIn: ({ user, account, isNewUser, profile }) => {
+      console.log('signIn', { user, account, isNewUser, profile });
+
+      if (user.FCMToken && user.role) {
+        subscribeUser(user.role, user.FCMToken);
       }
+    },
+    signOut: async ({ token, session }) => {
+      console.log('signOut', { token, session });
+
+      if (!token.user) {
+        return;
+      }
+
+      const user = token.user._id;
+
+      if (token.user.FCMToken) {
+        unsubscribeUser(token.user.role, token.user.FCMToken);
+      }
+
+      UserModel.findByIdAndUpdate(user, { session: '', FCMToken: '' });
+    },
+  },
+  callbacks: {
+    async session({ session, user, token }) {
+      if (token.user) {
+        try {
+          const user = await UserModel.findById(session.user?._id);
+
+          if (user?.compareSessions(session.user?.session)) {
+            session.user = {
+              ...token.user,
+            };
+          } else {
+            if (user) {
+              user.session = undefined;
+              user.FCMToken = undefined;
+
+              unsubscribeUser(user.role, user.FCMToken);
+              user.save();
+            }
+
+            session.user = undefined;
+            session.expires = new Date().toISOString();
+          }
+        } catch (error) {
+          console.log(error);
+          session.user = undefined;
+          session.expires = new Date().toISOString();
+        }
+      } else {
+        session.expires = new Date().toISOString();
+        session.user = undefined;
+      }
+
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role || 'USER';
-        token._id = user._id || '';
-        token.email = user.email || '';
-        token.name = user.name || '';
+        token.user = {
+          role: user.role || 'USER',
+          _id: user._id || '',
+          email: user.email || '',
+          name: user.name || '',
+          FCMToken: user.FCMToken || '',
+          session: user.session || '',
+        };
+      } else {
+        token.user = undefined;
       }
 
       return token;

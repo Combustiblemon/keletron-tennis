@@ -169,4 +169,17 @@ export const endpoints = {
       );
     },
   },
+  notifications: {
+    PUT: async (token: string, userId?: string) =>
+      handleResponse<ReservationType, `notifications`>(
+        await fetch(`/api/notifications/`, {
+          method: 'PUT',
+          headers: commonHeaders,
+          body: JSON.stringify({
+            token,
+            userId,
+          }),
+        })
+      ),
+  },
 };

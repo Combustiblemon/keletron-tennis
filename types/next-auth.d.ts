@@ -10,25 +10,35 @@ declare module 'next-auth' {
     name?: string;
     id?: never;
     image?: never;
+    FCMToken?: string;
+    session?: string;
   }
   interface Session {
-    user: {
-      name: string;
-      email: string;
-      role: Users['role'];
-      _id: string;
-    };
+    user:
+      | {
+          name: string;
+          email: string;
+          role: Users['role'];
+          _id: string;
+          FCMToken?: string;
+          session?: string;
+        }
+      | undefined;
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
-    role: Users['role'];
-    _id: string;
-    email: string;
-    name: string;
-    picture?: never;
-    sub?: never;
+    user:
+      | {
+          role: Users['role'];
+          _id: string;
+          email: string;
+          name: string;
+          FCMToken?: string;
+          session?: string;
+        }
+      | undefined;
   }
 }
 
