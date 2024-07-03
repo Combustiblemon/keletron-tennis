@@ -22,10 +22,11 @@ import { useEffect } from 'react';
 import { Errors } from '@/lib/api/common';
 import { i18n, useTranslation } from '@/lib/i18n/i18n';
 import { GoogleButton } from '@/components/GoogleButton/GoogleButton';
+import { firebaseCloudMessaging } from '@/lib/webPush';
 
 const AuthenticationForm = (props: PaperProps) => {
   const router = useRouter();
-  const { status } = useSession();
+  const { status, data: sessionData } = useSession();
   const { t, tError } = useTranslation();
 
   const [isLoading, { close: setIsLoaded, open: setIsLoading }] =
@@ -122,6 +123,7 @@ const AuthenticationForm = (props: PaperProps) => {
           redirect: false,
           email: values.email,
           password: values.password,
+          FCMToken: await firebaseCloudMessaging.getToken(),
         });
         break;
 
@@ -131,6 +133,7 @@ const AuthenticationForm = (props: PaperProps) => {
           email: values.email,
           password: values.password,
           name: values.name,
+          FCMToken: await firebaseCloudMessaging.getToken(),
         });
         break;
 

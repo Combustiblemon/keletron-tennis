@@ -6,9 +6,13 @@ import { Errors, onError, onSuccess } from '@/lib/api/common';
 import Court from '@/models/Court';
 
 import dbConnect from '../../../lib/api/dbConnect';
-import Reservation, { ReservationValidator } from '../../../models/Reservation';
+import ReservationModel, {
+  ReservationValidator,
+} from '../../../models/Reservation';
 import signale from 'signale';
 import { authUserHelpers } from '../auth/[...nextauth]';
+import { Topics, sendMessageToTopic } from '@/lib/api/notifications';
+import { formatDate } from '@/lib/common';
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,7 +20,7 @@ export default async function handler(
 ) {
   const {
     method,
-    query: { date },
+    query: { date, offset },
   } = req;
 
   await dbConnect();
@@ -34,39 +38,76 @@ export default async function handler(
             );
         }
 
-        let lookupDate: Date | undefined;
-        let lookupDate2: Date | undefined;
+        let offsetNumber = Number(offset);
 
-        try {
-          if (Array.isArray(date)) {
-            lookupDate = new Date(z.date().parse(date[0]));
-            lookupDate2 = new Date(z.date().parse(date[1]));
-          } else {
-            lookupDate = new Date(z.date().parse(date));
+        if (offset && !isNaN(offsetNumber)) {
+          const reservations = await ReservationModel.find({
+            owner: user._id,
+          })
+            .sort({
+              datetime: -1,
+            })
+            .skip(offsetNumber >= 0 ? offsetNumber : 0)
+            .limit(10);
+
+          return res
+            .status(200)
+            .json(onSuccess(reservations, 'reservations', 'GET'));
+        } else {
+          let lookupDate: string;
+          let lookupDate2: string | undefined;
+
+          try {
+            if (date) {
+              if (Array.isArray(date)) {
+                lookupDate = date[0];
+                lookupDate2 = date[1];
+              } else {
+                lookupDate = date;
+              }
+            } else {
+              lookupDate = formatDate(new Date());
+            }
+          } catch {
+            lookupDate = formatDate(new Date());
           }
-        } catch {
-          lookupDate = new Date();
+
+          /* find all the data in our database */
+          const reservationsData = await ReservationModel.find({
+            $and: [
+              {
+                datetime: {
+                  $gt: `${lookupDate.split(',')[0]},00:00`,
+                },
+              },
+              {
+                datetime: {
+                  $lt: `${(lookupDate2 || lookupDate).split(',')[0]},23:59`,
+                },
+              },
+            ],
+            ...(user.role !== 'ADMIN' ? { owner: user._id } : {}),
+          }).lean();
+
+          let reservationsSanitized = isAdmin
+            ? reservationsData
+            : reservationsData.map((r) => {
+                if (r.owner === user._id) {
+                  return r;
+                }
+
+                return r.sanitize();
+              });
+
+          return res
+            .status(200)
+            .json(onSuccess(reservationsSanitized, 'reservations', 'GET'));
         }
-
-        let gtDate = new Date(lookupDate);
-        gtDate.setHours(0, 0, 0, 0);
-
-        let ltDate = new Date(lookupDate2 || lookupDate);
-        ltDate.setHours(23, 59, 0, 0);
-
-        /* find all the data in our database */
-        const reservations = await Reservation.find({
-          $and: [
-            { datetime: { $gt: gtDate.toISOString() } },
-            { datetime: { $lt: ltDate.toISOString() } },
-          ],
-          ...(user.role !== 'ADMIN' ? { owner: user._id } : {}),
-        }).lean();
-
-        res.status(200).json(onSuccess(reservations, 'reservations', 'GET'));
       } catch (error) {
         signale.error(error);
-        res.status(400).json(onError(error as Error, 'reservations', 'GET'));
+        return res
+          .status(400)
+          .json(onError(error as Error, 'reservations', 'GET'));
       }
       break;
     case 'POST':
@@ -114,7 +155,7 @@ export default async function handler(
             );
         }
 
-        const courtReservations = await Reservation.find({
+        const courtReservations = await ReservationModel.find({
           datetime: { $regex: `^${data.datetime.substring(0, 10)}` },
           court: court._id,
         });
@@ -150,12 +191,14 @@ export default async function handler(
           );
         }
 
-        const reservation = await Reservation.create({
+        const reservation = await ReservationModel.create({
           ...data,
-          owner: isAdmin ? data.owner : user._id,
+          owner: isAdmin ? data.owner || user._id : user._id,
         });
 
-        // TODO: send notification to the admins
+        sendMessageToTopic(Topics.Admin, {
+          idk: 'stuff',
+        });
 
         res.status(201).json(onSuccess(reservation, 'reservations', 'POST'));
       } catch (error) {
@@ -191,7 +234,7 @@ export default async function handler(
           return res.status(200).json(onSuccess([], 'reservations', 'DELETE'));
         }
 
-        const reservations = await Reservation.find({
+        const reservations = await ReservationModel.find({
           _id: { $in: ids },
           ...(isAdmin ? {} : { owner: user.id }),
         });
@@ -224,7 +267,7 @@ export default async function handler(
           }
         }
 
-        const deletedCount = await Reservation.deleteMany({
+        const deletedCount = await ReservationModel.deleteMany({
           _id: { $in: reservations.map((r) => r._id) },
         });
 

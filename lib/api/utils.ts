@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { number, z } from 'zod';
 
 import {
   CourtValidator,
@@ -105,21 +105,26 @@ export const endpoints = {
   reservations: {
     GET: async <IDS extends Array<string> | undefined>(
       ids?: IDS,
-      date?: Date | [Date, Date]
+      date?: string | [string, string],
+      offset?: number
     ) => {
-      let dateQuery: string | undefined;
+      let query: string = '';
 
       if (date) {
         if (Array.isArray(date)) {
-          dateQuery = `date=${date[0].toISOString()}&date=${date[1].toISOString()}`;
+          query += `date=${date[0]}&date=${date[1]}`;
         } else {
-          dateQuery = `date=${date.toISOString()}`;
+          query += `date=${date}`;
         }
+      }
+
+      if (typeof offset === 'number') {
+        query += `offset=${offset >= 0 ? offset : 0}`;
       }
 
       return handleResponse<Array<ReservationType>, `reservations`>(
         await fetch(
-          `/api/reservations${ids ? `/${ids?.join(',')}` : ''}${dateQuery ? `?${dateQuery}` : ''}`,
+          `/api/reservations${ids ? `/${ids?.join(',')}` : ''}${query ? `?${query}` : ''}`,
           {
             method: 'GET',
             headers: commonHeaders,

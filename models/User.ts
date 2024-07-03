@@ -16,7 +16,7 @@ type SanitizedUserFields =
   | 'email'
   | 'role'
   | '_id'
-  | 'FCMToken'
+  | 'FCMTokens'
   | 'session';
 
 export type Users = mongoose.Document &
@@ -25,7 +25,7 @@ export type Users = mongoose.Document &
       value: string;
       expiresAt: Date;
     };
-    FCMToken?: string;
+    FCMTokens?: Array<string>;
     session?: string;
     comparePasswords: (candidatePassword?: string) => boolean;
     compareResetKey: (resetKey?: string) => boolean;
@@ -69,8 +69,8 @@ export const UserSchema = new mongoose.Schema<Users>({
       type: Date,
     },
   },
-  FCMToken: {
-    type: String,
+  FCMTokens: {
+    type: [String],
   },
   session: {
     type: String,
@@ -108,19 +108,17 @@ UserSchema.methods.compareSessions = function (session?: string) {
 export type UserSanitized = Pick<Users, SanitizedUserFields>;
 
 UserSchema.methods.sanitize = function (): UserSanitized {
-  const user = (this as Users).toObject({
+  return (this as Users).toObject({
     transform: (doc, ret) =>
       ({
         name: ret.name,
         email: ret.email,
         role: ret.role,
         _id: ret._id,
-        FCMToken: ret.FCMToken,
+        FCMTokens: ret.FCMToken,
         session: ret.session,
       }) satisfies UserSanitized,
   });
-
-  return user;
 };
 
 UserSchema.pre<Users>('save', function (next) {

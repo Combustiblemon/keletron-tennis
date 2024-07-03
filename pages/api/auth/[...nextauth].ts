@@ -101,6 +101,8 @@ export const authOptions = (
 
         const { email, password, FCMToken } = data;
 
+        console.log(FCMToken);
+
         let user: Users | null;
 
         try {
@@ -118,12 +120,16 @@ export const authOptions = (
         }
 
         if (!user) {
+          // res.status(401).json(onError(new Error(Errors.LOGIN_ERROR), 'login'));
+          // return null;
           throw new Error(Errors.LOGIN_ERROR);
         }
 
         const passwordMatch = user.comparePasswords(password);
 
         if (!passwordMatch) {
+          // res.status(401).json(onError(new Error(Errors.LOGIN_ERROR), 'login'));
+          // return null;
           throw new Error(Errors.LOGIN_ERROR);
         }
 
@@ -132,7 +138,16 @@ export const authOptions = (
         // If no error and we have user data, return it
         if (user) {
           try {
-            user.session = nanoid();
+            const session = nanoid();
+
+            user.session = session;
+            if (FCMToken) {
+              if (user.FCMTokens) {
+                user.FCMTokens.push(FCMToken);
+              } else {
+                user.FCMTokens = [FCMToken];
+              }
+            }
 
             await user.save();
 
@@ -141,8 +156,8 @@ export const authOptions = (
               email: user.email,
               role: user.role,
               _id: user._id as string,
-              FCMToken,
-              session: user.session,
+              FCMTokens: user.FCMTokens,
+              session,
             };
           } catch (err) {
             console.error(err);
@@ -161,7 +176,7 @@ export const authOptions = (
         email: { type: 'email' },
         password: { type: 'password' },
         name: { type: 'text' },
-        FCMToken: { type: 'text' },
+        FCMTokens: { type: 'text' },
       },
       type: 'credentials',
       async authorize(credentials) {
@@ -194,6 +209,7 @@ export const authOptions = (
         }
 
         let user: UserSanitized;
+        const session = nanoid();
 
         try {
           user = (
@@ -202,8 +218,8 @@ export const authOptions = (
               email,
               password,
               role: 'USER',
-              FCMToken,
-              session: nanoid(),
+              FCMTokens: [FCMToken],
+              session,
             })
           ).sanitize();
         } catch (error) {
@@ -224,8 +240,8 @@ export const authOptions = (
             email: user.email,
             role: user.role,
             _id: user._id as string,
-            FCMToken: user.FCMToken,
-            session: user.session,
+            FCMTokens: user.FCMTokens,
+            session,
           };
         }
 
@@ -235,75 +251,90 @@ export const authOptions = (
     }),
   ],
   events: {
-    signIn: ({ user, account, isNewUser, profile }) => {
-      console.log('signIn', { user, account, isNewUser, profile });
+    signIn: ({ user }) => {
+      console.log('signIn event');
 
-      if (user.FCMToken && user.role) {
-        subscribeUser(user.role, user.FCMToken);
+      if (user.FCMTokens && user.role && user.FCMTokens.length) {
+        subscribeUser(user.role, user.FCMTokens);
       }
     },
     signOut: async ({ token, session }) => {
-      console.log('signOut', { token, session });
+      console.log('signOut event');
+      // Delete auth cookie on signout so it doesn't persist past log out
+      res.setHeader('Set-Cookie', '');
+
+      // Set token/session to {}, that would update the cilentside token/session as well
 
       if (!token.user) {
+        token = {};
+        session = {};
+
         return;
       }
 
-      const user = token.user._id;
+      const { FCMTokens, _id, role } = token.user;
 
-      if (token.user.FCMToken) {
-        unsubscribeUser(token.user.role, token.user.FCMToken);
+      token = {};
+      session = {};
+
+      if (FCMTokens && FCMTokens.length) {
+        unsubscribeUser(role, FCMTokens);
       }
 
-      UserModel.findByIdAndUpdate(user, { session: '', FCMToken: '' });
+      UserModel.findByIdAndUpdate(_id, { session: '', FCMToken: '' });
     },
   },
   callbacks: {
-    async session({ session, user, token }) {
+    async session({ session, user, token, newSession, trigger }) {
       if (token.user) {
         try {
-          const user = await UserModel.findById(session.user?._id);
+          const user = await UserModel.findById(token.user?._id);
 
-          if (user?.compareSessions(session.user?.session)) {
+          if (user?.compareSessions(token.user?.session)) {
             session.user = {
               ...token.user,
             };
+
+            console.log('returning good session`');
+
+            return session;
           } else {
             if (user) {
               user.session = undefined;
-              user.FCMToken = undefined;
+              user.FCMTokens = undefined;
 
-              unsubscribeUser(user.role, user.FCMToken);
+              unsubscribeUser(user.role, user.FCMTokens);
               user.save();
             }
-
-            session.user = undefined;
-            session.expires = new Date().toISOString();
           }
         } catch (error) {
           console.log(error);
-          session.user = undefined;
-          session.expires = new Date().toISOString();
         }
-      } else {
-        session.expires = new Date().toISOString();
-        session.user = undefined;
       }
 
+      token = {};
+      session = {};
+
+      console.log('returning bad session');
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, profile, session, trigger }) {
       if (user) {
         token.user = {
           role: user.role || 'USER',
           _id: user._id || '',
           email: user.email || '',
           name: user.name || '',
-          FCMToken: user.FCMToken || '',
+          FCMTokens: user.FCMTokens || [],
           session: user.session || '',
         };
-      } else {
-        token.user = undefined;
+      } else if (token.user?._id && token.user?.session) {
+        const user = await UserModel.findById(token.user._id);
+
+        if (!user?.compareSessions(token.user?.session)) {
+          console.log('undefining token user');
+          token.user = undefined;
+        }
       }
 
       return token;

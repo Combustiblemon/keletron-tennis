@@ -14,6 +14,8 @@ import {
   Portal,
   Text,
   rem,
+  Card,
+  CardSection,
 } from '@mantine/core';
 import { DateInput, TimeInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
@@ -24,7 +26,7 @@ import {
   useElementSize,
 } from '@mantine/hooks';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   IconCancel,
   IconClock,
@@ -35,85 +37,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { CourtType } from '@/models/Court';
 import { APIResponse } from '@/lib/api/responseTypes';
 import { useSession } from 'next-auth/react';
-import { ReservationType, ReservationValidator } from '@/models/Reservation';
-import { z } from 'zod';
+import { notifications } from '@mantine/notifications';
+import { formatDate, isReservationTimeFree } from '@/lib/common';
 
-const now = new Date();
+const DEFAULT_RESERVATION_DURATION = 90;
 
-const testReservations: Array<
-  z.infer<typeof ReservationValidator> & { _id: string }
-> = [
-  {
-    _id: '667fc752ab1945633b6e5841',
-    type: 'SINGLE',
-    datetime: new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      now.getHours(),
-      now.getMinutes()
-    ).toISOString(),
-    people: ['Tasos'],
-    owner: '667e9644f13656fc97be0094',
-    court: '6676bb2866d60621f2caa49f',
-    status: 'APPROVED',
-    paid: false,
-    duration: 90,
-  },
-  {
-    _id: '667fc752ab1945633b6e5842',
-    type: 'SINGLE',
-    datetime: new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      now.getHours(),
-      now.getMinutes() + 90
-    ).toISOString(),
-    people: ['Tasos'],
-    owner: '667e9644f13656fc97be0094',
-    court: '6676bb2866d60621f2caa49f',
-    status: 'APPROVED',
-    paid: false,
-    duration: 90,
-  },
-  {
-    _id: '667fc752ab1945633b6e5843',
-    type: 'SINGLE',
-    datetime: new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      now.getHours(),
-      now.getMinutes() + 90 * 2
-    ).toISOString(),
-    people: ['Tasos'],
-    owner: '667e9644f13656fc97be0094',
-    court: '6676bb2866d60621f2caa49f',
-    status: 'APPROVED',
-    paid: false,
-    duration: 90,
-  },
-  {
-    _id: '667fc752ab1945633b6e5844',
-    type: 'SINGLE',
-    datetime: new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      now.getHours(),
-      now.getMinutes() + 90 * 3
-    ).toISOString(),
-    people: ['Tasos'],
-    owner: '667e9644f13656fc97be0094',
-    court: '6676bb2866d60621f2caa49f',
-    status: 'APPROVED',
-    paid: false,
-    duration: 90,
-  },
-];
-
-const fetchReservations = async (date?: Date) => {
+const fetchReservations = async (date?: string) => {
   return await endpoints.reservations.GET(undefined, date);
 };
 
@@ -142,6 +71,7 @@ const Reservations = () => {
   const [opened, { open, close }] = useDisclosure(false);
   const session = useSession();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const queryClient = useQueryClient();
 
   const courts = useQuery({
     queryKey: ['courts'],
@@ -153,7 +83,7 @@ const Reservations = () => {
     initialValues: {
       court: '',
       date: new Date(),
-      time: new Date().toISOString().substring(11, 16),
+      time: new Date().toTimeString().substring(0, 5),
       people: [] as string[],
     },
     validate: {
@@ -169,21 +99,16 @@ const Reservations = () => {
           values.court
         );
 
-        console.log({
-          validation: courtMinTime <= value && value <= courtMaxTime,
-          minTime: courtMinTime,
-          maxTime: courtMaxTime,
-          value: value,
-        });
-
         return (
           !(courtMinTime <= value && value <= courtMaxTime) && 'time error'
         );
       },
       date: (value) => {
         return (
-          value.toISOString().substring(0, 10) <
-            new Date().toISOString().substring(0, 10) && 'date error'
+          value.toLocaleDateString('en-CA', { timeZone: 'Europe/Athens' }) <
+            new Date().toLocaleDateString('en-CA', {
+              timeZone: 'Europe/Athens',
+            }) && 'date error'
         );
       },
     },
@@ -196,6 +121,7 @@ const Reservations = () => {
         if (i === index) {
           return value.trim();
         }
+
         return p;
       })
     );
@@ -204,11 +130,11 @@ const Reservations = () => {
   useEffect(() => {
     if (
       newReservation.getValues().people.length === 0 &&
-      session.data?.user.name
+      session.data?.user?.name
     ) {
       newReservation.setFieldValue('people', [session.data?.user.name]);
     }
-  }, [session.data?.user.name]);
+  }, [session.data?.user?.name]);
 
   const reservations = useQuery({
     queryKey: [
@@ -218,7 +144,13 @@ const Reservations = () => {
       newReservation.getValues().date.getUTCFullYear(),
     ],
     queryFn: () =>
-      testReservations || fetchReservations(newReservation.getValues().date),
+      fetchReservations(formatDate(newReservation.getValues().date)),
+  });
+
+  const userReservations = useQuery({
+    queryKey: ['reservations', 'user'],
+    queryFn: async () =>
+      await endpoints.reservations.GET(undefined, undefined, 0),
   });
 
   if (!courts.isPending && !courts.isError && !courts.data?.errors) {
@@ -240,6 +172,16 @@ const Reservations = () => {
     [courts]
   );
 
+  const reservationData = useMemo(
+    () => (reservations.data?.success ? reservations.data?.data : []),
+    [reservations]
+  );
+
+  const userReservationData = useMemo(
+    () => (userReservations.data?.success ? userReservations.data?.data : []),
+    [userReservations]
+  );
+
   const timePickerRef = useRef<HTMLInputElement>(null);
 
   const timePickerControl = (
@@ -259,12 +201,69 @@ const Reservations = () => {
     [selectedCourt]
   );
 
-  const handleNewReservationSubmit = newReservation.onSubmit((values) => {});
+  const handleNewReservationSubmit = newReservation.onSubmit(async (values) => {
+    setIsSubmitting(true);
+
+    const date = formatDate(values.date).split(',')[0];
+    const datetime = `${date},${values.time}`;
+
+    console.log(date);
+
+    const isReservationValid = isReservationTimeFree(
+      reservationData.filter((r) => r.datetime.includes(date)),
+      datetime,
+      DEFAULT_RESERVATION_DURATION
+    );
+
+    console.log({ isReservationValid });
+
+    if (!isReservationValid || true) {
+      notifications.show({
+        message: 'reservation exists on this time',
+        color: 'red',
+      });
+      setIsSubmitting(false);
+
+      return;
+    }
+
+    try {
+      const res = await endpoints.reservations.POST({
+        court: values.court,
+        datetime,
+        people: values.people,
+        type: values.people.length > 2 ? 'DOUBLE' : 'SINGLE',
+      });
+
+      if (!res?.success) {
+        console.log(JSON.stringify(res, null, 2));
+
+        notifications.show({
+          message: 'error creating reservation',
+          color: 'red',
+        });
+      } else {
+        notifications.show({
+          message: 'reservation has been created',
+          color: 'green',
+        });
+        queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      }
+    } catch {
+      notifications.show({
+        message: 'error creating reservation',
+        color: 'red',
+      });
+    }
+
+    close();
+    setIsSubmitting(false);
+  });
 
   return (
-    <div>
+    <Stack gap={'lg'}>
       <LoadingOverlay
-        visible={reservations.isPending || courts.isPending}
+        visible={reservations.isPending || courts.isPending || isSubmitting}
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
       />
@@ -331,7 +330,12 @@ const Reservations = () => {
                   label="Time"
                   maxTime={courtMaxTime}
                   minTime={courtMinTime}
-                  defaultValue={new Date().toISOString().substring(11, 16)}
+                  defaultValue={new Date()
+                    .toLocaleTimeString('el', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                    .substring(0, 5)}
                   rightSection={timePickerControl}
                   onChange={(e) =>
                     newReservation.setFieldValue('time', e.target.value.trim())
@@ -429,7 +433,7 @@ const Reservations = () => {
                 }
               </Text>
               <SimpleGrid cols={1} verticalSpacing={'xs'}>
-                {reservations.data
+                {reservationData
                   ?.filter((r) => r.court === newReservation.getValues().court)
                   .map((reservation) => {
                     const startTime = new Date(reservation.datetime);
@@ -440,7 +444,7 @@ const Reservations = () => {
 
                     return (
                       <Paper
-                        key={reservation._id}
+                        key={reservation._id as string}
                         withBorder
                         p={'md'}
                         radius={'md'}
@@ -485,8 +489,30 @@ const Reservations = () => {
         </Button>
       </Group>
 
-      <Stack>RESERVATION LIST</Stack>
-    </div>
+      <Stack>
+        {userReservationData
+          .filter((r) =>
+            r.datetime.includes(formatDate(new Date()).split(',')[0])
+          )
+          .map((r) => {
+            return (
+              <Card key={`${r._id}`} withBorder bg={'teal'} p={'md'}>
+                <CardSection>
+                  <Stack gap={'md'}>
+                    <Text>
+                      {
+                        courtsSelectionData.find((c) => c.value === r.court)
+                          ?.label
+                      }
+                    </Text>
+                    <Text>{r.datetime}</Text>
+                  </Stack>
+                </CardSection>
+              </Card>
+            );
+          })}
+      </Stack>
+    </Stack>
   );
 };
 

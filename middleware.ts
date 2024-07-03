@@ -13,14 +13,14 @@ export default withAuth({
   },
   callbacks: {
     authorized: ({ token, req }) => {
-      const hasId = !!token?._id;
+      const hasId = !!token?.user?._id;
 
       if (!hasId) {
         return false;
       }
 
       if (req.url.includes('/admin')) {
-        return token?.role === 'ADMIN';
+        return token?.user?.role === 'ADMIN';
       }
 
       return true;

@@ -3,9 +3,9 @@ import z from 'zod';
 
 export const ReservationValidator = z.object({
   type: z.enum(['SINGLE', 'DOUBLE', 'TRAINING']),
-  datetime: z.string().date(),
+  datetime: z.string(),
   people: z.array(z.string().max(50)),
-  owner: z.string(),
+  owner: z.string().optional(),
   court: z.string(),
   status: z.enum(['PENDING', 'APPROVED', 'REJECTED']).default('APPROVED'),
   paid: z.boolean().default(false),
@@ -15,8 +15,15 @@ export const ReservationValidator = z.object({
 
 export const ReservationValidatorPartial = ReservationValidator.deepPartial();
 
+type ReservationSanitized = Pick<
+  ReservationType,
+  'type' | 'court' | 'datetime' | 'duration'
+>;
+
 export type ReservationType = mongoose.Document &
-  z.infer<typeof ReservationValidator>;
+  z.infer<typeof ReservationValidator> & {
+    sanitize: () => ReservationSanitized;
+  };
 
 export const ReservationSchema = new mongoose.Schema<ReservationType>({
   type: {
@@ -24,6 +31,7 @@ export const ReservationSchema = new mongoose.Schema<ReservationType>({
     enum: ['SINGLE', 'DOUBLE'],
   },
   datetime: {
+    // !THIS IS NOT ISO DATE EVEN THOUGH IT IS IN THE SAME FORMAT
     type: String,
     required: [true, 'Please add a date and time'],
   },
@@ -51,6 +59,18 @@ export const ReservationSchema = new mongoose.Schema<ReservationType>({
   },
   people: [String],
 });
+
+ReservationSchema.methods.sanitize = function (): ReservationSanitized {
+  return (this as ReservationType).toObject({
+    transform: (doc, ret) =>
+      ({
+        court: ret.court,
+        datetime: ret.datetime,
+        duration: ret.duration,
+        type: ret.type,
+      }) satisfies ReservationSanitized,
+  });
+};
 
 export default (mongoose.models.Reservation as Model<ReservationType>) ||
   mongoose.model<ReservationType>('Reservation', ReservationSchema);
