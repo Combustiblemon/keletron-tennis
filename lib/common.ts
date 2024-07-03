@@ -40,6 +40,7 @@ export const formatDate = (date: Date) =>
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'Europe/Athens',
+      hour12: false,
     })
     .substring(0, 5)}`;
 
@@ -55,19 +56,17 @@ export const isReservationTimeFree = (
   const startTime = datetime.split(',')[1];
   const endTime = addMinutesToTime(startTime, duration);
 
-  console.log({ startTime, endTime });
-
   return !courtReservations
-    .filter((r) => r.datetime.split(',')[1] === datetime.split(',')[1])
+    .filter((r) => r.datetime.split(',')[0] === datetime.split(',')[0])
     .every((r) => {
       const rstartTime = r.datetime.split(',')[1];
       const rendTime = addMinutesToTime(rstartTime, r.duration);
 
       return (
         // if start time is within the reservation time
-        (rstartTime < startTime && startTime < rendTime) ||
+        (rstartTime <= startTime && startTime <= rendTime) ||
         // or end time is within the reservation time
-        (rstartTime < endTime && endTime < rendTime)
+        (rstartTime <= endTime && endTime <= rendTime)
       );
     });
 };

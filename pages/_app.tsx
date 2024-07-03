@@ -25,6 +25,7 @@ import { firebaseCloudMessaging } from '@/lib/webPush';
 import { theme } from '@/styles/theme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import DateProvider from '@/components/DateProvider/DateProvider';
+import '../styles/globals.css';
 
 // Create a client
 const queryClient = new QueryClient();

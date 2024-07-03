@@ -120,16 +120,12 @@ export const authOptions = (
         }
 
         if (!user) {
-          // res.status(401).json(onError(new Error(Errors.LOGIN_ERROR), 'login'));
-          // return null;
           throw new Error(Errors.LOGIN_ERROR);
         }
 
         const passwordMatch = user.comparePasswords(password);
 
         if (!passwordMatch) {
-          // res.status(401).json(onError(new Error(Errors.LOGIN_ERROR), 'login'));
-          // return null;
           throw new Error(Errors.LOGIN_ERROR);
         }
 

@@ -68,7 +68,6 @@ const getCourtTimes = (
 const formId = 'new-reservation';
 
 const Reservations = () => {
-  const [opened, { open, close }] = useDisclosure(false);
   const session = useSession();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -83,7 +82,7 @@ const Reservations = () => {
     initialValues: {
       court: '',
       date: new Date(),
-      time: new Date().toTimeString().substring(0, 5),
+      time: formatDate(new Date()).split(',')[1],
       people: [] as string[],
     },
     validate: {
@@ -99,6 +98,8 @@ const Reservations = () => {
           values.court
         );
 
+        console.log(`${courtMinTime} <= ${value} <= ${courtMaxTime}`);
+
         return (
           !(courtMinTime <= value && value <= courtMaxTime) && 'time error'
         );
@@ -111,6 +112,13 @@ const Reservations = () => {
             }) && 'date error'
         );
       },
+    },
+  });
+
+  const [opened, { open, close }] = useDisclosure(false, {
+    onClose: () => {
+      newReservation.reset();
+      newReservation.setFieldValue('people', [session.data?.user?.name || '']);
     },
   });
 
@@ -207,17 +215,15 @@ const Reservations = () => {
     const date = formatDate(values.date).split(',')[0];
     const datetime = `${date},${values.time}`;
 
-    console.log(date);
-
     const isReservationValid = isReservationTimeFree(
-      reservationData.filter((r) => r.datetime.includes(date)),
+      reservationData.filter(
+        (r) => r.datetime.includes(date) && r.court === values.court
+      ),
       datetime,
       DEFAULT_RESERVATION_DURATION
     );
 
-    console.log({ isReservationValid });
-
-    if (!isReservationValid || true) {
+    if (!isReservationValid) {
       notifications.show({
         message: 'reservation exists on this time',
         color: 'red',
@@ -328,18 +334,11 @@ const Reservations = () => {
                   error={newReservation.errors.time}
                   ref={timePickerRef}
                   label="Time"
-                  maxTime={courtMaxTime}
-                  minTime={courtMinTime}
-                  defaultValue={new Date()
-                    .toLocaleTimeString('el', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                    .substring(0, 5)}
+                  defaultValue={'09:00'}
                   rightSection={timePickerControl}
-                  onChange={(e) =>
-                    newReservation.setFieldValue('time', e.target.value.trim())
-                  }
+                  onChange={(e) => {
+                    newReservation.setFieldValue('time', e.target.value.trim());
+                  }}
                 />
               </Group>
             </Stack>
