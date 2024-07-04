@@ -1,17 +1,9 @@
-import { Button, Drawer, Group, Select, Stack, Text } from '@mantine/core';
+import { Drawer, Group, Stack, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useDisclosure } from '@mantine/hooks';
 
-import { useQuery } from '@tanstack/react-query';
-
-const fetchReservations = async () => {
-  return fetch('/api/reservations', {
-    method: 'GET',
-  });
-};
-
 const Admin = () => {
-  const [opened, { open, close }] = useDisclosure(false);
+  const [opened, { close }] = useDisclosure(false);
 
   // const result = useQuery({
   //   queryKey: ['reservations'],

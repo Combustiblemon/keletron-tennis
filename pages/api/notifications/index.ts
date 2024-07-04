@@ -7,7 +7,6 @@ import { Errors, onError, onSuccess } from '@/lib/api/common';
 import dbConnect from '../../../lib/api/dbConnect';
 import UserModel from '../../../models/User';
 import { authUserHelpers } from '../auth/[...nextauth]';
-import User from '../../../models/User';
 
 const validator = z.object({
   _id: z.string().length(24).optional(),
@@ -22,11 +21,7 @@ export default async function handler(
 
   await dbConnect();
 
-  const {
-    isLoggedIn,
-    isAdmin,
-    user: sessionUser,
-  } = await authUserHelpers(req, res);
+  const { isLoggedIn, user: sessionUser } = await authUserHelpers(req, res);
 
   switch (method) {
     case 'PUT':

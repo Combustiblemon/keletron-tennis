@@ -1,4 +1,3 @@
-import { ReservationType } from '@/models/Reservation';
 import {
   Card,
   CardSection,
@@ -11,6 +10,8 @@ import {
 } from '@mantine/core';
 import { IconUser } from '@tabler/icons-react';
 import React from 'react';
+
+import { ReservationType } from '@/models/Reservation';
 
 export interface ReservationProps {
   courtLabel: string;
@@ -57,24 +58,25 @@ const Reservation = ({
     const minutes = diff % 60;
     const days = Math.floor(hours / 24);
 
+    // eslint-disable-next-line no-nested-ternary
     timeUntil = `${days ? `${days}ημ ` : ''}${days ? `${hours % 24}ωρ ` : hours ? `${hours}ωρ ` : ''}${minutes}λ`;
   }
 
   return (
-    <Card onClick={onClick} withBorder bg={bg} radius={'lg'}>
-      <CardSection p={'sm'}>
-        <Stack gap={'md'}>
-          <Group w={'100%'} justify="space-between">
+    <Card onClick={onClick} withBorder bg={bg} radius="lg">
+      <CardSection p="sm">
+        <Stack gap="md">
+          <Group w="100%" justify="space-between">
             <Text {...textOptions}>{courtLabel}</Text>
             <Text {...textOptions}>{formatedDate}</Text>
           </Group>
-          <Group w={'100%'} justify="space-between">
+          <Group w="100%" justify="space-between">
             <Group gap={0} align="flex-end">
               <IconUser
                 color="white"
                 style={{ height: rem(16), width: rem(16) }}
               />
-              <Text {...textOptions} lh={'12px'}>
+              <Text {...textOptions} lh="12px">
                 {r.people.length}
               </Text>
             </Group>

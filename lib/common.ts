@@ -1,8 +1,9 @@
-import { deleteToken } from 'firebase/messaging';
-import { signOut } from 'next-auth/react';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
-import { firebaseCloudMessaging } from './webPush';
+import { signOut } from 'next-auth/react';
+
 import { ReservationType } from '@/models/Reservation';
+
+import { firebaseCloudMessaging } from './webPush';
 
 /**
  * Logs the user out of the application (next-auth) and redirects to the homepage
@@ -25,7 +26,7 @@ export const logout = async (
 
 export const addMinutesToTime = (time: string, minutes: number) =>
   new Date(
-    new Date('1970/01/01 ' + time).getTime() + minutes * 60000
+    new Date(`1970/01/01 ${time}`).getTime() + minutes * 60000
   ).toLocaleTimeString('el-GR', {
     hour: '2-digit',
     minute: '2-digit',
@@ -33,9 +34,9 @@ export const addMinutesToTime = (time: string, minutes: number) =>
   });
 
 export const formatDate = (date: Date) =>
-  `${new Date()
+  `${date
     .toLocaleDateString('en-CA', { timeZone: 'Europe/Athens' })
-    .substring(0, 10)},${new Date()
+    .substring(0, 10)},${date
     .toLocaleTimeString('el', {
       hour: '2-digit',
       minute: '2-digit',

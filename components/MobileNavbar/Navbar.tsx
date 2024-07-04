@@ -8,11 +8,12 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { useMemo } from 'react';
+
+import { logout } from '@/lib/common';
 
 import classes from './Navbar.module.css';
-import { useMemo } from 'react';
-import { signOut, useSession } from 'next-auth/react';
-import { logout } from '@/lib/common';
 
 export type NavItem =
   | {
@@ -35,7 +36,7 @@ function getNavItems(
 ) {
   return items.map((item, index) => {
     if (!item) {
-      return;
+      return undefined;
     }
 
     if (item === 'divider') {
@@ -67,10 +68,6 @@ function getNavItems(
 
 export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const [opened, { toggle }] = useDisclosure();
-  const [
-    logoutModalOpened,
-    { open: logoutModalOpen, close: logoutModalClose },
-  ] = useDisclosure(false);
   const router = useRouter();
   const { status } = useSession();
 
@@ -98,7 +95,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
           }
         : { title: 'Login', href: '/auth?type=login' },
     ],
-    [status]
+    [router, status]
   );
 
   return (

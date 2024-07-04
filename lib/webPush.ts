@@ -7,9 +7,9 @@ import {
   Messaging,
   onMessage,
 } from 'firebase/messaging';
+import { Session } from 'next-auth';
 
 import { db } from './indexDBUtils';
-import { Session } from 'next-auth';
 
 const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_KEY || '';
 
@@ -57,7 +57,7 @@ const firebaseCloudMessagingBuilder = () => {
           onMessage(messaging, (payload) => {
             console.log('firebase message received. ', payload);
 
-            let title = payload.data?.title || '';
+            const title = payload.data?.title || '';
 
             navigator.serviceWorker.getRegistrations().then((registrations) => {
               registrations[0].showNotification(title, {
@@ -96,6 +96,8 @@ const firebaseCloudMessagingBuilder = () => {
       if (messaging) {
         return getToken(messaging, { vapidKey: VAPID_KEY });
       }
+
+      return undefined;
     },
     async saveToken(session: Session) {
       if (!messaging) {

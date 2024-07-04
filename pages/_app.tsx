@@ -14,18 +14,17 @@ import '@mantine/nprogress/styles.css';
 
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { AppProps } from 'next/app';
 import { SessionProvider } from 'next-auth/react';
 import { useEffect } from 'react';
 
+import DateProvider from '@/components/DateProvider/DateProvider';
 import HeadInfo from '@/components/HeadInfo/HeadInfo';
 import { Navbar } from '@/components/MobileNavbar/Navbar';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { firebaseCloudMessaging } from '@/lib/webPush';
 import { theme } from '@/styles/theme';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import DateProvider from '@/components/DateProvider/DateProvider';
-import '../styles/globals.css';
 
 // Create a client
 const queryClient = new QueryClient();

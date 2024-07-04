@@ -1,19 +1,18 @@
 /* eslint-disable consistent-return */
 import { NextApiRequest, NextApiResponse } from 'next';
+import signale from 'signale';
 import { z } from 'zod';
 
 import { Errors, onError, onSuccess } from '@/lib/api/common';
+import { sendMessageToTopic, Topics } from '@/lib/api/notifications';
+import { formatDate, isReservationTimeFree } from '@/lib/common';
 import Court from '@/models/Court';
 
 import dbConnect from '../../../lib/api/dbConnect';
 import ReservationModel, {
   ReservationValidator,
 } from '../../../models/Reservation';
-import signale from 'signale';
 import { authUserHelpers } from '../auth/[...nextauth]';
-import { Topics, sendMessageToTopic } from '@/lib/api/notifications';
-import { formatDate, isReservationTimeFree } from '@/lib/common';
-import { title } from 'process';
 
 export default async function handler(
   req: NextApiRequest,
@@ -45,8 +44,7 @@ export default async function handler(
         try {
           if (date) {
             if (Array.isArray(date)) {
-              lookupDate = date[0];
-              lookupDate2 = date[1];
+              [lookupDate, lookupDate2] = date;
             } else {
               lookupDate = date;
             }
@@ -72,7 +70,7 @@ export default async function handler(
           ],
         };
 
-        let offsetNumber = Number(offset);
+        const offsetNumber = Number(offset);
 
         if (offset && !isNaN(offsetNumber)) {
           const reservations = await ReservationModel.find({
@@ -96,34 +94,32 @@ export default async function handler(
           return res
             .status(200)
             .json(onSuccess(reservations, 'reservations', 'GET'));
-        } else {
-          /* find all the data in our database */
-          const reservationsData = await ReservationModel.find({
-            ...dateQuery,
-            ...(user.role !== 'ADMIN' ? { owner: user._id } : {}),
-          }).lean();
-
-          let reservationsSanitized = isAdmin
-            ? reservationsData
-            : reservationsData.map((r) => {
-                if (r.owner === user._id) {
-                  return r;
-                }
-
-                return r.sanitize();
-              });
-
-          return res
-            .status(200)
-            .json(onSuccess(reservationsSanitized, 'reservations', 'GET'));
         }
+        /* find all the data in our database */
+        const reservationsData = await ReservationModel.find({
+          ...dateQuery,
+          ...(user.role !== 'ADMIN' ? { owner: user._id } : {}),
+        }).lean();
+
+        const reservationsSanitized = isAdmin
+          ? reservationsData
+          : reservationsData.map((r) => {
+              if (r.owner === user._id) {
+                return r;
+              }
+
+              return r.sanitize();
+            });
+
+        return res
+          .status(200)
+          .json(onSuccess(reservationsSanitized, 'reservations', 'GET'));
       } catch (error) {
         signale.error(error);
         return res
           .status(400)
           .json(onError(error as Error, 'reservations', 'GET'));
       }
-      break;
     case 'POST':
       // create a new reservation
       try {

@@ -1,4 +1,3 @@
-import { endpoints } from '@/lib/api/utils';
 import {
   ActionIcon,
   Button,
@@ -7,39 +6,40 @@ import {
   Input,
   LoadingOverlay,
   Paper,
+  rem,
   Select,
   SimpleGrid,
   Stack,
   Text,
-  rem,
 } from '@mantine/core';
 import { DateInput, TimeInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { useDisclosure } from '@mantine/hooks';
-
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { notifications } from '@mantine/notifications';
 import {
   IconCancel,
   IconClock,
   IconDeviceFloppy,
   IconUserPlus,
 } from '@tabler/icons-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { CourtType } from '@/models/Court';
-import { APIResponse } from '@/lib/api/responseTypes';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { notifications } from '@mantine/notifications';
-import { formatDate, isReservationTimeFree } from '@/lib/common';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
 import Reservation from '@/components/Reservation/Reservation';
+import { APIResponse } from '@/lib/api/responseTypes';
+import { endpoints } from '@/lib/api/utils';
+import { formatDate, isReservationTimeFree } from '@/lib/common';
+import { CourtType } from '@/models/Court';
 
 const DEFAULT_RESERVATION_DURATION = 90;
 
 const fetchReservations = async (date?: string) => {
-  return await endpoints.reservations.GET(undefined, date);
+  return endpoints.reservations.GET(undefined, date);
 };
 
 const fetchCourts = async () => {
-  return await endpoints.courts(undefined).GET();
+  return endpoints.courts(undefined).GET();
 };
 
 const getCourtTimes = (
@@ -47,14 +47,13 @@ const getCourtTimes = (
   selectedCourt: string
 ) => {
   if (courts && !courts.errors) {
-    let resInfo = courts.data.find(
+    const resInfo = courts.data.find(
       (c) => c._id === selectedCourt
     )?.reservationsInfo;
 
     return [resInfo?.startTime || '09:00', resInfo?.endTime || '21:00'];
-  } else {
-    return ['09:00', '21:00'];
   }
+  return ['09:00', '21:00'];
 };
 
 const formId = 'new-reservation';
@@ -98,8 +97,6 @@ const Reservations = () => {
 
         const timeValid = !isToday || formatDate(now).split(',')[1] < value;
 
-        console.log({ timeValid, time: formatDate(now).split(',')[1], value });
-
         return !(courtMinTime < value && value < courtMaxTime) || !timeValid
           ? 'time error'
           : false;
@@ -142,7 +139,7 @@ const Reservations = () => {
     ) {
       newReservation.setFieldValue('people', [session.data?.user.name]);
     }
-  }, [session.data?.user?.name]);
+  }, [newReservation, session.data?.user?.name]);
 
   const reservations = useQuery({
     queryKey: [
@@ -157,8 +154,7 @@ const Reservations = () => {
 
   const userReservations = useQuery({
     queryKey: ['reservations', 'user'],
-    queryFn: async () =>
-      await endpoints.reservations.GET(undefined, undefined, 0),
+    queryFn: async () => endpoints.reservations.GET(undefined, undefined, 0),
   });
 
   if (!courts.isPending && !courts.isError && !courts.data?.errors) {
@@ -206,9 +202,9 @@ const Reservations = () => {
 
   const selectedCourt = newReservation.getValues().court;
 
-  const [courtMinTime, courtMaxTime] = useMemo(
+  const [minCourtTime, maxCourtTime] = useMemo(
     () => getCourtTimes(courts.data, selectedCourt),
-    [selectedCourt]
+    [selectedCourt, courts.data]
   );
 
   const handleNewReservationSubmit = newReservation.onSubmit(async (values) => {
@@ -254,13 +250,12 @@ const Reservations = () => {
         });
 
         return;
-      } else {
-        notifications.show({
-          message: 'reservation has been created',
-          color: 'green',
-        });
-        queryClient.invalidateQueries({ queryKey: ['reservations'] });
       }
+      notifications.show({
+        message: 'reservation has been created',
+        color: 'green',
+      });
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
     } catch {
       notifications.show({
         message: 'error creating reservation',
@@ -273,7 +268,7 @@ const Reservations = () => {
   });
 
   return (
-    <Stack gap={'lg'}>
+    <Stack gap="lg">
       <LoadingOverlay
         visible={reservations.isPending || courts.isPending || isSubmitting}
         zIndex={1000}
@@ -317,11 +312,11 @@ const Reservations = () => {
               }}
             >
               <Text>
-                Το γήπεδο είναι ανοιχτό από {courtMinTime} έως {courtMaxTime}
+                Το γήπεδο είναι ανοιχτό από {minCourtTime} έως {maxCourtTime}
               </Text>
 
               <Group
-                gap={'sm'}
+                gap="sm"
                 justify="space-between"
                 w="100%"
                 align="flex-start"
@@ -349,10 +344,9 @@ const Reservations = () => {
                   error={newReservation.errors.time}
                   ref={timePickerRef}
                   label="Time"
-                  defaultValue={'09:00'}
+                  defaultValue="09:00"
                   rightSection={timePickerControl}
                   onChange={(e) => {
-                    console.log(e.target.value);
                     newReservation.setFieldValue('time', e.target.value.trim());
                   }}
                 />
@@ -368,12 +362,12 @@ const Reservations = () => {
                   court: value || '',
                 });
               }}
-              label={'Select court'}
+              label="Select court"
               multiple={false}
               withCheckIcon={false}
             />
 
-            <Stack w="100%" gap={'sm'}>
+            <Stack w="100%" gap="sm">
               <Group w="100%" justify="space-between">
                 <Text>People</Text>
                 <ActionIcon
@@ -381,7 +375,7 @@ const Reservations = () => {
                   variant="subtle"
                   color="dark"
                   onClick={() => {
-                    const people = newReservation.getValues().people;
+                    const { people } = newReservation.getValues();
 
                     if (people.length >= 4) {
                       return;
@@ -393,13 +387,14 @@ const Reservations = () => {
                   <IconUserPlus style={{ width: rem(16), height: rem(16) }} />
                 </ActionIcon>
               </Group>
-              <Stack gap={'sm'} w={'100%'}>
+              <Stack gap="sm" w="100%">
                 {newReservation.getValues().people.map((person, index) => {
                   return (
                     <Group
                       w="100%"
                       justify="space-between"
                       gap="sm"
+                      // eslint-disable-next-line react/no-array-index-key
                       key={index}
                     >
                       <Input
@@ -446,7 +441,7 @@ const Reservations = () => {
                   )?.label
                 }
               </Text>
-              <SimpleGrid cols={1} verticalSpacing={'xs'}>
+              <SimpleGrid cols={1} verticalSpacing="xs">
                 {reservationData
                   ?.filter((r) => r.court === newReservation.getValues().court)
                   .sort(
@@ -465,10 +460,10 @@ const Reservations = () => {
                       <Paper
                         key={reservation._id as string}
                         withBorder
-                        p={'md'}
-                        radius={'md'}
+                        p="md"
+                        radius="md"
                         shadow="sm"
-                        bg={'red'}
+                        bg="red"
                       >
                         <Group justify="space-between">
                           <Group>

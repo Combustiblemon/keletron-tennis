@@ -1,7 +1,6 @@
 import {
   Anchor,
   Button,
-  Checkbox,
   Divider,
   Group,
   LoadingOverlay,
@@ -20,13 +19,12 @@ import { signIn, useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 
 import { Errors } from '@/lib/api/common';
-import { i18n, useTranslation } from '@/lib/i18n/i18n';
-import { GoogleButton } from '@/components/GoogleButton/GoogleButton';
+import { useTranslation } from '@/lib/i18n/i18n';
 import { firebaseCloudMessaging } from '@/lib/webPush';
 
 const AuthenticationForm = (props: PaperProps) => {
   const router = useRouter();
-  const { status, data: sessionData } = useSession();
+  const { status } = useSession();
   const { t, tError } = useTranslation();
 
   const [isLoading, { close: setIsLoaded, open: setIsLoading }] =
@@ -173,7 +171,7 @@ const AuthenticationForm = (props: PaperProps) => {
         overlayProps={{ radius: 'sm', blur: 2 }}
       />
 
-      <Stack gap={'lg'}>
+      <Stack gap="lg">
         <Text size="lg" fw={500}>
           {t(`auth.${type}`)}
         </Text>
@@ -223,22 +221,20 @@ const AuthenticationForm = (props: PaperProps) => {
           />
 
           {type === 'register' && (
-            <>
-              <PasswordInput
-                required
-                label={t('auth.form.repeatPasswordInput.label')}
-                placeholder={t('auth.form.repeatPasswordInput.placeholder')}
-                value={form.values.repeatPassword}
-                onChange={(event) =>
-                  form.setFieldValue(
-                    'repeatPassword',
-                    event.currentTarget.value.trim()
-                  )
-                }
-                error={form.errors.password}
-                radius="md"
-              />
-            </>
+            <PasswordInput
+              required
+              label={t('auth.form.repeatPasswordInput.label')}
+              placeholder={t('auth.form.repeatPasswordInput.placeholder')}
+              value={form.values.repeatPassword}
+              onChange={(event) =>
+                form.setFieldValue(
+                  'repeatPassword',
+                  event.currentTarget.value.trim()
+                )
+              }
+              error={form.errors.password}
+              radius="md"
+            />
           )}
         </Stack>
 

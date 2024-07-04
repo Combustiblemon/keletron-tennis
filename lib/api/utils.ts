@@ -1,19 +1,18 @@
-import { number, z } from 'zod';
+import { z } from 'zod';
 
 import {
+  CourtType,
   CourtValidator,
   CourtValidatorPartial,
-  CourtType,
 } from '@/models/Court';
-import { notifications } from '@mantine/notifications';
-import { Errors, onError, onSuccess } from './common';
-import { useTranslation } from '../i18n/i18n';
-import { APIResponse } from './responseTypes';
 import {
+  ReservationType,
   ReservationValidator,
   ReservationValidatorPartial,
-  ReservationType,
 } from '@/models/Reservation';
+
+import { Errors, onError, onSuccess } from './common';
+import { APIResponse } from './responseTypes';
 
 const handleResponse = async <ReturnDataType, Endpoint extends string>(
   res: Response
@@ -34,13 +33,11 @@ const handleResponse = async <ReturnDataType, Endpoint extends string>(
         ...body,
         endpoint: body.endpoint as Endpoint,
       };
-    } else {
-      const body = (await res.json()) as ReturnType<
-        typeof onSuccess<ReturnDataType, Endpoint>
-      >;
-
-      return body satisfies APIResponse<ReturnDataType, Endpoint>;
     }
+
+    return (await res.json()) as ReturnType<
+      typeof onSuccess<ReturnDataType, Endpoint>
+    > satisfies APIResponse<ReturnDataType, Endpoint>;
   } catch (err) {
     console.log(err);
   }

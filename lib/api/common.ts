@@ -3,7 +3,7 @@ import { ZodError, ZodIssue } from 'zod';
 import { APIResponse } from './responseTypes';
 
 export const formatZodError = (
-  error: ZodError<any>
+  error: ZodError<unknown>
 ): Array<
   ZodIssue & {
     message: string;

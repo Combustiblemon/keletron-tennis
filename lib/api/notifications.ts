@@ -1,10 +1,5 @@
-import {
-  initializeApp,
-  applicationDefault,
-  App,
-  cert,
-} from 'firebase-admin/app';
 import { credential, messaging } from 'firebase-admin';
+import { initializeApp } from 'firebase-admin/app';
 
 export enum Topics {
   Admin = 'yoORfs84Inuo0nX4uBQKB',
@@ -80,6 +75,7 @@ export const subscribeToTopic = async (
   topic: Topics | Array<Topics>
 ) => {
   initApp();
+
   if (typeof topic === 'string') {
     const res = await messaging().subscribeToTopic(tokens, topic);
 
@@ -108,6 +104,8 @@ export const subscribeToTopic = async (
         if (p.value[0].failureCount > 0) {
           return [p.value[0].errors, p.value[1]] as const;
         }
+
+        return [];
       });
 
       console.error(JSON.stringify(errors, null, 2));
@@ -120,6 +118,7 @@ export const unsubscribeFromTopic = async (
   topic: Topics | Array<Topics>
 ) => {
   initApp();
+
   if (typeof topic === 'string') {
     const res = await messaging().subscribeToTopic(tokens, topic);
 
@@ -148,6 +147,8 @@ export const unsubscribeFromTopic = async (
         if (p.value[0].failureCount > 0) {
           return [p.value[0].errors, p.value[1]] as const;
         }
+
+        return [];
       });
 
       console.error(JSON.stringify(errors, null, 2));

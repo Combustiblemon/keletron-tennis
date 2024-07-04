@@ -1,52 +1,17 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { nanoid } from 'nanoid';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import NextAuth, { AuthOptions, User, getServerSession } from 'next-auth';
+import NextAuth, { AuthOptions, getServerSession, User } from 'next-auth';
 import { decode, encode } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import { z } from 'zod';
-import { nanoid } from 'nanoid';
 
 import { Errors, onError } from '@/lib/api/common';
 import dbConnect from '@/lib/api/dbConnect';
+import { subscribeUser, unsubscribeUser } from '@/lib/api/notifications';
 import UserModel, { Users, UserSanitized } from '@/models/User';
-import {
-  subscribeToTopic,
-  subscribeUser,
-  unsubscribeUser,
-} from '@/lib/api/notifications';
-import { use } from 'react';
-
-type AuthUserHelpersReturnType = (
-  | {
-      isLoggedIn: true;
-      user: NonNullable<User>;
-    }
-  | {
-      isLoggedIn: false;
-      user: undefined;
-    }
-) & {
-  isAdmin: boolean;
-  isUser: boolean;
-};
-
-export const authUserHelpers = async (
-  req: NextApiRequest,
-  res: NextApiResponse
-) => {
-  const authOpts = authOptions(req, res);
-  const session = await getServerSession(req, res, authOpts);
-
-  const isLoggedIn = !!session && !!session?.user;
-  return {
-    isLoggedIn,
-    isAdmin: isLoggedIn && session?.user?.role === 'ADMIN',
-    isUser: isLoggedIn && session?.user?.role === 'USER',
-    user: isLoggedIn ? session.user : undefined,
-  } as AuthUserHelpersReturnType;
-};
 
 const registerValidator = z.object({
   email: z.string().email(),
@@ -137,6 +102,7 @@ export const authOptions = (
             const session = nanoid();
 
             user.session = session;
+
             if (FCMToken) {
               if (user.FCMTokens) {
                 user.FCMTokens.push(FCMToken);
@@ -281,25 +247,25 @@ export const authOptions = (
     },
   },
   callbacks: {
-    async session({ session, user, token, newSession, trigger }) {
+    async session({ session, token }) {
       if (token.user) {
         try {
-          const user = await UserModel.findById(token.user?._id);
+          const dbUser = await UserModel.findById(token.user?._id);
 
-          if (user?.compareSessions(token.user?.session)) {
+          if (dbUser?.compareSessions(token.user?.session)) {
             session.user = {
               ...token.user,
             };
 
             return session;
-          } else {
-            if (user) {
-              user.session = undefined;
-              user.FCMTokens = undefined;
+          }
 
-              unsubscribeUser(user.role, user.FCMTokens);
-              user.save();
-            }
+          if (dbUser) {
+            dbUser.session = undefined;
+            dbUser.FCMTokens = undefined;
+
+            unsubscribeUser(dbUser.role, dbUser.FCMTokens);
+            dbUser.save();
           }
         } catch (error) {
           console.log(error);
@@ -322,9 +288,9 @@ export const authOptions = (
           session: user.session || '',
         };
       } else if (token.user?._id && token.user?.session) {
-        const user = await UserModel.findById(token.user._id);
+        const dbUser = await UserModel.findById(token.user._id);
 
-        if (!user?.compareSessions(token.user?.session)) {
+        if (!dbUser?.compareSessions(token.user?.session)) {
           console.log('undefining token user');
           token.user = undefined;
         }
@@ -334,6 +300,36 @@ export const authOptions = (
     },
   },
 });
+
+type AuthUserHelpersReturnType = (
+  | {
+      isLoggedIn: true;
+      user: NonNullable<User>;
+    }
+  | {
+      isLoggedIn: false;
+      user: undefined;
+    }
+) & {
+  isAdmin: boolean;
+  isUser: boolean;
+};
+
+export const authUserHelpers = async (
+  req: NextApiRequest,
+  res: NextApiResponse
+) => {
+  const authOpts = authOptions(req, res);
+  const session = await getServerSession(req, res, authOpts);
+
+  const isLoggedIn = !!session && !!session?.user;
+  return {
+    isLoggedIn,
+    isAdmin: isLoggedIn && session?.user?.role === 'ADMIN',
+    isUser: isLoggedIn && session?.user?.role === 'USER',
+    user: isLoggedIn ? session.user : undefined,
+  } as AuthUserHelpersReturnType;
+};
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   await dbConnect();
