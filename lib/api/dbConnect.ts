@@ -29,15 +29,15 @@ if (!cached) {
 }
 
 async function dbConnect() {
-  if (cached.conn) {
-    return cached.conn;
-  }
-
   if (!existsSync('./ca.crt')) {
     await writeFile(
       './ca.crt',
       Buffer.from(process.env.CA_BASE64 || '', 'base64').toString('utf8')
     );
+  }
+
+  if (cached.conn) {
+    return cached.conn;
   }
 
   if (!cached.promise) {
