@@ -1,7 +1,6 @@
 import { endpoints } from '@/lib/api/utils';
 import {
   ActionIcon,
-  Box,
   Button,
   Drawer,
   Group,
@@ -11,20 +10,12 @@ import {
   Select,
   SimpleGrid,
   Stack,
-  Portal,
   Text,
   rem,
-  Card,
-  CardSection,
 } from '@mantine/core';
 import { DateInput, TimeInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
-import {
-  useDebouncedCallback,
-  useDebouncedValue,
-  useDisclosure,
-  useElementSize,
-} from '@mantine/hooks';
+import { useDisclosure } from '@mantine/hooks';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -39,6 +30,7 @@ import { APIResponse } from '@/lib/api/responseTypes';
 import { useSession } from 'next-auth/react';
 import { notifications } from '@mantine/notifications';
 import { formatDate, isReservationTimeFree } from '@/lib/common';
+import Reservation from '@/components/Reservation/Reservation';
 
 const DEFAULT_RESERVATION_DURATION = 90;
 
@@ -98,9 +90,19 @@ const Reservations = () => {
           values.court
         );
 
-        console.log(`${courtMinTime} < ${value} < ${courtMaxTime}`);
+        const now = new Date();
 
-        return !(courtMinTime < value && value < courtMaxTime) && 'time error';
+        const isToday =
+          formatDate(now).split(',')[0] ===
+          formatDate(values.date).split(',')[0];
+
+        const timeValid = !isToday || formatDate(now).split(',')[1] < value;
+
+        console.log({ timeValid, time: formatDate(now).split(',')[1], value });
+
+        return !(courtMinTime < value && value < courtMaxTime) || !timeValid
+          ? 'time error'
+          : false;
       },
       date: (value) => {
         return (
@@ -318,7 +320,12 @@ const Reservations = () => {
                 Το γήπεδο είναι ανοιχτό από {courtMinTime} έως {courtMaxTime}
               </Text>
 
-              <Group gap={'sm'} justify="space-between" w="100%">
+              <Group
+                gap={'sm'}
+                justify="space-between"
+                w="100%"
+                align="flex-start"
+              >
                 <DateInput
                   value={newReservation.getValues().date}
                   onChange={(value): void => {
@@ -335,6 +342,10 @@ const Reservations = () => {
                 />
                 <TimeInput
                   required
+                  onFocus={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }}
                   error={newReservation.errors.time}
                   ref={timePickerRef}
                   label="Time"
@@ -438,6 +449,11 @@ const Reservations = () => {
               <SimpleGrid cols={1} verticalSpacing={'xs'}>
                 {reservationData
                   ?.filter((r) => r.court === newReservation.getValues().court)
+                  .sort(
+                    (a, b) =>
+                      new Date(a.datetime).getTime() -
+                      new Date(b.datetime).getTime()
+                  )
                   .map((reservation) => {
                     const startTime = new Date(reservation.datetime);
                     const endTime = new Date(reservation.datetime);
@@ -500,19 +516,14 @@ const Reservations = () => {
           )
           .map((r) => {
             return (
-              <Card key={`${r._id}`} withBorder bg={'teal'} p={'md'}>
-                <CardSection>
-                  <Stack gap={'md'}>
-                    <Text>
-                      {
-                        courtsSelectionData.find((c) => c.value === r.court)
-                          ?.label
-                      }
-                    </Text>
-                    <Text>{r.datetime}</Text>
-                  </Stack>
-                </CardSection>
-              </Card>
+              <Reservation
+                key={`${r._id}`}
+                reservation={r}
+                courtLabel={
+                  courtsSelectionData.find((c) => c.value === selectedCourt)
+                    ?.label || ''
+                }
+              />
             );
           })}
       </Stack>

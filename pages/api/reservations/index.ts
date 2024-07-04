@@ -13,6 +13,7 @@ import signale from 'signale';
 import { authUserHelpers } from '../auth/[...nextauth]';
 import { Topics, sendMessageToTopic } from '@/lib/api/notifications';
 import { formatDate, isReservationTimeFree } from '@/lib/common';
+import { title } from 'process';
 
 export default async function handler(
   req: NextApiRequest,
@@ -153,7 +154,7 @@ export default async function handler(
             .json(onError(error as Error, 'reservations', 'POST'));
         }
 
-        const court = await Court.exists({ _id: data.court });
+        const court = await Court.findOne({ _id: data.court });
 
         if (!court) {
           return res
@@ -194,7 +195,8 @@ export default async function handler(
         });
 
         sendMessageToTopic(Topics.Admin, {
-          idk: 'stuff',
+          title: 'Νέα κράτηση',
+          body: `${reservation.datetime.split(',')[0]} - ${reservation.datetime.split(',')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.name || ''}`,
         });
 
         res.status(201).json(onSuccess(reservation, 'reservations', 'POST'));

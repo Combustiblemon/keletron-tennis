@@ -57,9 +57,11 @@ const firebaseCloudMessagingBuilder = () => {
           onMessage(messaging, (payload) => {
             console.log('firebase message received. ', payload);
 
+            let title = payload.data?.title || '';
+
             navigator.serviceWorker.getRegistrations().then((registrations) => {
-              registrations[0].showNotification('test', {
-                body: 'test body',
+              registrations[0].showNotification(title, {
+                body: payload.data?.body,
               });
             });
           });

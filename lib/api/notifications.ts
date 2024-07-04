@@ -1,5 +1,10 @@
-import { initializeApp, applicationDefault, App } from 'firebase-admin/app';
-import { messaging } from 'firebase-admin';
+import {
+  initializeApp,
+  applicationDefault,
+  App,
+  cert,
+} from 'firebase-admin/app';
+import { credential, messaging } from 'firebase-admin';
 
 export enum Topics {
   Admin = 'yoORfs84Inuo0nX4uBQKB',
@@ -17,7 +22,9 @@ let app: boolean = false;
 const initApp = () => {
   if (!app) {
     initializeApp({
-      credential: applicationDefault(),
+      credential: credential.cert(
+        JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS || '{}')
+      ),
     });
 
     app = true;
