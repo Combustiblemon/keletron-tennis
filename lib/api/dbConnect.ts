@@ -21,6 +21,11 @@ if (!MONGODB_URI) {
   );
 }
 
+await writeFile(
+  './ca.crt',
+  Buffer.from(process.env.CA_BASE64 || '', 'base64').toString('utf8')
+);
+
 let cached = global.mongoose;
 
 if (!cached) {
