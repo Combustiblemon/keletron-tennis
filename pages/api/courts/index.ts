@@ -3,10 +3,10 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
 import { onError, onSuccess } from '@/lib/api/common';
-import { isAdmin } from '@/lib/api/utils';
 
 import dbConnect from '../../../lib/api/dbConnect';
 import Court, { CourtValidator } from '../../../models/Court';
+import { authUserHelpers } from '../auth/[...nextauth]';
 
 export default async function handler(
   req: NextApiRequest,
@@ -15,6 +15,8 @@ export default async function handler(
   const { method } = req;
 
   await dbConnect();
+
+  const { isAdmin } = await authUserHelpers(req, res);
 
   switch (method) {
     case 'GET':
@@ -30,7 +32,7 @@ export default async function handler(
     case 'POST':
       // create a new court
       try {
-        if (!isAdmin()) {
+        if (!isAdmin) {
           return res.status(401).json({ success: false });
         }
 

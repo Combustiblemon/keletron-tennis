@@ -7,6 +7,7 @@ import {
   Messaging,
   onMessage,
 } from 'firebase/messaging';
+import { Session } from 'next-auth';
 
 import { db } from './indexDBUtils';
 
@@ -18,21 +19,11 @@ const firebaseConfig = JSON.parse(
 
 const firebaseCloudMessagingBuilder = () => {
   let firebaseapp: FirebaseApp | null = null;
-
   let messaging: Messaging | null = null;
-  const isTokenInIndexedDB = async (token: string): Promise<boolean> => {
-    const tokenRecord = await db.tokens.get(token);
 
-    return tokenRecord !== undefined;
-  };
-
-  const saveTokenToIndexedDB = async (token: string) => {
-    const email = localStorage.getItem('email') || 'unregistered';
-
-    if (await isTokenInIndexedDB(token)) {
-      await db.tokens.update(token, { email, FCMToken: token });
-    } else {
-      await db.tokens.put({ email, FCMToken: token });
+  const saveToken = async (token: string, session?: Session) => {
+    if (session?.user?._id) {
+      // save FCM token to user in DB
     }
   };
 
@@ -42,7 +33,7 @@ const firebaseCloudMessagingBuilder = () => {
 
   return {
     // initializing firebase app
-    async init(): Promise<string | null> {
+    async init(session?: Session): Promise<string | null> {
       // requesting notification permission from browser
       const status = await Notification.requestPermission();
 
@@ -66,17 +57,18 @@ const firebaseCloudMessagingBuilder = () => {
           onMessage(messaging, (payload) => {
             console.log('firebase message received. ', payload);
 
+            const title = payload.data?.title || '';
+
             navigator.serviceWorker.getRegistrations().then((registrations) => {
-              registrations[0].showNotification('test', {
-                body: 'test body',
+              registrations[0].showNotification(title, {
+                body: payload.data?.body,
               });
             });
           });
 
           if (FCMToken) {
             // return the FCM token after saving it
-            saveTokenToIndexedDB(FCMToken);
-            // console.log('FCM Token: ', FCMToken);
+            saveToken(FCMToken, session);
 
             return FCMToken;
           }
@@ -88,7 +80,6 @@ const firebaseCloudMessagingBuilder = () => {
 
       return null;
     },
-
     deleteToken(): Promise<boolean> {
       return messaging
         ? (async (): Promise<boolean> => {
@@ -100,6 +91,23 @@ const firebaseCloudMessagingBuilder = () => {
             return true;
           })()
         : Promise.resolve(false);
+    },
+    async getToken() {
+      if (messaging) {
+        return getToken(messaging, { vapidKey: VAPID_KEY });
+      }
+
+      return undefined;
+    },
+    async saveToken(session: Session) {
+      if (!messaging) {
+        return;
+      }
+
+      await saveToken(
+        await getToken(messaging, { vapidKey: VAPID_KEY }),
+        session
+      );
     },
   };
 };

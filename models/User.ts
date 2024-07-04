@@ -11,15 +11,26 @@ export const UserValidator = z.object({
   password: z.string().min(6),
 });
 
+type SanitizedUserFields =
+  | 'name'
+  | 'email'
+  | 'role'
+  | '_id'
+  | 'FCMTokens'
+  | 'session';
+
 export type Users = mongoose.Document &
   z.infer<typeof UserValidator> & {
     resetKey?: {
       value: string;
       expiresAt: Date;
     };
-    comparePasswords: (candidatePassword: string) => boolean;
-    compareResetKey: (resetKey: string) => boolean;
-    sanitize: () => Omit<Users, 'password' | 'resetKey'>;
+    FCMTokens?: Array<string>;
+    session?: string;
+    comparePasswords: (candidatePassword?: string) => boolean;
+    compareResetKey: (resetKey?: string) => boolean;
+    compareSessions: (session?: string) => boolean;
+    sanitize: () => Pick<Users, SanitizedUserFields>;
   };
 
 export const UserSchema = new mongoose.Schema<Users>({
@@ -58,41 +69,67 @@ export const UserSchema = new mongoose.Schema<Users>({
       type: Date,
     },
   },
+  FCMTokens: {
+    type: [String],
+  },
+  session: {
+    type: String,
+  },
 });
 
-UserSchema.methods.comparePasswords = function (candidatePassword: string) {
+UserSchema.methods.comparePasswords = function (candidatePassword?: string) {
+  if (!candidatePassword) {
+    return false;
+  }
+
   const user = this as Users;
   return bcrypt.compareSync(candidatePassword, user.password);
 };
 
-UserSchema.methods.compareResetKey = function (resetKey: string) {
-  const user = this as Users;
+UserSchema.methods.compareResetKey = function (resetKey?: string) {
+  if (!resetKey) {
+    return false;
+  }
 
+  const user = this as Users;
   return (
     resetKey === user.resetKey?.value && new Date() < user.resetKey?.expiresAt
   );
 };
 
-export type UserSanitized = Omit<Users, 'password' | 'resetKey'>;
+UserSchema.methods.compareSessions = function (session?: string) {
+  if (!session) {
+    return false;
+  }
+
+  return bcrypt.compareSync(session, (this as Users).session || '');
+};
+
+export type UserSanitized = Pick<Users, SanitizedUserFields>;
 
 UserSchema.methods.sanitize = function (): UserSanitized {
-  const user = (this as Users).toObject<Users>({
-    transform: (doc, ret) => {
-      delete ret.password;
-      delete ret.resetKey;
-      return ret;
-    },
+  return (this as Users).toObject({
+    transform: (doc, ret) =>
+      ({
+        name: ret.name,
+        email: ret.email,
+        role: ret.role,
+        _id: ret._id,
+        FCMTokens: ret.FCMToken,
+        session: ret.session,
+      }) satisfies UserSanitized,
   });
-
-  return user;
 };
 
 UserSchema.pre<Users>('save', function (next) {
-  if (!this.isModified('password')) {
-    next();
+  if (this.isModified('password')) {
+    this.password = bcrypt.hashSync(this.password, 10);
   }
 
-  this.password = bcrypt.hashSync(this.password, 10);
+  if (this.isModified('session') && this.session) {
+    this.session = bcrypt.hashSync(this.session, 10);
+  }
+
   next();
 });
 

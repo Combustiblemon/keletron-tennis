@@ -3,17 +3,17 @@ import {
   Burger,
   Divider,
   Group,
-  Stack,
   UnstyledButton,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { useMemo } from 'react';
+
+import { logout } from '@/lib/common';
 
 import classes from './Navbar.module.css';
-import { useMemo } from 'react';
-import { signOut, useSession } from 'next-auth/react';
-import { logout } from '@/lib/common';
 
 export type NavItem =
   | {
@@ -26,7 +26,8 @@ export type NavItem =
       onClick: () => void;
       href?: never;
     }
-  | 'divider';
+  | 'divider'
+  | null;
 
 function getNavItems(
   items: Array<NavItem>,
@@ -34,6 +35,10 @@ function getNavItems(
   router: AppRouterInstance
 ) {
   return items.map((item, index) => {
+    if (!item) {
+      return undefined;
+    }
+
     if (item === 'divider') {
       // eslint-disable-next-line react/no-array-index-key
       return <Divider key={`divider-${index}`} />;
@@ -63,16 +68,20 @@ function getNavItems(
 
 export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const [opened, { toggle }] = useDisclosure();
-  const [
-    logoutModalOpened,
-    { open: logoutModalOpen, close: logoutModalClose },
-  ] = useDisclosure(false);
   const router = useRouter();
   const { status } = useSession();
 
   const navItems: NavItem[] = useMemo(
     () => [
       { title: 'Home', href: '/' },
+      ...[
+        status === 'authenticated'
+          ? {
+              title: 'Reservations',
+              href: '/reservations',
+            }
+          : null,
+      ],
       'divider',
       { title: 'Settings', href: '/settings' },
       { title: 'About', href: '/about' },
@@ -86,7 +95,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
           }
         : { title: 'Login', href: '/auth?type=login' },
     ],
-    [status]
+    [router, status]
   );
 
   return (

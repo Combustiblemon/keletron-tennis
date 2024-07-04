@@ -10,8 +10,12 @@ export const CourtValidator = z.object({
     reservedTimes: z.array(
       z.object({
         startTime: z.string(),
-        endTime: z.string(),
+        duration: z.number().positive().default(90),
         reason: z.string(),
+        repeat: z
+          .enum(['WEEKLY', 'MONTHLY', 'DAILY'])
+          .optional()
+          .default('WEEKLY'),
       })
     ),
     duration: z.number(),
@@ -20,9 +24,9 @@ export const CourtValidator = z.object({
 
 export const CourtValidatorPartial = CourtValidator.deepPartial();
 
-export type Courts = mongoose.Document & z.infer<typeof CourtValidator>;
+export type CourtType = mongoose.Document & z.infer<typeof CourtValidator>;
 
-export const CourtSchema = new mongoose.Schema<Courts>({
+export const CourtSchema = new mongoose.Schema<CourtType>({
   name: {
     type: String,
     maxlength: [60, 'Court name cannot be more than 60 characters'],
@@ -48,13 +52,16 @@ export const CourtSchema = new mongoose.Schema<Courts>({
           type: String,
           required: [true, 'Please add a start time'],
         },
-        endTime: {
-          type: String,
-          required: [true, 'Please add an end time'],
+        duration: {
+          type: Number,
         },
         reason: {
           type: String,
           required: [true, 'Please add a reason'],
+        },
+        repeat: {
+          type: String,
+          enum: ['WEEKLY', 'MONTHLY', 'DAILY'],
         },
       },
     ],
@@ -65,5 +72,5 @@ export const CourtSchema = new mongoose.Schema<Courts>({
   },
 });
 
-export default (mongoose.models.Court as mongoose.Model<Courts>) ||
-  mongoose.model<Courts>('Court', CourtSchema);
+export default (mongoose.models.Court as mongoose.Model<CourtType>) ||
+  mongoose.model<CourtType>('Court', CourtSchema);

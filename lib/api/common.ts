@@ -1,11 +1,17 @@
-import { z, ZodError } from 'zod';
+import { ZodError, ZodIssue } from 'zod';
 
 import { APIResponse } from './responseTypes';
 
-export const formatZodError = (error: z.ZodError) => {
+export const formatZodError = (
+  error: ZodError<unknown>
+): Array<
+  ZodIssue & {
+    message: string;
+  }
+> => {
   return error.issues.map((issue) => ({
     ...issue,
-    path: issue.path.join('.'),
+    message: issue.path.join('.'),
   }));
 };
 
@@ -16,9 +22,12 @@ export const onError = (
   data?: Record<string, unknown>
 ) => {
   return {
-    success: false,
+    success: false as const,
     endpoint,
-    error: error instanceof ZodError ? formatZodError(error) : error,
+    errors:
+      error instanceof ZodError
+        ? formatZodError(error)
+        : [{ message: error.message }],
     ...(operation ? { operation } : {}),
     ...(data ? { data } : {}),
   };
@@ -30,9 +39,9 @@ export const onSuccess = <Data, Endpoint extends string>(
   operation?: 'POST' | 'GET' | 'PUT' | 'DELETE'
 ): APIResponse<Data, Endpoint> => {
   return {
-    success: true,
+    success: true as const,
     endpoint,
-    data,
+    data: data ?? ({} as Data),
     ...(operation ? { operation } : {}),
   };
 };
@@ -51,4 +60,6 @@ export enum Errors {
   RESET_KEY_NOT_FOUND = 'reset_key_not_found',
   INVALID_RESET_REQUEST = 'invalid_reset_request',
   INVALID_PASSWORD = 'invalid_password',
+  UNAUTHORIZED = 'unauthorized',
+  RESOURCE_NOT_FOUND = 'resource_not_found',
 }
