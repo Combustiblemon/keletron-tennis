@@ -23,21 +23,6 @@ const firebaseConfig = JSON.parse(
 const firebaseApp = initializeApp(firebaseConfig);
 const messaging = getMessaging(firebaseApp);
 
-// onMessage(messaging, (payload) => {
-//   console.log(
-//     '[firebase-messaging-sw.js] Received message in foreground.',
-//     payload
-//   );
-//   // Customize notification here
-//   const notificationTitle = payload.notification?.title || 'Title';
-//   const notificationOptions = {
-//     body: payload.notification?.body || 'Body',
-//     icon: payload.notification?.icon || '/favicon.ico',
-//   };
-
-//   self.registration.showNotification(notificationTitle, notificationOptions);
-// });
-
 onBackgroundMessage(messaging, (payload) => {
   console.log(
     '[firebase-messaging-sw.js] Received background message ',

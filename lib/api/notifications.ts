@@ -12,13 +12,15 @@ const topicMap = {
   ADMIN: [Topics.Admin],
 } as const;
 
-let app: App | undefined;
+let app: boolean = false;
 
 const initApp = () => {
   if (!app) {
-    app = initializeApp({
+    initializeApp({
       credential: applicationDefault(),
     });
+
+    app = true;
   }
 };
 
@@ -49,6 +51,7 @@ export const sendMessageToTopic = (
   data: Record<string, string>
 ) => {
   initApp();
+
   // Send a message to the device corresponding to the provided
   // registration token.
   messaging()

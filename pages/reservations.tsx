@@ -82,7 +82,7 @@ const Reservations = () => {
     initialValues: {
       court: '',
       date: new Date(),
-      time: formatDate(new Date()).split(',')[1],
+      time: '09:00',
       people: [] as string[],
     },
     validate: {
@@ -98,11 +98,9 @@ const Reservations = () => {
           values.court
         );
 
-        console.log(`${courtMinTime} <= ${value} <= ${courtMaxTime}`);
+        console.log(`${courtMinTime} < ${value} < ${courtMaxTime}`);
 
-        return (
-          !(courtMinTime <= value && value <= courtMaxTime) && 'time error'
-        );
+        return !(courtMinTime < value && value < courtMaxTime) && 'time error';
       },
       date: (value) => {
         return (
@@ -196,7 +194,9 @@ const Reservations = () => {
     <ActionIcon
       variant="subtle"
       color="gray"
-      onClick={() => timePickerRef.current?.showPicker()}
+      onClick={() => {
+        timePickerRef.current?.showPicker();
+      }}
     >
       <IconClock style={{ width: rem(16), height: rem(16) }} stroke={1.5} />
     </ActionIcon>
@@ -228,6 +228,7 @@ const Reservations = () => {
         message: 'reservation exists on this time',
         color: 'red',
       });
+
       setIsSubmitting(false);
 
       return;
@@ -240,6 +241,7 @@ const Reservations = () => {
         people: values.people,
         type: values.people.length > 2 ? 'DOUBLE' : 'SINGLE',
       });
+      setIsSubmitting(false);
 
       if (!res?.success) {
         console.log(JSON.stringify(res, null, 2));
@@ -248,6 +250,8 @@ const Reservations = () => {
           message: 'error creating reservation',
           color: 'red',
         });
+
+        return;
       } else {
         notifications.show({
           message: 'reservation has been created',
@@ -337,6 +341,7 @@ const Reservations = () => {
                   defaultValue={'09:00'}
                   rightSection={timePickerControl}
                   onChange={(e) => {
+                    console.log(e.target.value);
                     newReservation.setFieldValue('time', e.target.value.trim());
                   }}
                 />
@@ -351,7 +356,6 @@ const Reservations = () => {
                 newReservation.setValues({
                   court: value || '',
                 });
-                console.log({ value });
               }}
               label={'Select court'}
               multiple={false}
@@ -489,6 +493,7 @@ const Reservations = () => {
       </Group>
 
       <Stack>
+        <Text>Upcoming reservations:</Text>
         {userReservationData
           .filter((r) =>
             r.datetime.includes(formatDate(new Date()).split(',')[0])

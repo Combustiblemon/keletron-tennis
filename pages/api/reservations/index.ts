@@ -12,7 +12,7 @@ import ReservationModel, {
 import signale from 'signale';
 import { authUserHelpers } from '../auth/[...nextauth]';
 import { Topics, sendMessageToTopic } from '@/lib/api/notifications';
-import { formatDate } from '@/lib/common';
+import { formatDate, isReservationTimeFree } from '@/lib/common';
 
 export default async function handler(
   req: NextApiRequest,
@@ -38,11 +38,53 @@ export default async function handler(
             );
         }
 
+        let lookupDate: string;
+        let lookupDate2: string | undefined;
+
+        try {
+          if (date) {
+            if (Array.isArray(date)) {
+              lookupDate = date[0];
+              lookupDate2 = date[1];
+            } else {
+              lookupDate = date;
+            }
+          } else {
+            lookupDate = formatDate(new Date());
+          }
+        } catch {
+          lookupDate = formatDate(new Date());
+        }
+
+        const dateQuery = {
+          $and: [
+            {
+              datetime: {
+                $gt: `${lookupDate.split(',')[0]},00:00`,
+              },
+            },
+            {
+              datetime: {
+                $lt: `${(lookupDate2 || lookupDate).split(',')[0]},23:59`,
+              },
+            },
+          ],
+        };
+
         let offsetNumber = Number(offset);
 
         if (offset && !isNaN(offsetNumber)) {
           const reservations = await ReservationModel.find({
             owner: user._id,
+            ...(Array.isArray(date)
+              ? dateQuery
+              : {
+                  datetime: {
+                    $gte: formatDate(
+                      new Date(new Date().getTime() - 20 * 60 * 1000)
+                    ),
+                  },
+                }),
           })
             .sort({
               datetime: -1,
@@ -54,38 +96,9 @@ export default async function handler(
             .status(200)
             .json(onSuccess(reservations, 'reservations', 'GET'));
         } else {
-          let lookupDate: string;
-          let lookupDate2: string | undefined;
-
-          try {
-            if (date) {
-              if (Array.isArray(date)) {
-                lookupDate = date[0];
-                lookupDate2 = date[1];
-              } else {
-                lookupDate = date;
-              }
-            } else {
-              lookupDate = formatDate(new Date());
-            }
-          } catch {
-            lookupDate = formatDate(new Date());
-          }
-
           /* find all the data in our database */
           const reservationsData = await ReservationModel.find({
-            $and: [
-              {
-                datetime: {
-                  $gt: `${lookupDate.split(',')[0]},00:00`,
-                },
-              },
-              {
-                datetime: {
-                  $lt: `${(lookupDate2 || lookupDate).split(',')[0]},23:59`,
-                },
-              },
-            ],
+            ...dateQuery,
             ...(user.role !== 'ADMIN' ? { owner: user._id } : {}),
           }).lean();
 
@@ -140,7 +153,7 @@ export default async function handler(
             .json(onError(error as Error, 'reservations', 'POST'));
         }
 
-        const court = await Court.findOne({ _id: data.court });
+        const court = await Court.exists({ _id: data.court });
 
         if (!court) {
           return res
@@ -156,33 +169,17 @@ export default async function handler(
         }
 
         const courtReservations = await ReservationModel.find({
-          datetime: { $regex: `^${data.datetime.substring(0, 10)}` },
+          datetime: { $regex: `^${data.datetime.split(',')[0]}` },
           court: court._id,
         });
 
-        const startTime = new Date(data.datetime);
-        const endTime = new Date(data.datetime);
-        endTime.setMinutes(endTime.getMinutes() + data.duration);
-
         // check if the new reservation conflicts with an existing one
         if (
-          !courtReservations.every((res) => {
-            const sTime = new Date(res.datetime);
-            const eTime = new Date(res.datetime);
-            eTime.setMinutes(eTime.getMinutes() + res.duration);
-
-            let validDate = true;
-
-            if (sTime < startTime && startTime < eTime) {
-              validDate = false;
-            }
-
-            if (validDate && sTime < endTime && endTime < eTime) {
-              validDate = false;
-            }
-
-            return validDate;
-          })
+          !isReservationTimeFree(
+            courtReservations,
+            data.datetime,
+            data.duration
+          )
         ) {
           return res.status(400).json(
             onError(new Error('time_conflict'), 'reservations', 'POST', {

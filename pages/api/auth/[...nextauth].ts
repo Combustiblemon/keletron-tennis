@@ -291,8 +291,6 @@ export const authOptions = (
               ...token.user,
             };
 
-            console.log('returning good session`');
-
             return session;
           } else {
             if (user) {
@@ -311,7 +309,6 @@ export const authOptions = (
       token = {};
       session = {};
 
-      console.log('returning bad session');
       return session;
     },
     async jwt({ token, user, account, profile, session, trigger }) {
