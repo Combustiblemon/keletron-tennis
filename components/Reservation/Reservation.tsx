@@ -11,7 +11,7 @@ import {
 import { IconUser } from '@tabler/icons-react';
 import React from 'react';
 
-import { ReservationType } from '@/models/Reservation';
+import { ReservationType } from '@/server/src/models/Reservation';
 
 export interface ReservationProps {
   courtLabel: string;

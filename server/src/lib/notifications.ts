@@ -1,4 +1,4 @@
-import { credential, messaging } from 'firebase-admin';
+import adminSDK from 'firebase-admin';
 import { initializeApp } from 'firebase-admin/app';
 
 export enum Topics {
@@ -17,7 +17,7 @@ let app: boolean = false;
 const initApp = () => {
   if (!app) {
     initializeApp({
-      credential: credential.cert(
+      credential: adminSDK.credential.cert(
         JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS || '{}')
       ),
     });
@@ -34,7 +34,8 @@ export const sendMessageToTokens = (
 
   // Send a message to the device corresponding to the provided
   // registration token.
-  messaging()
+  adminSDK
+    .messaging()
     .sendEachForMulticast({
       data,
       tokens,
@@ -56,7 +57,8 @@ export const sendMessageToTopic = (
 
   // Send a message to the device corresponding to the provided
   // registration token.
-  messaging()
+  adminSDK
+    .messaging()
     .send({
       topic,
       data,
@@ -77,7 +79,7 @@ export const subscribeToTopic = async (
   initApp();
 
   if (typeof topic === 'string') {
-    const res = await messaging().subscribeToTopic(tokens, topic);
+    const res = await adminSDK.messaging().subscribeToTopic(tokens, topic);
 
     if (res.errors.length > 0) {
       console.error(res.errors);
@@ -85,7 +87,10 @@ export const subscribeToTopic = async (
   } else {
     const res = await Promise.allSettled(
       topic.map(async (t) => {
-        return [await messaging().subscribeToTopic(tokens, t), t] as const;
+        return [
+          await adminSDK.messaging().subscribeToTopic(tokens, t),
+          t,
+        ] as const;
       })
     );
 
@@ -120,7 +125,7 @@ export const unsubscribeFromTopic = async (
   initApp();
 
   if (typeof topic === 'string') {
-    const res = await messaging().subscribeToTopic(tokens, topic);
+    const res = await adminSDK.messaging().subscribeToTopic(tokens, topic);
 
     if (res.errors.length > 0) {
       console.error(res.errors);
@@ -128,7 +133,10 @@ export const unsubscribeFromTopic = async (
   } else {
     const res = await Promise.allSettled(
       topic.map(async (t) => {
-        return [await messaging().subscribeToTopic(tokens, t), t] as const;
+        return [
+          await adminSDK.messaging().subscribeToTopic(tokens, t),
+          t,
+        ] as const;
       })
     );
 

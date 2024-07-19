@@ -4,12 +4,12 @@ import {
   CourtType,
   CourtValidator,
   CourtValidatorPartial,
-} from '@/models/Court';
+} from '@/server/src/models/Court';
 import {
   ReservationType,
   ReservationValidator,
   ReservationValidatorPartial,
-} from '@/models/Reservation';
+} from '@/server/src/models/Reservation';
 
 import { Errors, onError, onSuccess } from './common';
 import { APIResponse } from './responseTypes';

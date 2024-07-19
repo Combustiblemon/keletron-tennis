@@ -2,8 +2,6 @@
 
 import { serialize } from 'cookie';
 import { JWTPayload, SignJWT } from 'jose';
-import { jwtDecode } from 'jwt-decode';
-import { NextRequest } from 'next/server';
 
 import {
   ACCESS_TOKEN_EXPIRATION_TIME_TEXT,
@@ -11,39 +9,6 @@ import {
   JWT_REFRESH_TOKEN_NAME,
   REFRESH_TOKEN_EXPIRATION_TIME_TEXT,
 } from '@/constants';
-import type { AccessTokenValues, DecodedAccessToken } from '@/types/api/auth';
-
-export const getJwtTokenValues = (token: string): AccessTokenValues => {
-  // if token is present we decoded it and return the decoded token
-  if (token) {
-    const decodedToken: DecodedAccessToken = jwtDecode(token);
-    const { userId, rememberMe } = decodedToken;
-
-    return {
-      userId,
-      rememberMe,
-    };
-  }
-  return {
-    userId: '',
-    rememberMe: false,
-  };
-};
-
-export const getUserIdFromRequestHeaders = (
-  request: NextRequest
-): string | null => {
-  const authorization = request.headers.get('authorization');
-
-  if (!authorization) {
-    return null;
-  }
-  const { jwtAccessToken } = JSON.parse(authorization);
-
-  const { userId } = getJwtTokenValues(jwtAccessToken);
-
-  return userId || null;
-};
 
 export const generateNoSerializedToken = async (
   payload: JWTPayload,

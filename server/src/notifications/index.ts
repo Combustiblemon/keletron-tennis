@@ -5,8 +5,8 @@ import { z } from 'zod';
 import { Errors, onError, onSuccess } from '@/lib/api/common';
 
 import dbConnect from '../../../lib/api/dbConnect';
-import UserModel from '../../../models/User';
-import { authUserHelpers } from '../auth/[...nextauth]';
+import { authUserHelpers } from '../auth/nextauth';
+import UserModel from '../models/User';
 
 const validator = z.object({
   _id: z.string().length(24).optional(),

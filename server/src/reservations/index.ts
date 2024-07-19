@@ -6,13 +6,11 @@ import { z } from 'zod';
 import { Errors, onError, onSuccess } from '@/lib/api/common';
 import { sendMessageToTopic, Topics } from '@/lib/api/notifications';
 import { formatDate, isReservationTimeFree } from '@/lib/common';
-import Court from '@/models/Court';
+import Court from '@/server/src/models/Court';
 
 import dbConnect from '../../../lib/api/dbConnect';
-import ReservationModel, {
-  ReservationValidator,
-} from '../../../models/Reservation';
-import { authUserHelpers } from '../auth/[...nextauth]';
+import { authUserHelpers } from '../auth/nextauth';
+import ReservationModel, { ReservationValidator } from '../models/Reservation';
 
 export default async function handler(
   req: NextApiRequest,

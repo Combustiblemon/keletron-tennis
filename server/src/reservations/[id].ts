@@ -4,10 +4,10 @@ import { z } from 'zod';
 import { Errors, onError, onSuccess } from '@/lib/api/common';
 
 import dbConnect from '../../../lib/api/dbConnect';
+import { authUserHelpers } from '../auth/nextauth';
 import Reservation, {
   ReservationValidatorPartial,
-} from '../../../models/Reservation';
-import { authUserHelpers } from '../auth/[...nextauth]';
+} from '../models/Reservation';
 
 // eslint-disable-next-line consistent-return
 export default async function handler(

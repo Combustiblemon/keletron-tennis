@@ -4,8 +4,8 @@ import { z } from 'zod';
 import { Errors, onError, onSuccess } from '@/lib/api/common';
 
 import dbConnect from '../../../lib/api/dbConnect';
-import Court, { CourtValidatorPartial } from '../../../models/Court';
-import { authUserHelpers } from '../auth/[...nextauth]';
+import { authUserHelpers } from '../auth/config';
+import Court, { CourtValidatorPartial } from '../models/Court';
 
 // eslint-disable-next-line consistent-return
 export default async function handler(

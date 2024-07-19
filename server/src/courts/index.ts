@@ -5,8 +5,8 @@ import { z } from 'zod';
 import { onError, onSuccess } from '@/lib/api/common';
 
 import dbConnect from '../../../lib/api/dbConnect';
-import Court, { CourtValidator } from '../../../models/Court';
-import { authUserHelpers } from '../auth/[...nextauth]';
+import { authUserHelpers } from '../auth/nextauth';
+import Court, { CourtValidator } from '../models/Court';
 
 export default async function handler(
   req: NextApiRequest,

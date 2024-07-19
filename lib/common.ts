@@ -1,7 +1,7 @@
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { signOut } from 'next-auth/react';
 
-import { ReservationType } from '@/models/Reservation';
+import { ReservationType } from '@/server/src/models/Reservation';
 
 import { firebaseCloudMessaging } from './webPush';
 

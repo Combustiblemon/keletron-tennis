@@ -1,17 +1,15 @@
 /* eslint-disable no-param-reassign */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import type { ExpressAuth, User } from '@auth/express';
+import { getSession } from '@auth/express';
+import Credentials from '@auth/express/providers/credentials';
+import Google from '@auth/express/providers/google';
+import { Request, Response } from 'express';
 import { nanoid } from 'nanoid';
-import type { NextApiRequest, NextApiResponse } from 'next';
-import NextAuth, { AuthOptions, getServerSession, User } from 'next-auth';
-import { decode, encode } from 'next-auth/jwt';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import GoogleProvider from 'next-auth/providers/google';
 import { z } from 'zod';
 
-import { Errors, onError } from '@/lib/api/common';
-import dbConnect from '@/lib/api/dbConnect';
-import { subscribeUser, unsubscribeUser } from '@/lib/api/notifications';
-import UserModel, { Users, UserSanitized } from '@/models/User';
+import { Errors, onError } from '@/server/src/lib/common';
+import { subscribeUser, unsubscribeUser } from '@/server/src/lib/notifications';
+import UserModel, { Users, UserSanitized } from '@/server/src/models/User';
 
 const registerValidator = z.object({
   email: z.string().email(),
@@ -26,27 +24,20 @@ const loginValidator = registerValidator.pick({
   FCMToken: true,
 });
 
-export const authOptions = (
-  req: NextApiRequest,
-  res: NextApiResponse
-): AuthOptions => ({
+export const getAuthConfig = async (
+  req: Request,
+  res: Response
+): Promise<Parameters<typeof ExpressAuth>['0']> => ({
   session: {
     strategy: 'jwt',
   },
-  jwt: { encode, decode },
-  pages: {
-    signIn: '/auth?type=login',
-    signOut: '/',
-    // error: '/auth/error', // Error code passed in query string as ?error=
-    // verifyRequest: '/auth/verify-request', // (used for check email message)
-    // newUser: '/auth/new-user' // New users will be directed here on first sign in (leave the property out if not of interest)
-  },
+  trustHost: true,
   providers: [
-    GoogleProvider({
+    Google({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
-    CredentialsProvider({
+    Credentials({
       id: 'login',
       credentials: {
         email: { type: 'email' },
@@ -132,7 +123,7 @@ export const authOptions = (
         return null;
       },
     }),
-    CredentialsProvider({
+    Credentials({
       id: 'register',
       credentials: {
         email: { type: 'email' },
@@ -212,6 +203,13 @@ export const authOptions = (
       },
     }),
   ],
+  pages: {
+    signIn: '/auth?type=login',
+    signOut: '/',
+    // error: '/auth/error', // Error code passed in query string as ?error=
+    // verifyRequest: '/auth/verify-request', // (used for check email message)
+    // newUser: '/auth/new-user' // New users will be directed here on first sign in (leave the property out if not of interest)
+  },
   events: {
     signIn: ({ user }) => {
       console.log('signIn event');
@@ -220,12 +218,16 @@ export const authOptions = (
         subscribeUser(user.role, user.FCMTokens);
       }
     },
-    signOut: async ({ token, session }) => {
+    signOut: async (event) => {
       console.log('signOut event');
       // Delete auth cookie on signout so it doesn't persist past log out
       res.setHeader('Set-Cookie', '');
 
-      // Set token/session to {}, that would update the cilentside token/session as well
+      let token = 'token' in event ? event?.token : event.session;
+
+      if (!token) {
+        return;
+      }
 
       if (!token.user) {
         token = {};
@@ -277,7 +279,7 @@ export const authOptions = (
 
       return session;
     },
-    async jwt({ token, user, account, profile, session, trigger }) {
+    async jwt({ token, user }) {
       if (user) {
         token.user = {
           role: user.role || 'USER',
@@ -315,12 +317,9 @@ type AuthUserHelpersReturnType = (
   isUser: boolean;
 };
 
-export const authUserHelpers = async (
-  req: NextApiRequest,
-  res: NextApiResponse
-) => {
-  const authOpts = authOptions(req, res);
-  const session = await getServerSession(req, res, authOpts);
+export const authUserHelpers = async (req: Request, res: Response) => {
+  const authOpts = await getAuthConfig(req, res);
+  const session = await getSession(req, authOpts);
 
   const isLoggedIn = !!session && !!session?.user;
   return {
@@ -330,9 +329,3 @@ export const authUserHelpers = async (
     user: isLoggedIn ? session.user : undefined,
   } as AuthUserHelpersReturnType;
 };
-
-export default async function auth(req: NextApiRequest, res: NextApiResponse) {
-  await dbConnect();
-
-  return NextAuth(req, res, authOptions(req, res));
-}

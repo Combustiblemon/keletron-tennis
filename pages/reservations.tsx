@@ -30,7 +30,7 @@ import Reservation from '@/components/Reservation/Reservation';
 import { APIResponse } from '@/lib/api/responseTypes';
 import { endpoints } from '@/lib/api/utils';
 import { formatDate, isReservationTimeFree } from '@/lib/common';
-import { CourtType } from '@/models/Court';
+import { CourtType } from '@/server/src/models/Court';
 
 const DEFAULT_RESERVATION_DURATION = 90;
 

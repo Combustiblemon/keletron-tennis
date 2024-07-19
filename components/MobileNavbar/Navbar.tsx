@@ -69,7 +69,7 @@ function getNavItems(
 export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const [opened, { toggle }] = useDisclosure();
   const router = useRouter();
-  const { status } = useSession();
+  const { status, data } = useSession();
 
   const navItems: NavItem[] = useMemo(
     () => [
