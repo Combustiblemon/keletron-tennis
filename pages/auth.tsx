@@ -18,9 +18,9 @@ import { useRouter } from 'next/router';
 import { signIn, useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 
-import { Errors } from '@/lib/api/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { firebaseCloudMessaging } from '@/lib/webPush';
+import { Errors } from '@/server/src/lib/common';
 
 const AuthenticationForm = (props: PaperProps) => {
   const router = useRouter();

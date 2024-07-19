@@ -1,19 +1,27 @@
 import { ExpressAuth } from '@auth/express';
 import express, { type Request, type Response } from 'express';
-import nconf from 'nconf';
+import { rateLimit } from 'express-rate-limit';
 import signale from 'signale';
 
 import { getAuthConfig } from './auth/config';
 import { authenticatedUser, currentSession } from './middleware/auth';
 import { errorHandler, errorNotFoundHandler } from './middleware/error';
 
-nconf.argv().env().file('./config.json');
-
-const SERVER_PORT = nconf.get('PORT');
+const SERVER_PORT = process.env.PORT;
 
 const app = express();
 
 app.set('port', SERVER_PORT);
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 500, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+  standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+});
+
+// Apply the rate limiting middleware to all requests.
+app.use(limiter);
 
 // Parse incoming requests data
 app.use(express.urlencoded({ extended: true }));

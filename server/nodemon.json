@@ -1,6 +1,6 @@
 {
   "execMap": {
-    "ts": "node --import=./swcRegisterESM.js ./src/index.ts"
+    "ts": "node --env-file=.env --import=./swcRegisterESM.js ./src/index.ts"
   },
   "ext": ".ts,.js,.json",
   "ignore": ["./dist", "./test", "./settings.json"],

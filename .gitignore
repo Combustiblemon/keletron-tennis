@@ -47,3 +47,4 @@ public/firebase-messaging-sw.js
 service-account-file.json
 service-account-file-backup.json
 server/dist
+server/.env
