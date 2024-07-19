@@ -58,6 +58,7 @@ const server = app.listen(SERVER_PORT, () => {
     (server?.address?.() as { port: number })?.port
   );
 });
+
 const skipErrorNames: string[] = [];
 
 // catch any uncaught exceptions, so that the server never crashes
