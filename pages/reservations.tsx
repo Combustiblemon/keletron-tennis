@@ -322,6 +322,7 @@ const Reservations = () => {
                 align="flex-start"
               >
                 <DateInput
+                  inputMode="none"
                   value={newReservation.getValues().date}
                   onChange={(value): void => {
                     if (value) {
@@ -335,6 +336,7 @@ const Reservations = () => {
                   label="Date"
                   error={newReservation.errors.date}
                 />
+
                 <TimeInput
                   required
                   onFocus={(e) => {

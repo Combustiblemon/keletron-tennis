@@ -32,18 +32,18 @@ const Document = () => {
           crossOrigin="use-credentials"
           href="/manifest.json"
         />
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:url" content="https://yourdomain.com" />
-        <meta name="twitter:title" content="My awesome PWA app" />
-        <meta name="twitter:description" content="Best PWA app in the world!" />
-        <meta name="twitter:image" content="/icons/twitter.png" />
-        <meta name="twitter:creator" content="@DavidWShadow" />
+        {/* <meta name="twitter:card" content="summary" /> */}
+        {/* <meta name="twitter:url" content="https://yourdomain.com" /> */}
+        {/* <meta name="twitter:title" content="Keletron tennis app" /> */}
+        {/* <meta name="twitter:description" content="Best PWA app in the world!" /> */}
+        {/* <meta name="twitter:image" content="/icons/twitter.png" /> */}
+        {/* <meta name="twitter:creator" content="@DavidWShadow" /> */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="My awesome PWA app" />
-        <meta property="og:description" content="Best PWA app in the world!" />
-        <meta property="og:site_name" content="My awesome PWA app" />
-        <meta property="og:url" content="https://yourdomain.com" />
-        <meta property="og:image" content="/icons/og.png" />
+        <meta property="og:title" content="Keletron tennis app" />
+        {/* <meta property="og:description" content="Best PWA app in the world!" /> */}
+        <meta property="og:site_name" content="Keletron tennis app" />
+        {/* <meta property="og:url" content="https://yourdomain.com" /> */}
+        {/* <meta property="og:image" content="/icons/og.png" /> */}
         {/* add the following only if you want to add a startup image for Apple devices. */}
         {/* <link
           rel="apple-touch-startup-image"
