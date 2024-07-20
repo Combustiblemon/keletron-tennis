@@ -22,13 +22,16 @@ export async function authenticatedUser(
   return res.status(401).json({ message: 'Not Authenticated' });
 }
 
-export async function currentSession(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  const session =
-    (await getSession(req, await getAuthConfig(req, res))) ?? undefined;
-  res.locals.session = session;
-  return next();
-}
+// export async function currentSession(
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) {
+//   if (!res.locals.session) {
+//     const session =
+//       (await getSession(req, await getAuthConfig(req, res))) ?? undefined;
+//     res.locals.session = session;
+//   }
+
+//   return next();
+// }

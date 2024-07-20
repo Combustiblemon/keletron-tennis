@@ -4,7 +4,7 @@ import { rateLimit } from 'express-rate-limit';
 import signale from 'signale';
 
 import { getAuthConfig } from './auth/config';
-import { authenticatedUser, currentSession } from './middleware/auth';
+import { authenticatedUser } from './middleware/auth';
 import { errorHandler, errorNotFoundHandler } from './middleware/error';
 
 const SERVER_PORT = process.env.PORT;
@@ -20,25 +20,25 @@ const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
 });
 
-// Apply the rate limiting middleware to all requests.
-app.use(limiter);
+if (process.env.ISPRODUCTION === 'true') {
+  // Apply the rate limiting middleware to all requests.
+  app.use(limiter);
+  signale.info('Rate limiting enabled');
+}
 
 // Parse incoming requests data
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Set session in res.locals
-app.use(currentSession);
-
 // Set up ExpressAuth to handle authentication
 // IMPORTANT: It is highly encouraged set up rate limiting on this route
-app.use('/api/auth/*', async (req, res) =>
-  ExpressAuth(await getAuthConfig(req, res))
-);
+app.use('/api/auth/*', async (req, res) => {
+  return ExpressAuth(await getAuthConfig(req, res));
+});
 
 // Routes
 app.get('/protected', async (_req: Request, res: Response) => {
-  res.render('protected', { session: res.locals.session });
+  res.json({ session: res.locals.session });
 });
 
 app.get(
@@ -50,7 +50,7 @@ app.get(
 );
 
 app.get('/', async (_req: Request, res: Response) => {
-  res.render('index', {
+  res.json({
     title: 'Express Auth Example',
     user: res.locals.session?.user,
   });

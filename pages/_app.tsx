@@ -39,7 +39,11 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
       <MantineProvider theme={theme}>
         <LanguageProvider defaultLanguage="el">
           <DateProvider>
-            <SessionProvider session={session}>
+            <SessionProvider
+              session={session}
+              basePath="/api/auth"
+              baseUrl="http://Localhost:2000"
+            >
               <Notifications position="bottom-center" zIndex={1000} />
               <HeadInfo title="Keletron Tennis Academy" />
               <Navbar>

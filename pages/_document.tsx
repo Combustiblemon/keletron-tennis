@@ -6,7 +6,7 @@ const Document = () => {
     <Html lang="en" className="h-screen w-screen overflow-hidden">
       <Head>
         <ColorSchemeScript defaultColorScheme="auto" />
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        {/* <meta name="viewport" content="width=device-width,initial-scale=1" /> */}
         <meta name="description" content="Keletron tennis club" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="mask-icon" href="/logo.webp" color="#FFFFFF" />

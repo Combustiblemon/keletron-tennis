@@ -10,9 +10,10 @@ export const errorHandler = (
 ): void => {
   // Render the error page
   res.status(500);
-  res.render('error', {
+  res.json({
     title: 'status' in err ? err.status : err.name,
     message: err.message,
+    url: _req.url,
   });
 };
 

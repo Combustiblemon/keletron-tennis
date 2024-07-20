@@ -29,6 +29,7 @@
   "scripts": {
     "build": "npm run typecheck && sh ./scripts/build.sh",
     "build:code": "rm -rf ./dist && npx swc ./src/ -d ./dist/ ",
+    "debug": "node --inspect --env-file=.env --import=./swcRegisterESM.js ./src/index.ts",
     "start": "npm run start:test",
     "start:test": "nodemon",
     "typecheck": "tsc -p ./tsconfig.json --noEmit"

@@ -5,11 +5,14 @@ import Credentials from '@auth/express/providers/credentials';
 import Google from '@auth/express/providers/google';
 import { Request, Response } from 'express';
 import { nanoid } from 'nanoid';
+import signale from 'signale';
 import { z } from 'zod';
 
 import { Errors, onError } from '@/server/src/lib/common';
 import { subscribeUser, unsubscribeUser } from '@/server/src/lib/notifications';
 import UserModel, { Users, UserSanitized } from '@/server/src/models/User';
+
+import dbConnect from '../lib/dbConnect';
 
 const registerValidator = z.object({
   email: z.string().email(),
@@ -27,83 +30,175 @@ const loginValidator = registerValidator.pick({
 export const getAuthConfig = async (
   req: Request,
   res: Response
-): Promise<Parameters<typeof ExpressAuth>['0']> => ({
-  session: {
-    strategy: 'jwt',
-  },
-  trustHost: true,
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    }),
-    Credentials({
-      id: 'login',
-      credentials: {
-        email: { type: 'email' },
-        password: { type: 'password' },
-        FCMToken: { type: 'text' },
-      },
-      type: 'credentials',
-      async authorize(credentials) {
-        let data: z.infer<typeof loginValidator>;
+): Promise<Parameters<typeof ExpressAuth>['0']> => {
+  await dbConnect();
 
-        try {
-          data = loginValidator.parse(credentials);
-        } catch (error) {
-          console.error('Error parsing credentials', error);
-          throw new Error(Errors.INVALID_CREDENTIALS);
-        }
+  return {
+    secret: process.env.NEXTAUTH_SECRET,
+    session: {
+      strategy: 'jwt',
+    },
+    trustHost: true,
+    providers: [
+      Google({
+        clientId: process.env.GOOGLE_CLIENT_ID || '',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      }),
+      Credentials({
+        id: 'login',
+        credentials: {
+          email: { type: 'email' },
+          password: { type: 'password' },
+          FCMToken: { type: 'text' },
+        },
+        type: 'credentials',
+        async authorize(credentials) {
+          let data: z.infer<typeof loginValidator>;
 
-        const { email, password, FCMToken } = data;
-
-        console.log(FCMToken);
-
-        let user: Users | null;
-
-        try {
-          user = await UserModel.findOne({
-            email,
-          });
-        } catch (error) {
-          console.error('Error finding user', error);
-
-          res
-            .status(500)
-            .json(onError(new Error(Errors.INTERNAL_SERVER_ERROR), 'register'));
-
-          return null;
-        }
-
-        if (!user) {
-          throw new Error(Errors.LOGIN_ERROR);
-        }
-
-        const passwordMatch = user.comparePasswords(password);
-
-        if (!passwordMatch) {
-          throw new Error(Errors.LOGIN_ERROR);
-        }
-
-        console.log('User logged in', user.email);
-
-        // If no error and we have user data, return it
-        if (user) {
           try {
-            const session = nanoid();
+            data = loginValidator.parse(credentials);
+          } catch (error) {
+            console.error('Error parsing credentials', error);
+            throw new Error(Errors.INVALID_CREDENTIALS);
+          }
 
-            user.session = session;
+          const { email, password, FCMToken } = data;
 
-            if (FCMToken) {
-              if (user.FCMTokens) {
-                user.FCMTokens.push(FCMToken);
-              } else {
-                user.FCMTokens = [FCMToken];
+          console.log(FCMToken);
+
+          let user: Users | null;
+
+          try {
+            user = await UserModel.findOne({
+              email,
+            });
+          } catch (error) {
+            console.error('Error finding user', error);
+
+            res
+              .status(500)
+              .json(
+                onError(new Error(Errors.INTERNAL_SERVER_ERROR), 'register')
+              );
+
+            return null;
+          }
+
+          if (!user) {
+            throw new Error(Errors.LOGIN_ERROR);
+          }
+
+          const passwordMatch = user.comparePasswords(password);
+
+          if (!passwordMatch) {
+            throw new Error(Errors.LOGIN_ERROR);
+          }
+
+          console.log('User logged in', user.email);
+
+          // If no error and we have user data, return it
+          if (user) {
+            try {
+              const session = nanoid();
+
+              user.session = session;
+
+              if (FCMToken) {
+                if (user.FCMTokens) {
+                  user.FCMTokens.push(FCMToken);
+                } else {
+                  user.FCMTokens = [FCMToken];
+                }
               }
+
+              await user.save();
+
+              return {
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                _id: user._id as string,
+                FCMTokens: user.FCMTokens,
+                session,
+              };
+            } catch (err) {
+              console.error(err);
+
+              return null;
             }
+          }
 
-            await user.save();
+          // Return null if user data could not be retrieved
+          return null;
+        },
+      }),
+      Credentials({
+        id: 'register',
+        credentials: {
+          email: { type: 'email' },
+          password: { type: 'password' },
+          name: { type: 'text' },
+          FCMTokens: { type: 'text' },
+        },
+        type: 'credentials',
+        async authorize(credentials) {
+          let data: z.infer<typeof registerValidator>;
 
+          try {
+            data = registerValidator.parse(credentials);
+          } catch (error) {
+            console.error('Error parsing credentials', error);
+            throw new Error(Errors.INVALID_CREDENTIALS);
+          }
+
+          const { email, password, name, FCMToken } = data;
+
+          let userExists: boolean;
+
+          try {
+            userExists = Boolean(await UserModel.exists({ email }));
+          } catch (error) {
+            console.error('Error checking if user exists', error);
+
+            res
+              .status(500)
+              .json(onError(new Error('internal server error'), 'register'));
+            return null;
+          }
+
+          if (userExists) {
+            throw new Error(Errors.USER_EXISTS);
+          }
+
+          let user: UserSanitized;
+          const session = nanoid();
+
+          try {
+            user = (
+              await UserModel.create({
+                name,
+                email,
+                password,
+                role: 'USER',
+                FCMTokens: [FCMToken],
+                session,
+              })
+            ).sanitize();
+          } catch (error) {
+            console.error('Error creating user', error);
+
+            res
+              .status(500)
+              .json(
+                onError(new Error(Errors.INTERNAL_SERVER_ERROR), 'register')
+              );
+            return null;
+          }
+
+          console.log('User created', user.email);
+
+          // If no error and we have user data, return it
+          if (user) {
             return {
               name: user.name,
               email: user.email,
@@ -112,196 +207,117 @@ export const getAuthConfig = async (
               FCMTokens: user.FCMTokens,
               session,
             };
-          } catch (err) {
-            console.error(err);
-
-            return null;
           }
-        }
 
-        // Return null if user data could not be retrieved
-        return null;
-      },
-    }),
-    Credentials({
-      id: 'register',
-      credentials: {
-        email: { type: 'email' },
-        password: { type: 'password' },
-        name: { type: 'text' },
-        FCMTokens: { type: 'text' },
-      },
-      type: 'credentials',
-      async authorize(credentials) {
-        let data: z.infer<typeof registerValidator>;
-
-        try {
-          data = registerValidator.parse(credentials);
-        } catch (error) {
-          console.error('Error parsing credentials', error);
-          throw new Error(Errors.INVALID_CREDENTIALS);
-        }
-
-        const { email, password, name, FCMToken } = data;
-
-        let userExists: boolean;
-
-        try {
-          userExists = Boolean(await UserModel.exists({ email }));
-        } catch (error) {
-          console.error('Error checking if user exists', error);
-
-          res
-            .status(500)
-            .json(onError(new Error('internal server error'), 'register'));
+          // Return null if user data could not be retrieved
           return null;
-        }
-
-        if (userExists) {
-          throw new Error(Errors.USER_EXISTS);
-        }
-
-        let user: UserSanitized;
-        const session = nanoid();
-
-        try {
-          user = (
-            await UserModel.create({
-              name,
-              email,
-              password,
-              role: 'USER',
-              FCMTokens: [FCMToken],
-              session,
-            })
-          ).sanitize();
-        } catch (error) {
-          console.error('Error creating user', error);
-
-          res
-            .status(500)
-            .json(onError(new Error(Errors.INTERNAL_SERVER_ERROR), 'register'));
-          return null;
-        }
-
-        console.log('User created', user.email);
-
-        // If no error and we have user data, return it
-        if (user) {
-          return {
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            _id: user._id as string,
-            FCMTokens: user.FCMTokens,
-            session,
-          };
-        }
-
-        // Return null if user data could not be retrieved
-        return null;
-      },
-    }),
-  ],
-  pages: {
-    signIn: '/auth?type=login',
-    signOut: '/',
-    // error: '/auth/error', // Error code passed in query string as ?error=
-    // verifyRequest: '/auth/verify-request', // (used for check email message)
-    // newUser: '/auth/new-user' // New users will be directed here on first sign in (leave the property out if not of interest)
-  },
-  events: {
-    signIn: ({ user }) => {
-      console.log('signIn event');
-
-      if (user.FCMTokens && user.role && user.FCMTokens.length) {
-        subscribeUser(user.role, user.FCMTokens);
-      }
+        },
+      }),
+    ],
+    pages: {
+      signIn: '/auth?type=login',
+      signOut: '/',
+      // error: '/auth/error', // Error code passed in query string as ?error=
+      // verifyRequest: '/auth/verify-request', // (used for check email message)
+      // newUser: '/auth/new-user' // New users will be directed here on first sign in (leave the property out if not of interest)
     },
-    signOut: async (event) => {
-      console.log('signOut event');
-      // Delete auth cookie on signout so it doesn't persist past log out
-      res.setHeader('Set-Cookie', '');
+    events: {
+      signIn: ({ user }) => {
+        console.log('signIn event');
 
-      let token = 'token' in event ? event?.token : event.session;
+        if (user.FCMTokens && user.role && user.FCMTokens.length) {
+          subscribeUser(user.role, user.FCMTokens);
+        }
+      },
+      signOut: async (event) => {
+        console.log('signOut event');
+        // Delete auth cookie on signout so it doesn't persist past log out
+        res.setHeader('Set-Cookie', '');
 
-      if (!token) {
-        return;
-      }
+        let token = 'token' in event ? event?.token : event.session;
 
-      if (!token.user) {
+        if (!token) {
+          return;
+        }
+
+        if (!token.user) {
+          token = {};
+          session = {};
+
+          return;
+        }
+
+        const { FCMTokens, _id, role } = token.user;
+
         token = {};
         session = {};
 
-        return;
-      }
-
-      const { FCMTokens, _id, role } = token.user;
-
-      token = {};
-      session = {};
-
-      if (FCMTokens && FCMTokens.length) {
-        unsubscribeUser(role, FCMTokens);
-      }
-
-      UserModel.findByIdAndUpdate(_id, { session: '', FCMToken: '' });
-    },
-  },
-  callbacks: {
-    async session({ session, token }) {
-      if (token.user) {
-        try {
-          const dbUser = await UserModel.findById(token.user?._id);
-
-          if (dbUser?.compareSessions(token.user?.session)) {
-            session.user = {
-              ...token.user,
-            };
-
-            return session;
-          }
-
-          if (dbUser) {
-            dbUser.session = undefined;
-            dbUser.FCMTokens = undefined;
-
-            unsubscribeUser(dbUser.role, dbUser.FCMTokens);
-            dbUser.save();
-          }
-        } catch (error) {
-          console.log(error);
+        if (FCMTokens && FCMTokens.length) {
+          unsubscribeUser(role, FCMTokens);
         }
-      }
 
-      token = {};
-      session = {};
-
-      return session;
+        UserModel.findByIdAndUpdate(_id, { session: '', FCMToken: '' });
+      },
     },
-    async jwt({ token, user }) {
-      if (user) {
-        token.user = {
-          role: user.role || 'USER',
-          _id: user._id || '',
-          email: user.email || '',
-          name: user.name || '',
-          FCMTokens: user.FCMTokens || [],
-          session: user.session || '',
-        };
-      } else if (token.user?._id && token.user?.session) {
-        const dbUser = await UserModel.findById(token.user._id);
+    callbacks: {
+      async session({ session, token }) {
+        signale.debug('hello session');
 
-        if (!dbUser?.compareSessions(token.user?.session)) {
-          console.log('undefining token user');
-          token.user = undefined;
+        if (token.user) {
+          try {
+            const dbUser = await UserModel.findById(token.user?._id);
+
+            if (dbUser?.compareSessions(token.user?.session)) {
+              session.user = {
+                ...token.user,
+              };
+
+              return session;
+            }
+
+            if (dbUser) {
+              dbUser.session = undefined;
+              dbUser.FCMTokens = undefined;
+
+              unsubscribeUser(dbUser.role, dbUser.FCMTokens);
+              dbUser.save();
+            }
+          } catch (error) {
+            console.log(error);
+          }
         }
-      }
 
-      return token;
+        token = {};
+        session = {};
+
+        return session;
+      },
+      async jwt({ token, user }) {
+        signale.debug('hello jwt');
+
+        if (user) {
+          token.user = {
+            role: user.role || 'USER',
+            _id: user._id || '',
+            email: user.email || '',
+            name: user.name || '',
+            FCMTokens: user.FCMTokens || [],
+            session: user.session || '',
+          };
+        } else if (token.user?._id && token.user?.session) {
+          const dbUser = await UserModel.findById(token.user._id);
+
+          if (!dbUser?.compareSessions(token.user?.session)) {
+            console.log('undefining token user');
+            token.user = undefined;
+          }
+        }
+
+        return token;
+      },
     },
-  },
-});
+  };
+};
 
 type AuthUserHelpersReturnType = (
   | {

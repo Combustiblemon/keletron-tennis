@@ -13,4 +13,15 @@ const withWPA = withPWAInit({
 export default withWPA({
   reactStrictMode: true,
   swcMinify: true,
+  env: {
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL || '',
+  },
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: '/api/auth/:path*',
+  //       destination: 'http://localhost:2000/api/auth/:path*',
+  //     },
+  //   ];
+  // },
 });
