@@ -2,6 +2,7 @@ import { existsSync } from 'fs';
 import { writeFile } from 'fs/promises';
 import { MongoClient } from 'mongodb';
 import mongoose, { Mongoose } from 'mongoose';
+import os from 'os';
 
 declare global {
   // eslint-disable-next-line vars-on-top, no-var
@@ -13,7 +14,10 @@ declare global {
 
 const database = process.env.MONGODB_DB || 'dev';
 const MONGODB_URI =
-  process.env.MONGODB_URI?.replace('ferretdb', database) || '';
+  process.env.MONGODB_URI?.replace('ferretdb', database)?.replace(
+    'CA_CRT_PATH',
+    `${os.tmpdir()}/ca.crt`
+  ) || '';
 
 if (!MONGODB_URI) {
   throw new Error(
@@ -29,9 +33,9 @@ if (!cached) {
 }
 
 async function dbConnect() {
-  if (!existsSync('./ca.crt')) {
+  if (!existsSync(`${os.tmpdir()}/ca.crt`)) {
     await writeFile(
-      './ca.crt',
+      `${os.tmpdir()}/ca.crt`,
       Buffer.from(process.env.CA_BASE64 || '', 'base64').toString('utf8')
     );
   }
