@@ -15,7 +15,7 @@ declare global {
 const database = process.env.MONGODB_DB || 'dev';
 const MONGODB_URI =
   process.env.MONGODB_URI?.replace('ferretdb', database)?.replace(
-    'CA_CRT_PATH',
+    './ca.crt',
     `${os.tmpdir()}/ca.crt`
   ) || '';
 
