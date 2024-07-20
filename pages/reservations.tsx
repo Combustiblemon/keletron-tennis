@@ -97,7 +97,7 @@ const Reservations = () => {
 
         const timeValid = !isToday || formatDate(now).split(',')[1] < value;
 
-        return !(courtMinTime < value && value < courtMaxTime) || !timeValid
+        return !(courtMinTime <= value && value <= courtMaxTime) || !timeValid
           ? 'time error'
           : false;
       },
@@ -242,7 +242,8 @@ const Reservations = () => {
       setIsSubmitting(false);
 
       if (!res?.success) {
-        console.log(JSON.stringify(res, null, 2));
+        // eslint-disable-next-line no-console
+        console.error(JSON.stringify(res, null, 2));
 
         notifications.show({
           message: 'error creating reservation',
@@ -322,6 +323,7 @@ const Reservations = () => {
                 align="flex-start"
               >
                 <DateInput
+                  inputMode="none"
                   value={newReservation.getValues().date}
                   onChange={(value): void => {
                     if (value) {
@@ -335,6 +337,7 @@ const Reservations = () => {
                   label="Date"
                   error={newReservation.errors.date}
                 />
+
                 <TimeInput
                   required
                   onFocus={(e) => {
@@ -506,8 +509,16 @@ const Reservations = () => {
       <Stack>
         <Text>Upcoming reservations:</Text>
         {userReservationData
-          .filter((r) =>
-            r.datetime.includes(formatDate(new Date()).split(',')[0])
+          .filter((r) => {
+            return (
+              new Date(r.datetime).getTime() >
+              //                     20 minutes ago
+              new Date().getTime() - 20 * 60 * 1000
+            );
+          })
+          .sort(
+            (a, b) =>
+              new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
           )
           .map((r) => {
             return (
