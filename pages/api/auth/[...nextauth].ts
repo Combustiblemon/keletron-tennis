@@ -106,6 +106,7 @@ export const authOptions = (
             if (FCMToken) {
               if (user.FCMTokens) {
                 user.FCMTokens.push(FCMToken);
+                user.FCMTokens = Array.from(new Set(user.FCMTokens));
               } else {
                 user.FCMTokens = [FCMToken];
               }
