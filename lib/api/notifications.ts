@@ -54,15 +54,12 @@ export const sendMessageToTopic = (
 ) => {
   initApp();
 
-  // Send a message to the device corresponding to the provided
-  // registration token.
   messaging()
     .send({
       topic,
       data,
     })
     .then((response) => {
-      // Response is a message ID string.
       console.log('Successfully sent message:', response);
     })
     .catch((error) => {
