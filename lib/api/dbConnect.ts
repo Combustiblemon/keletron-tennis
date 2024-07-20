@@ -1,8 +1,8 @@
 import { existsSync } from 'fs';
 import { writeFile } from 'fs/promises';
-import { MongoClient } from 'mongodb';
 import mongoose, { Mongoose } from 'mongoose';
 import os from 'os';
+import signale from 'signale';
 
 declare global {
   // eslint-disable-next-line vars-on-top, no-var
@@ -26,6 +26,7 @@ if (!MONGODB_URI) {
 }
 
 if (!existsSync(`${os.tmpdir()}/ca.crt`)) {
+  signale.info(`Writing temp ca.crt file to ${os.tmpdir()}/ca.crt`);
   await writeFile(
     `${os.tmpdir()}/ca.crt`,
     Buffer.from(process.env.CA_BASE64 || '', 'base64').toString('utf8')
@@ -70,29 +71,3 @@ async function dbConnect() {
 }
 
 export default dbConnect;
-
-const options = {};
-
-let client;
-// eslint-disable-next-line import/no-mutable-exports
-let mongodbClientPromise: Promise<MongoClient>;
-
-if (process.env.NODE_ENV === 'development') {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  const globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>;
-  };
-
-  if (!globalWithMongo._mongoClientPromise) {
-    client = new MongoClient(MONGODB_URI, options);
-    globalWithMongo._mongoClientPromise = client.connect();
-  }
-  mongodbClientPromise = globalWithMongo._mongoClientPromise;
-} else {
-  // In production mode, it's best to not use a global variable.
-  client = new MongoClient(MONGODB_URI, options);
-  mongodbClientPromise = client.connect();
-}
-
-export { mongodbClientPromise };
