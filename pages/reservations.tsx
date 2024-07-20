@@ -242,7 +242,8 @@ const Reservations = () => {
       setIsSubmitting(false);
 
       if (!res?.success) {
-        console.log(JSON.stringify(res, null, 2));
+        // eslint-disable-next-line no-console
+        console.error(JSON.stringify(res, null, 2));
 
         notifications.show({
           message: 'error creating reservation',
@@ -510,6 +511,10 @@ const Reservations = () => {
         {userReservationData
           .filter((r) =>
             r.datetime.includes(formatDate(new Date()).split(',')[0])
+          )
+          .sort(
+            (a, b) =>
+              new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
           )
           .map((r) => {
             return (

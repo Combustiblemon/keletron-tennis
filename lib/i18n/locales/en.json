@@ -30,12 +30,12 @@
       "register": "Register with Google"
     },
     "login": "Login to your account.",
-    "loginPrompt": "Already have an account? Login.",
+    "loginPrompt": "Don't have an account? Register.",
     "loginSuccess": "Login successful.",
     "logout": "Logout.",
     "logoutSuccess": "Logout successful.",
     "register": "Register a new account.",
-    "registerPrompt": "Don't have an account? Register.",
+    "registerPrompt": "Already have an account? Login.",
     "registerSuccess": "Registration successful."
   },
   "errors": {
