@@ -20,6 +20,10 @@ const handleResponse = async <ReturnDataType, Endpoint extends string>(
   try {
     if (!res.ok) {
       if (res.status === 401) {
+        if (window) {
+          window.location.pathname = '/';
+        }
+
         return {
           success: false,
           errors: [{ message: Errors.UNAUTHORIZED }],

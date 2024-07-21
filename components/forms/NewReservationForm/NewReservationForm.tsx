@@ -104,10 +104,10 @@ const NewReservationForm = ({
         const now = new Date();
 
         const isToday =
-          formatDate(now).split(',')[0] ===
-          formatDate(values.date).split(',')[0];
+          formatDate(now).split('T')[0] ===
+          formatDate(values.date).split('T')[0];
 
-        const timeValid = !isToday || formatDate(now).split(',')[1] < value;
+        const timeValid = !isToday || formatDate(now).split('T')[1] < value;
 
         return !(courtMinTime <= value && value <= courtMaxTime) || !timeValid
           ? 'time error'

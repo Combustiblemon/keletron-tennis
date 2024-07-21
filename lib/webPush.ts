@@ -4,12 +4,13 @@ import {
   deleteToken as deleteFCMToken,
   getMessaging,
   getToken,
+  isSupported,
   Messaging,
   onMessage,
+  Unsubscribe,
 } from 'firebase/messaging';
-import { Session } from 'next-auth';
 
-import { db } from './indexDBUtils';
+import { endpoints } from './api/utils';
 
 const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_KEY || '';
 
@@ -20,20 +21,19 @@ const firebaseConfig = JSON.parse(
 const firebaseCloudMessagingBuilder = () => {
   let firebaseapp: FirebaseApp | null = null;
   let messaging: Messaging | null = null;
+  let stopListening: Unsubscribe | undefined;
 
-  const saveToken = async (token: string, session?: Session) => {
-    if (session?.user?._id) {
-      // save FCM token to user in DB
-    }
-  };
-
-  const deleteTokenFromIndexedDB = async (token: string): Promise<void> => {
-    await db.tokens.delete(token);
+  const saveToken = async (token: string) => {
+    await endpoints.notifications.PUT(token);
   };
 
   return {
     // initializing firebase app
-    async init(session?: Session): Promise<string | null> {
+    async init(): Promise<string | null> {
+      if (!(await isSupported())) {
+        return null;
+      }
+
       // requesting notification permission from browser
       const status = await Notification.requestPermission();
 
@@ -54,21 +54,24 @@ const firebaseCloudMessagingBuilder = () => {
           // getting token from FCM
           const FCMToken = await getToken(messaging, { vapidKey: VAPID_KEY });
 
-          onMessage(messaging, (payload) => {
-            console.log('firebase message received. ', payload);
-
-            const title = payload.data?.title || '';
-
-            navigator.serviceWorker.getRegistrations().then((registrations) => {
-              registrations[0].showNotification(title, {
-                body: payload.data?.body,
-              });
-            });
-          });
-
           if (FCMToken) {
+            onMessage(messaging, (payload) => {
+              // eslint-disable-next-line no-console
+              console.log('firebase message received.', payload);
+
+              const title = payload.data?.title || 'empty notification';
+
+              navigator.serviceWorker
+                .getRegistrations()
+                .then((registrations) => {
+                  registrations[0].showNotification(title, {
+                    body: payload.data?.body,
+                  });
+                });
+            });
+
             // return the FCM token after saving it
-            saveToken(FCMToken, session);
+            saveToken(FCMToken);
 
             return FCMToken;
           }
@@ -83,9 +86,9 @@ const firebaseCloudMessagingBuilder = () => {
     deleteToken(): Promise<boolean> {
       return messaging
         ? (async (): Promise<boolean> => {
-            const FCMToken = await getToken(messaging);
+            // const FCMToken = await getToken(messaging, { vapidKey: VAPID_KEY });
 
-            deleteTokenFromIndexedDB(FCMToken);
+            stopListening?.();
             deleteFCMToken(messaging);
 
             return true;
@@ -93,21 +96,18 @@ const firebaseCloudMessagingBuilder = () => {
         : Promise.resolve(false);
     },
     async getToken() {
-      if (messaging) {
-        return getToken(messaging, { vapidKey: VAPID_KEY });
+      if (!messaging) {
+        return undefined;
       }
 
-      return undefined;
+      return getToken(messaging, { vapidKey: VAPID_KEY });
     },
-    async saveToken(session: Session) {
+    async saveToken() {
       if (!messaging) {
         return;
       }
 
-      await saveToken(
-        await getToken(messaging, { vapidKey: VAPID_KEY }),
-        session
-      );
+      await saveToken(await getToken(messaging, { vapidKey: VAPID_KEY }));
     },
   };
 };
