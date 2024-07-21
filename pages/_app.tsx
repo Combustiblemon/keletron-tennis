@@ -13,6 +13,7 @@ import '@mantine/spotlight/styles.css';
 import '@mantine/nprogress/styles.css';
 
 import { MantineProvider } from '@mantine/core';
+import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { AppProps } from 'next/app';
@@ -37,17 +38,19 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
   return (
     <QueryClientProvider client={queryClient}>
       <MantineProvider theme={theme}>
-        <LanguageProvider defaultLanguage="el">
-          <DateProvider>
-            <SessionProvider session={session}>
-              <Notifications position="bottom-center" zIndex={1000} />
-              <HeadInfo title="Keletron Tennis Academy" />
-              <Navbar>
-                <Component {...pageProps} />
-              </Navbar>
-            </SessionProvider>
-          </DateProvider>
-        </LanguageProvider>
+        <ModalsProvider>
+          <LanguageProvider defaultLanguage="el">
+            <DateProvider>
+              <SessionProvider session={session}>
+                <Notifications position="bottom-center" zIndex={1000} />
+                <HeadInfo title="Keletron Tennis Academy" />
+                <Navbar>
+                  <Component {...pageProps} />
+                </Navbar>
+              </SessionProvider>
+            </DateProvider>
+          </LanguageProvider>
+        </ModalsProvider>
       </MantineProvider>
     </QueryClientProvider>
   );

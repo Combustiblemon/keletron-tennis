@@ -10,6 +10,7 @@ import {
   SimpleGrid,
   Stack,
   Text,
+  Textarea,
 } from '@mantine/core';
 import { DateInput, TimeInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
@@ -76,6 +77,7 @@ const NewReservationForm = ({
       date: new Date(),
       time: '09:00',
       people: [] as string[],
+      notes: '',
     },
     validate: {
       people: (value) => {
@@ -312,10 +314,6 @@ const NewReservationForm = ({
               <TimeInput
                 required
                 inputMode="none"
-                onFocus={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.blur();
-                }}
                 error={newReservation.errors.time}
                 ref={timePickerRef}
                 label="Ώρα"
@@ -340,6 +338,13 @@ const NewReservationForm = ({
             label="Γήπεδο"
             multiple={false}
             withCheckIcon={false}
+          />
+
+          <Textarea
+            placeholder="Σημειώσεις"
+            onChange={(e) => {
+              newReservation.setFieldValue('notes', e.target.value.trim());
+            }}
           />
 
           <Stack w="100%" gap="sm">

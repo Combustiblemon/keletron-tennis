@@ -93,6 +93,7 @@ const Reservations = () => {
           .map((r) => {
             return (
               <Reservation
+                editable
                 key={`${r._id}`}
                 reservation={r}
                 courtLabel={

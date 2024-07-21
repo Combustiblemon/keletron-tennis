@@ -24,7 +24,11 @@ export const CourtValidator = z.object({
 
 export const CourtValidatorPartial = CourtValidator.deepPartial();
 
-export type CourtType = mongoose.Document & z.infer<typeof CourtValidator>;
+export type CourtDataType = z.infer<typeof CourtValidator> & {
+  _id: string;
+};
+
+export type CourtType = mongoose.Document & CourtDataType;
 
 export const CourtSchema = new mongoose.Schema<CourtType>({
   name: {

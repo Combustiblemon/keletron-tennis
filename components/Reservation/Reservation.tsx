@@ -9,15 +9,19 @@ import {
   Text,
 } from '@mantine/core';
 import { IconUser } from '@tabler/icons-react';
-import React from 'react';
+import React, { useState } from 'react';
 
-import { ReservationType } from '@/models/Reservation';
+import { formatDate } from '@/lib/common';
+import { ReservationDataType } from '@/models/Reservation';
+
+import ReservationDetails from './ReservationDetails';
 
 export interface ReservationProps {
   courtLabel: string;
-  reservation: ReservationType;
+  reservation: ReservationDataType;
   bg?: StyleProp<DefaultMantineColor>;
   onClick?: () => void | Promise<void>;
+  editable?: boolean;
 }
 
 const textOptions = {
@@ -29,24 +33,12 @@ const Reservation = ({
   reservation: r,
   bg = 'teal',
   onClick,
+  editable,
 }: ReservationProps) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const date = new Date(r.datetime);
-
-  const formatedDate = date
-    .toLocaleDateString('el-GR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      timeZone: 'Europe/Athens',
-    })
-    .substring(0, 5);
-
-  const formatedTime = date.toLocaleTimeString('el-GR', {
-    minute: '2-digit',
-    hour: '2-digit',
-    hour12: false,
-    timeZone: 'Europe/Athens',
-  });
+  const formatedDate = formatDate(new Date(r.datetime)).split('T');
 
   let timeUntil = '';
   const now = new Date();
@@ -62,13 +54,35 @@ const Reservation = ({
     timeUntil = `${days ? `${days}ημ ` : ''}${days ? `${hours % 24}ωρ ` : hours ? `${hours}ωρ ` : ''}${minutes}λ`;
   }
 
+  const openDetailsModal = () => {
+    setIsModalOpen(true);
+  };
+
   return (
-    <Card onClick={onClick} withBorder bg={bg} radius="lg">
+    <Card
+      onClick={() => {
+        onClick?.();
+        openDetailsModal();
+      }}
+      withBorder
+      bg={bg}
+      radius="lg"
+    >
+      <ReservationDetails
+        courtLabel={courtLabel}
+        editable={editable}
+        close={() => {
+          setIsModalOpen(false);
+        }}
+        opened={isModalOpen}
+        reservation={r}
+      />
+
       <CardSection p="sm">
         <Stack gap="md">
           <Group w="100%" justify="space-between">
             <Text {...textOptions}>{courtLabel}</Text>
-            <Text {...textOptions}>{formatedDate}</Text>
+            <Text {...textOptions}>{formatedDate[0]}</Text>
           </Group>
           <Group w="100%" justify="space-between">
             <Group gap={0} align="flex-end">
@@ -81,7 +95,7 @@ const Reservation = ({
               </Text>
             </Group>
             <Text {...textOptions}>
-              {formatedTime} {timeUntil ? `(${timeUntil})` : ''}
+              {formatedDate[1]} {timeUntil ? `(${timeUntil})` : ''}
             </Text>
           </Group>
         </Stack>

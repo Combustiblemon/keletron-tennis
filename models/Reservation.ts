@@ -16,12 +16,17 @@ export const ReservationValidator = z.object({
 export const ReservationValidatorPartial = ReservationValidator.deepPartial();
 
 type ReservationSanitized = Pick<
+  // eslint-disable-next-line no-use-before-define
   ReservationType,
   'type' | 'court' | 'datetime' | 'duration'
 >;
 
+export type ReservationDataType = z.infer<typeof ReservationValidator> & {
+  _id: string;
+};
+
 export type ReservationType = mongoose.Document &
-  z.infer<typeof ReservationValidator> & {
+  ReservationDataType & {
     sanitize: () => ReservationSanitized;
   };
 
