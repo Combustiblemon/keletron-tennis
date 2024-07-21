@@ -24,18 +24,17 @@ const firebaseApp = initializeApp(firebaseConfig);
 const messaging = getMessaging(firebaseApp);
 
 onBackgroundMessage(messaging, (payload) => {
+  // eslint-disable-next-line no-console
   console.log(
     '[firebase-messaging-sw.js] Received background message ',
     payload
   );
 
-  if (payload.data?.notification) {
-    // Customize notification here
-    const notificationTitle = payload.data?.title;
-    const notificationOptions = {
-      body: payload.data?.body,
-    };
+  // Customize notification here
+  const notificationTitle = payload.data?.title || '';
+  const notificationOptions = {
+    body: payload.data?.body,
+  };
 
-    self.registration.showNotification(notificationTitle, notificationOptions);
-  }
+  self.registration.showNotification(notificationTitle, notificationOptions);
 });

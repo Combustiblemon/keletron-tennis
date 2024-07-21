@@ -36,7 +36,7 @@ export const addMinutesToTime = (time: string, minutes: number) =>
 export const formatDate = (date: Date) =>
   `${date
     .toLocaleDateString('en-CA', { timeZone: 'Europe/Athens' })
-    .substring(0, 10)},${date
+    .substring(0, 10)}T${date
     .toLocaleTimeString('el', {
       hour: '2-digit',
       minute: '2-digit',
@@ -59,10 +59,10 @@ export const isReservationTimeFree = (
 
   return courtReservations
     .filter((r) => {
-      return r.datetime.split(',')[0] === datetime.split(',')[0];
+      return r.datetime.split('T')[0] === datetime.split('T')[0];
     })
     .every((r) => {
-      const rstartTime = r.datetime.split(',')[1];
+      const rstartTime = r.datetime.split('T')[1];
       const rendTime = addMinutesToTime(rstartTime, r.duration);
 
       return (

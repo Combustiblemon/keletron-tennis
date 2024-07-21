@@ -173,8 +173,8 @@ const NewReservationForm = ({
   const handleNewReservationSubmit = newReservation.onSubmit(async (values) => {
     setIsSubmitting(true);
 
-    const date = formatDate(values.date).split(',')[0];
-    const datetime = `${date},${values.time}`;
+    const date = formatDate(values.date).split('T')[0];
+    const datetime = `${date}T${values.time}`;
 
     const isReservationValid = isReservationTimeFree(
       reservationData.filter(

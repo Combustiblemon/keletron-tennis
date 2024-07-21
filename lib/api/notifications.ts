@@ -1,5 +1,6 @@
 import { credential, messaging } from 'firebase-admin';
-import { initializeApp } from 'firebase-admin/app';
+import { getApp, initializeApp } from 'firebase-admin/app';
+import signale from 'signale';
 
 export enum Topics {
   Admin = 'yoORfs84Inuo0nX4uBQKB',
@@ -15,14 +16,22 @@ const topicMap = {
 let app: boolean = false;
 
 const initApp = () => {
-  if (!app) {
+  try {
+    if (!app || !getApp()) {
+      app = true;
+      initializeApp({
+        credential: credential.cert(
+          JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS || '{}')
+        ),
+      });
+    }
+  } catch {
+    app = true;
     initializeApp({
       credential: credential.cert(
         JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS || '{}')
       ),
     });
-
-    app = true;
   }
 };
 
@@ -41,10 +50,10 @@ export const sendMessageToTokens = (
     })
     .then((response) => {
       // Response is a message ID string.
-      console.log('Successfully sent message:', response);
+      signale.info('Successfully sent message:', response);
     })
     .catch((error) => {
-      console.error('Error sending message:', error);
+      signale.error('Error sending message:', error);
     });
 };
 
@@ -60,10 +69,10 @@ export const sendMessageToTopic = (
       data,
     })
     .then((response) => {
-      console.log('Successfully sent message:', response);
+      signale.info('Successfully sent message:', response);
     })
     .catch((error) => {
-      console.error('Error sending message:', error);
+      signale.error('Error sending message:', error);
     });
 };
 
@@ -77,7 +86,7 @@ export const subscribeToTopic = async (
     const res = await messaging().subscribeToTopic(tokens, topic);
 
     if (res.errors.length > 0) {
-      console.error(res.errors);
+      signale.error(res.errors);
     }
   } else {
     const res = await Promise.allSettled(
@@ -105,7 +114,7 @@ export const subscribeToTopic = async (
         return [];
       });
 
-      console.error(JSON.stringify(errors, null, 2));
+      signale.error(JSON.stringify(errors, null, 2));
     }
   }
 };
@@ -120,7 +129,7 @@ export const unsubscribeFromTopic = async (
     const res = await messaging().subscribeToTopic(tokens, topic);
 
     if (res.errors.length > 0) {
-      console.error(res.errors);
+      signale.error(res.errors);
     }
   } else {
     const res = await Promise.allSettled(
@@ -148,7 +157,7 @@ export const unsubscribeFromTopic = async (
         return [];
       });
 
-      console.error(JSON.stringify(errors, null, 2));
+      signale.error(JSON.stringify(errors, null, 2));
     }
   }
 };

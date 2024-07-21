@@ -59,12 +59,12 @@ export default async function handler(
           $and: [
             {
               datetime: {
-                $gt: `${lookupDate.split(',')[0]},00:00`,
+                $gt: `${lookupDate.split('T')[0]}T00:00`,
               },
             },
             {
               datetime: {
-                $lt: `${(lookupDate2 || lookupDate).split(',')[0]},23:59`,
+                $lt: `${(lookupDate2 || lookupDate).split('T')[0]}T23:59`,
               },
             },
           ],
@@ -192,7 +192,7 @@ export default async function handler(
 
         sendMessageToTopic(Topics.Admin, {
           title: 'Νέα κράτηση',
-          body: `${reservation.datetime.split(',')[0]} - ${reservation.datetime.split(',')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.name || ''}`,
+          body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.name || ''}`,
         });
 
         res.status(201).json(onSuccess(reservation, 'reservations', 'POST'));

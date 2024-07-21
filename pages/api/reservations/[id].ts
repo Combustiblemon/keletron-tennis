@@ -34,9 +34,9 @@ export default async function handler(
             );
         }
 
-        const ids = (id as string).split(',');
+        const ids = Array.isArray(id) ? id : id?.split(',');
 
-        if (!ids.length) {
+        if (!ids || !ids.length) {
           return res.status(200).json(onSuccess([], 'reservations/id', 'GET'));
         }
 
