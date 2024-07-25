@@ -10,45 +10,133 @@ import {
   Text,
   Textarea,
 } from '@mantine/core';
+import { DateInput, TimeInput } from '@mantine/dates';
+import { useForm } from '@mantine/form';
 import { modals } from '@mantine/modals';
+import { notifications } from '@mantine/notifications';
 import {
   IconCancel,
   IconCheck,
+  IconClock,
   IconPencil,
   IconTrash,
   IconUserPlus,
 } from '@tabler/icons-react';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { endpoints } from '@/lib/api/utils';
 import { addMinutesToTime, formatDate } from '@/lib/common';
+import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
 
 const iconStyle = { width: rem(16), height: rem(16) };
 
-export interface ReservationDetailsProps {
+const updateDatetime = (datetime: string, date?: string, time?: string) => {
+  let res = datetime;
+
+  if (time) {
+    res = `${res.split('T')[0]}T${time}`;
+  }
+
+  if (date) {
+    res = `${date}T${datetime.split('T')[1]}`;
+  }
+
+  return res;
+};
+
+export type ReservationDetailsProps = {
   reservation: ReservationDataType;
   opened: boolean;
   close: () => void;
+  court: CourtDataType;
   editable?: boolean;
-  courtLabel: string;
-}
+};
 
 const ReservationDetails = ({
-  reservation: r,
+  reservation,
   opened,
   close,
   editable,
-  courtLabel,
+  court,
 }: ReservationDetailsProps) => {
   const [editState, setEditState] = useState(false);
-  const date = new Date(r.datetime);
-  const formatedTime = formatDate(date).split('T')[1];
   const [isLoading, setIsLoading] = useState(false);
+
+  const updatedReservation = useForm({
+    mode: 'uncontrolled',
+    initialValues: {
+      ...reservation,
+    },
+    validate: {
+      people: (value) => {
+        const errors: number[] = [];
+
+        value.forEach((p, index) => {
+          if (!p) {
+            errors.push(index);
+          }
+        });
+
+        return (
+          (value.length <= 0 && 'people error no people') ||
+          (!!errors.length && errors)
+        );
+      },
+      datetime: (value) => {
+        const courtMinTime = court.reservationsInfo.endTime;
+        const courtMaxTime = court.reservationsInfo.startTime;
+
+        const now = new Date();
+
+        const isToday = formatDate(now).split('T')[0] === value.split('T')[0];
+
+        const timeValid =
+          !isToday || formatDate(now).split('T')[1] <= value.split('T')[1];
+
+        return !(courtMinTime <= value && value <= courtMaxTime) || !timeValid
+          ? 'time error'
+          : false;
+      },
+    },
+  });
+
+  const date = new Date(updatedReservation.getValues().datetime);
+  const formatedTime = formatDate(date).split('T')[1];
 
   const deleteReservation = async () => {
     setIsLoading(true);
-    await endpoints.reservations.DELETE([r._id]);
+    await endpoints.reservations.DELETE([updatedReservation.getValues()._id]);
+    setIsLoading(false);
+  };
+
+  const updateReservation = async () => {
+    setIsLoading(true);
+    try {
+      const res = await endpoints.reservations.PUT(
+        updatedReservation.getValues()._id,
+        updatedReservation.getValues()
+      );
+
+      if (res?.success) {
+        notifications.show({
+          message: 'Reservation updated',
+          color: 'green',
+        });
+      } else {
+        notifications.show({
+          message: res?.errors[0].message,
+          color: 'red',
+        });
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(err);
+      notifications.show({
+        message: 'An unexpected error occured',
+        color: 'red',
+      });
+    }
     setIsLoading(false);
   };
 
@@ -62,6 +150,20 @@ const ReservationDetails = ({
       onConfirm: () => deleteReservation,
     });
   };
+
+  const timePickerRef = useRef<HTMLInputElement>(null);
+
+  const timePickerControl = (
+    <ActionIcon
+      variant="subtle"
+      color="gray"
+      onClick={() => {
+        timePickerRef.current?.showPicker();
+      }}
+    >
+      <IconClock style={{ width: rem(16), height: rem(16) }} stroke={1.5} />
+    </ActionIcon>
+  );
 
   return (
     <Modal
@@ -82,8 +184,12 @@ const ReservationDetails = ({
         <Group gap="sm">
           {editable && (
             <ActionIcon
-              onClick={() => {
-                setEditState(true);
+              onClick={async () => {
+                if (editState) {
+                  updateReservation();
+                }
+
+                setEditState(!editState);
               }}
               color="gray"
             >
@@ -107,38 +213,85 @@ const ReservationDetails = ({
       />
       <Paper w="100%" p="md" data-autofocus>
         <Stack w="100%" gap="md">
-          <Text>
-            {date.toLocaleDateString('el-GR', {
-              timeZone: 'Europe/Athens',
-              weekday: 'long',
-            })}{' '}
-            {date.toLocaleDateString('el-GR', {
-              month: '2-digit',
-              day: 'numeric',
-              timeZone: 'Europe/Athens',
-            })}{' '}
-            {formatedTime} - {addMinutesToTime(formatedTime, r.duration)}
-          </Text>
-          <Input disabled defaultValue={courtLabel} placeholder="Γήπεδο" />
+          <DateInput
+            disabled={!editState}
+            inputMode="none"
+            value={new Date(updatedReservation.getValues().datetime)}
+            onChange={(value): void => {
+              if (value) {
+                updatedReservation.setFieldValue(
+                  'datetime',
+                  updateDatetime(
+                    updatedReservation.getValues().datetime,
+                    value.toUTCString().substring(0, 10)
+                  )
+                );
+              }
+            }}
+            minDate={new Date()}
+            required
+            label="Ημερομηνία"
+            error={updatedReservation.errors.datetime}
+          />
+          <Group align="flex-end">
+            <TimeInput
+              disabled={!editState}
+              required
+              inputMode="none"
+              error={updatedReservation.errors.datetime}
+              ref={timePickerRef}
+              label="Ώρα"
+              defaultValue="09:00"
+              rightSection={timePickerControl}
+              onChange={(e) => {
+                if (e.target.value.trim()) {
+                  updatedReservation.setFieldValue(
+                    'datetime',
+                    updateDatetime(
+                      updatedReservation.getValues().datetime,
+                      undefined,
+                      e.target.value.trim()
+                    )
+                  );
+                }
+              }}
+            />
+            <Text pb="6px">
+              -&nbsp;&nbsp;&nbsp;
+              {addMinutesToTime(
+                formatedTime,
+                updatedReservation.getValues().duration
+              )}
+            </Text>
+          </Group>
+          <Input disabled defaultValue={court.name} placeholder="Γήπεδο" />
           <Textarea
             disabled={!editState}
             placeholder="Σημειώσεις"
-            defaultValue={r.notes}
+            defaultValue={reservation.notes}
+            onChange={(e) => {
+              updatedReservation.setFieldValue('notes', e.target.value.trim());
+            }}
           />
           <Stack w="100%" gap="sm">
             <Group w="100%" justify="space-between">
               <Text>Άτομα</Text>
               {editState && (
                 <ActionIcon
-                  disabled={r.people.length >= 4}
+                  disabled={
+                    updatedReservation.getValues().people.length >= 4 ||
+                    !editState
+                  }
                   variant="subtle"
                   color="dark"
                   onClick={() => {
-                    // const { people } = r;
-                    // if (people.length >= 4) {
-                    //   return;
-                    // }
-                    // newReservation.setFieldValue('people', [...people, '']);
+                    const { people } = updatedReservation.getValues();
+
+                    if (people.length >= 4) {
+                      return;
+                    }
+
+                    updatedReservation.setFieldValue('people', [...people, '']);
                   }}
                 >
                   <IconUserPlus style={{ width: rem(16), height: rem(16) }} />
@@ -146,16 +299,7 @@ const ReservationDetails = ({
               )}
             </Group>
             <Stack gap="sm" w="100%">
-              {r.people.map((person, index) => {
-                let error: string | undefined;
-
-                // if (
-                //   Array.isArray(newReservation.errors.people) &&
-                //   newReservation.errors.people.includes(index)
-                // ) {
-                //   error = 'please add person name';
-                // }
-
+              {updatedReservation.getValues().people.map((person, index) => {
                 return (
                   <Group
                     w="100%"
@@ -166,11 +310,24 @@ const ReservationDetails = ({
                   >
                     <Input
                       defaultValue={person}
-                      // onChange={(e) => {
-                      //   // updatePeople(index, e.target.value);
-                      // }}
-                      error={error}
+                      onChange={(e) => {
+                        updatedReservation.setFieldValue(
+                          'people',
+                          updatedReservation.getValues().people.map((p, i) => {
+                            if (i === index) {
+                              return e.target.value.trim();
+                            }
+
+                            return p;
+                          })
+                        );
+                      }}
                       disabled={!editState}
+                      error={
+                        Array.isArray(updatedReservation.errors.people)
+                          ? updatedReservation.errors.people.includes(index)
+                          : ''
+                      }
                     />
                     {editState && (
                       <ActionIcon
@@ -178,12 +335,12 @@ const ReservationDetails = ({
                         variant="subtle"
                         color="red"
                         onClick={() => {
-                          // newReservation.setFieldValue(
-                          //   'people',
-                          //   newReservation
-                          //     .getValues()
-                          //     .people.filter((_, i) => i !== index)
-                          // );
+                          updatedReservation.setFieldValue(
+                            'people',
+                            updatedReservation
+                              .getValues()
+                              .people.filter((_, i) => i !== index)
+                          );
                         }}
                       >
                         <IconCancel
@@ -195,13 +352,13 @@ const ReservationDetails = ({
                 );
               })}
             </Stack>
-            {/* {newReservation.errors.people && (
+            {updatedReservation.errors.people && (
               <Input.Error>
-                {Array.isArray(newReservation.errors.people)
+                {Array.isArray(updatedReservation.errors.people)
                   ? 'please add all names'
-                  : newReservation.errors.people}
+                  : updatedReservation.errors.people}
               </Input.Error>
-            )} */}
+            )}
           </Stack>
         </Stack>
       </Paper>

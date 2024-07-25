@@ -2,9 +2,12 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
 import { Errors, onError, onSuccess } from '@/lib/api/common';
+import { sendMessageToTopic, Topics } from '@/lib/api/notifications';
+import { isReservationTimeFree } from '@/lib/common';
+import CourtModel from '@/models/Court';
 
 import dbConnect from '../../../lib/api/dbConnect';
-import Reservation, {
+import ReservationModel, {
   ReservationValidatorPartial,
 } from '../../../models/Reservation';
 import { authUserHelpers } from '../auth/[...nextauth]';
@@ -40,7 +43,7 @@ export default async function handler(
           return res.status(200).json(onSuccess([], 'reservations/id', 'GET'));
         }
 
-        const reservations = await Reservation.find({
+        const reservations = await ReservationModel.find({
           id: { $in: ids },
         });
 
@@ -93,7 +96,16 @@ export default async function handler(
             .json(onError(error as Error, 'reservations/id', 'PUT'));
         }
 
-        const reservation = await Reservation.findOne({ _id: id });
+        const reservation = await ReservationModel.findOne({ _id: id });
+        const court = await CourtModel.findOne({ _id: reservation?.court });
+
+        if (!court) {
+          return res.status(404).json(
+            onError(new Error('No court found'), 'reservations/id', 'PUT', {
+              _id: id,
+            })
+          );
+        }
 
         if (!reservation) {
           return res
@@ -108,15 +120,42 @@ export default async function handler(
             );
         }
 
-        if (reservation.owner !== user.id && isAdmin) {
+        if (reservation.owner !== user.id && !isAdmin) {
           return res
             .status(401)
             .json(onError(new Error('Unauthorized'), 'reservations/id', 'PUT'));
         }
 
-        // TODO: send notification to the admins if the reservation is edited
+        // check if the new reservation conflicts with an existing one
+        if (data.datetime || data.duration) {
+          const courtReservations = await ReservationModel.find({
+            datetime: {
+              $regex: `^${(data.datetime || reservation.datetime).split('T')[0]}`,
+            },
+            court: reservation.court,
+          });
+
+          if (
+            !isReservationTimeFree(
+              courtReservations,
+              data.datetime || reservation.datetime,
+              data.duration || reservation.duration
+            )
+          ) {
+            return res.status(400).json(
+              onError(new Error('time_conflict'), 'reservations', 'POST', {
+                _id: data.court,
+              })
+            );
+          }
+        }
 
         reservation.set(data);
+
+        sendMessageToTopic(Topics.Admin, {
+          title: 'Αλλαγή κράτησης',
+          body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.name || ''}`,
+        });
 
         await reservation.save();
 

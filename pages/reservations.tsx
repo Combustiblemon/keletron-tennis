@@ -53,6 +53,11 @@ const Reservations = () => {
     [userReservations]
   );
 
+  const courtData = useMemo(
+    () => (courts.data?.success ? courts.data?.data : []),
+    [courts]
+  );
+
   return (
     <Stack gap="lg">
       <LoadingOverlay
@@ -91,16 +96,16 @@ const Reservations = () => {
               new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
           )
           .map((r) => {
+            const court = courtData.find((c) => c._id === r.court);
             return (
-              <Reservation
-                editable
-                key={`${r._id}`}
-                reservation={r}
-                courtLabel={
-                  courtsSelectionData.find((c) => c.value === r.court)?.label ||
-                  ''
-                }
-              />
+              court && (
+                <Reservation
+                  editable
+                  key={`${r._id}`}
+                  reservation={r}
+                  court={court}
+                />
+              )
             );
           })}
       </Stack>

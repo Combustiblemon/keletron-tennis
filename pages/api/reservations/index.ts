@@ -166,7 +166,7 @@ export default async function handler(
         }
 
         const courtReservations = await ReservationModel.find({
-          datetime: { $regex: `^${data.datetime.split(',')[0]}` },
+          datetime: { $regex: `^${data.datetime.split('T')[0]}` },
           court: court._id,
         });
 

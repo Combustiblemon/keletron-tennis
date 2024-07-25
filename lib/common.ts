@@ -54,24 +54,24 @@ export const isReservationTimeFree = (
     return true;
   }
 
-  const startTime = datetime.split(',')[1];
+  const startTime = datetime.split('T')[1];
   const endTime = addMinutesToTime(startTime, duration);
 
-  return courtReservations
+  return !courtReservations
     .filter((r) => {
       return r.datetime.split('T')[0] === datetime.split('T')[0];
     })
-    .every((r) => {
+    .some((r) => {
       const rstartTime = r.datetime.split('T')[1];
       const rendTime = addMinutesToTime(rstartTime, r.duration);
 
       return (
         // if start time is within the reservation time
-        !(rstartTime < startTime && startTime < rendTime) ||
+        (rstartTime < startTime && startTime < rendTime) ||
         // or end time is within the reservation time
-        !(rstartTime < endTime && endTime < rendTime) ||
+        (rstartTime < endTime && endTime < rendTime) ||
         // or if the times are the same
-        !(rstartTime === startTime && r.duration === duration)
+        (rstartTime === startTime && r.duration === duration)
       );
     });
 };

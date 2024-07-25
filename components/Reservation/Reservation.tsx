@@ -12,24 +12,25 @@ import { IconUser } from '@tabler/icons-react';
 import React, { useState } from 'react';
 
 import { formatDate } from '@/lib/common';
+import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
 
 import ReservationDetails from './ReservationDetails';
 
-export interface ReservationProps {
-  courtLabel: string;
+export type ReservationProps = {
+  court: CourtDataType;
   reservation: ReservationDataType;
   bg?: StyleProp<DefaultMantineColor>;
   onClick?: () => void | Promise<void>;
   editable?: boolean;
-}
+};
 
 const textOptions = {
   c: 'white',
 };
 
 const Reservation = ({
-  courtLabel,
+  court,
   reservation: r,
   bg = 'teal',
   onClick,
@@ -69,8 +70,8 @@ const Reservation = ({
       radius="lg"
     >
       <ReservationDetails
-        courtLabel={courtLabel}
-        editable={editable}
+        court={court}
+        editable={editable as true}
         close={() => {
           setIsModalOpen(false);
         }}
@@ -81,7 +82,7 @@ const Reservation = ({
       <CardSection p="sm">
         <Stack gap="md">
           <Group w="100%" justify="space-between">
-            <Text {...textOptions}>{courtLabel}</Text>
+            <Text {...textOptions}>{court.name}</Text>
             <Text {...textOptions}>{formatedDate[0]}</Text>
           </Group>
           <Group w="100%" justify="space-between">

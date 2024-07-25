@@ -28,7 +28,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { APIResponse } from '@/lib/api/responseTypes';
 import { endpoints } from '@/lib/api/utils';
 import { formatDate, isReservationTimeFree } from '@/lib/common';
-import { CourtType } from '@/models/Court';
+import { CourtDataType } from '@/models/Court';
 
 const DEFAULT_RESERVATION_DURATION = 90;
 
@@ -37,7 +37,7 @@ const fetchReservations = async (date?: string) => {
 };
 
 const getCourtTimes = (
-  courts: APIResponse<CourtType[], 'courts'> | undefined,
+  courts: APIResponse<CourtDataType[], 'courts'> | undefined,
   selectedCourt: string
 ) => {
   if (courts && !courts.errors) {
@@ -54,7 +54,7 @@ const formId = 'new-reservation';
 
 export interface NewReservationFormProps {
   sessionData: Session | null;
-  courtData?: APIResponse<CourtType[], 'courts'>;
+  courtData?: APIResponse<CourtDataType[], 'courts'>;
   opened: boolean;
   onClose: () => void;
   courtsSelectionData: Array<{ label: string; value: string }>;
@@ -73,7 +73,7 @@ const NewReservationForm = ({
   const newReservation = useForm({
     mode: 'uncontrolled',
     initialValues: {
-      court: '',
+      court: courtData?.success ? courtData.data[0]._id : '',
       date: new Date(),
       time: '09:00',
       people: [] as string[],
@@ -329,7 +329,7 @@ const NewReservationForm = ({
           <Select
             error={newReservation.errors.court}
             data={courtsSelectionData}
-            value={newReservation.getValues().court}
+            defaultValue={courtData?.success ? courtData.data[0]._id : ''}
             onChange={(value) => {
               newReservation.setValues({
                 court: value || '',
@@ -345,6 +345,7 @@ const NewReservationForm = ({
             onChange={(e) => {
               newReservation.setFieldValue('notes', e.target.value.trim());
             }}
+            error={newReservation.errors.notes}
           />
 
           <Stack w="100%" gap="sm">
