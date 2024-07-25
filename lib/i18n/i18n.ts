@@ -39,7 +39,7 @@ export const getErrorTranslation = (error: Errors, language: Language) => {
 };
 
 export const useTranslation = () => {
-  const { language } = useLanguage();
+  const [language] = useLanguage();
 
   return {
     t: (key: LocaleKeys) => i18n(key, language),

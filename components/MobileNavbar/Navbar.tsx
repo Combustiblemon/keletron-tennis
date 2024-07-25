@@ -3,18 +3,23 @@ import {
   Burger,
   Divider,
   Group,
-  UnstyledButton,
+  rem,
+  Select,
+  Stack,
+  Switch,
+  Text,
+  useMantineColorScheme,
+  useMantineTheme,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { IconMoonStars, IconSun } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useMemo } from 'react';
 
+import { Language, useLanguage } from '@/context/LanguageContext';
 import { logout } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
-
-import classes from './Navbar.module.css';
 
 export type NavItem =
   | {
@@ -30,48 +35,47 @@ export type NavItem =
   | 'divider'
   | null;
 
-function getNavItems(
-  items: Array<NavItem>,
-  toggle: () => void,
-  router: AppRouterInstance
-) {
-  return items.map((item, index) => {
-    if (!item) {
-      return undefined;
-    }
-
-    if (item === 'divider') {
-      // eslint-disable-next-line react/no-array-index-key
-      return <Divider key={`divider-${index}`} />;
-    }
-
-    return (
-      <UnstyledButton
-        key={item.href || item.title}
-        className={classes.control}
-        onClick={() => {
-          toggle();
-
-          if (item.onClick) {
-            item.onClick();
-            return;
-          }
-
-          if (window.location.pathname === item.href) return;
-          router.push(item.href);
-        }}
-      >
-        {item.title}
-      </UnstyledButton>
-    );
-  });
-}
-
 export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const [opened, { toggle }] = useDisclosure();
   const router = useRouter();
   const { status } = useSession();
   const { t } = useTranslation();
+  const [lang, setLang] = useLanguage();
+  const { setColorScheme, colorScheme } = useMantineColorScheme();
+  const theme = useMantineTheme();
+
+  function getNavItems(items: Array<NavItem>) {
+    return items.map((item, index) => {
+      if (!item) {
+        return undefined;
+      }
+
+      if (item === 'divider') {
+        // eslint-disable-next-line react/no-array-index-key
+        return <Divider key={`divider-${index}`} />;
+      }
+
+      return (
+        <Text
+          key={item.href || item.title}
+          onClick={() => {
+            toggle();
+
+            if (item.onClick) {
+              item.onClick();
+              return;
+            }
+
+            if (window.location.pathname === item.href) return;
+            router.push(item.href);
+          }}
+          pl="sm"
+        >
+          {item.title}
+        </Text>
+      );
+    });
+  }
 
   const navItems: NavItem[] = useMemo(
     () => [
@@ -100,8 +104,25 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
     [router, status, t]
   );
 
+  const sunIcon = (
+    <IconSun
+      style={{ width: rem(16), height: rem(16) }}
+      stroke={2.5}
+      color={theme.colors.yellow[4]}
+    />
+  );
+
+  const moonIcon = (
+    <IconMoonStars
+      style={{ width: rem(16), height: rem(16) }}
+      stroke={2.5}
+      color={theme.colors.blue[6]}
+    />
+  );
+
   return (
     <AppShell
+      suppressHydrationWarning
       styles={{
         navbar: {
           borderWidth: 2,
@@ -123,14 +144,83 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
           <Group justify="space-between" style={{ flex: 1 }}>
             <Group ml="xl" gap={0} visibleFrom="sm">
-              {getNavItems(navItems, toggle, router)}
+              {getNavItems(navItems)}
             </Group>
+          </Group>
+          <Group visibleFrom="sm" gap="lg">
+            <Select
+              visibleFrom="sm"
+              value={lang}
+              styles={{
+                wrapper: {
+                  width: '40px',
+                },
+                section: {
+                  display: 'none',
+                },
+                input: {
+                  padding: '10px',
+                },
+              }}
+              data={[
+                { value: 'en', label: '🇬🇧' },
+                { value: 'el', label: '🇬🇷' },
+              ]}
+              onChange={(v) => {
+                setLang(v as Language);
+              }}
+              comboboxProps={{ width: 80, position: 'bottom-start' }}
+              allowDeselect={false}
+            />
+            <Switch
+              size="md"
+              color="dark.4"
+              onLabel={sunIcon}
+              offLabel={moonIcon}
+            />
           </Group>
         </Group>
       </AppShell.Header>
 
       <AppShell.Navbar py="md" px={4}>
-        {getNavItems(navItems, toggle, router)}
+        <Stack justify="space-between" h="100%">
+          <Stack gap="xs">{getNavItems(navItems)}</Stack>
+          <Group w="100%" justify="center" gap="lg">
+            <Select
+              value={lang}
+              styles={{
+                wrapper: {
+                  width: '40px',
+                },
+                section: {
+                  display: 'none',
+                },
+                input: {
+                  padding: '10px',
+                },
+              }}
+              data={[
+                { value: 'en', label: '🇬🇧' },
+                { value: 'el', label: '🇬🇷' },
+              ]}
+              onChange={(v) => {
+                setLang(v as Language);
+              }}
+              comboboxProps={{ width: 80, position: 'bottom-start' }}
+              allowDeselect={false}
+            />
+            <Switch
+              size="md"
+              color="dark.4"
+              onLabel={sunIcon}
+              offLabel={moonIcon}
+              checked={colorScheme === 'dark'}
+              onChange={() =>
+                setColorScheme(colorScheme === 'light' ? 'dark' : 'light')
+              }
+            />
+          </Group>
+        </Stack>
       </AppShell.Navbar>
 
       <AppShell.Main>{children}</AppShell.Main>

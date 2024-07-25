@@ -41,7 +41,7 @@
     "login": "Login to your account.",
     "loginPrompt": "Don't have an account? Register.",
     "loginSuccess": "Login successful.",
-    "logout": "Logout.",
+    "logout": "Logout",
     "logoutSuccess": "Logout successful.",
     "register": "Register a new account.",
     "registerPrompt": "Already have an account? Login.",

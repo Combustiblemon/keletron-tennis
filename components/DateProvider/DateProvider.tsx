@@ -7,7 +7,7 @@ import React from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 
 const DateProvider = ({ children }: { children: React.ReactNode }) => {
-  const { language } = useLanguage();
+  const [language] = useLanguage();
 
   return (
     <DatesProvider
