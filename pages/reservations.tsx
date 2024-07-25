@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import NewReservationForm from '@/components/forms/NewReservationForm/NewReservationForm';
 import Reservation from '@/components/Reservation/Reservation';
 import { endpoints } from '@/lib/api/utils';
+import { useTranslation } from '@/lib/i18n/i18n';
 
 const fetchCourts = async () => {
   return endpoints.courts(undefined).GET();
@@ -14,6 +15,7 @@ const fetchCourts = async () => {
 
 const Reservations = () => {
   const session = useSession();
+  const { t } = useTranslation();
 
   const [isLoading, setIsLoading] = useState(true);
   const [opened, { open, close }] = useDisclosure(false);
@@ -75,14 +77,14 @@ const Reservations = () => {
       />
 
       <Group justify="space-between">
-        <Text>Reservations</Text>
+        <Text>{t('reservations.title')}</Text>
         <Button variant="default" onClick={open}>
-          New Reservation
+          {t('reservations.newReservation')}
         </Button>
       </Group>
 
       <Stack>
-        <Text>Upcoming reservations:</Text>
+        <Text>{t('reservations.upcomingReservations')}</Text>
         {userReservationData
           .filter((r) => {
             return (

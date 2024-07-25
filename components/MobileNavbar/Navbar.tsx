@@ -12,6 +12,7 @@ import { useSession } from 'next-auth/react';
 import { useMemo } from 'react';
 
 import { logout } from '@/lib/common';
+import { useTranslation } from '@/lib/i18n/i18n';
 
 import classes from './Navbar.module.css';
 
@@ -70,32 +71,33 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const [opened, { toggle }] = useDisclosure();
   const router = useRouter();
   const { status } = useSession();
+  const { t } = useTranslation();
 
   const navItems: NavItem[] = useMemo(
     () => [
-      { title: 'Home', href: '/' },
+      { title: t('Navbar.home'), href: '/' },
       ...[
         status === 'authenticated'
           ? {
-              title: 'Reservations',
+              title: t('Navbar.reservations'),
               href: '/reservations',
             }
           : null,
       ],
       'divider',
-      { title: 'Settings', href: '/settings' },
-      { title: 'About', href: '/about' },
-      { title: 'Contact', href: '/contact' },
+      { title: t('Navbar.settings'), href: '/settings' },
+      // { title: 'About', href: '/about' },
+      // { title: 'Contact', href: '/contact' },
       status === 'authenticated'
         ? {
-            title: 'Logout',
+            title: t('auth.logout'),
             onClick: async () => {
               logout(router);
             },
           }
-        : { title: 'Login', href: '/auth?type=login' },
+        : { title: t('auth.login'), href: '/auth?type=login' },
     ],
-    [router, status]
+    [router, status, t]
   );
 
   return (

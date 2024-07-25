@@ -23,8 +23,11 @@ const access = (
   path: LocaleKeys,
   obj: (typeof locales)[keyof typeof locales]
 ): string => {
-  // @ts-expect-error
-  return path.split('.').reduce((acc, key) => acc[key], obj) as string;
+  return path.split('.').reduce(
+    // @ts-expect-error will need advanced TS that i don't want to write atm :)
+    (acc, key) => acc[key as keyof typeof acc],
+    obj
+  ) as unknown as string;
 };
 
 export const i18n = (key: LocaleKeys, locale: Language): string => {
@@ -32,7 +35,6 @@ export const i18n = (key: LocaleKeys, locale: Language): string => {
 };
 
 export const getErrorTranslation = (error: Errors, language: Language) => {
-  // @ts-expect-error
   return i18n(`errors.${error}`, language);
 };
 
