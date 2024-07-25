@@ -26,6 +26,7 @@ import React, { useRef, useState } from 'react';
 
 import { endpoints } from '@/lib/api/utils';
 import { addMinutesToTime, formatDate } from '@/lib/common';
+import { useTranslation } from '@/lib/i18n/i18n';
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
 
@@ -62,6 +63,7 @@ const ReservationDetails = ({
 }: ReservationDetailsProps) => {
   const [editState, setEditState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
 
   const updatedReservation = useForm({
     mode: 'uncontrolled',
@@ -79,7 +81,7 @@ const ReservationDetails = ({
         });
 
         return (
-          (value.length <= 0 && 'people error no people') ||
+          (value.length <= 0 && t('generic.form.errors.noPeople')) ||
           (!!errors.length && errors)
         );
       },
@@ -95,7 +97,7 @@ const ReservationDetails = ({
           !isToday || formatDate(now).split('T')[1] <= value.split('T')[1];
 
         return !(courtMinTime <= value && value <= courtMaxTime) || !timeValid
-          ? 'time error'
+          ? t('generic.form.errors.time')
           : false;
       },
     },
@@ -120,7 +122,7 @@ const ReservationDetails = ({
 
       if (res?.success) {
         notifications.show({
-          message: 'Reservation updated',
+          message: t('generic.components.ReservationDetails.updated'),
           color: 'green',
         });
       } else {
@@ -133,7 +135,7 @@ const ReservationDetails = ({
       // eslint-disable-next-line no-console
       console.log(err);
       notifications.show({
-        message: 'An unexpected error occured',
+        message: t('errors.unexpected_error'),
         color: 'red',
       });
     }
@@ -142,10 +144,17 @@ const ReservationDetails = ({
 
   const openDeleteModal = () => {
     modals.openConfirmModal({
-      title: 'Διαγραφή κράτησης',
+      title: t('generic.components.ReservationDetails.deleteModal.title'),
       centered: true,
-      children: <Text size="sm">Η διαγραφή δεν μπορεί να αντιστραφεί</Text>,
-      labels: { confirm: 'Διαγραφή', cancel: 'Ακύρωση' },
+      children: (
+        <Text size="sm">
+          {t('generic.components.ReservationDetails.deleteModal.body')}
+        </Text>
+      ),
+      labels: {
+        confirm: t('generic.components.ReservationDetails.deleteModal.confirm'),
+        cancel: t('generic.components.ReservationDetails.deleteModal.cancel'),
+      },
       confirmProps: { color: 'red' },
       onConfirm: () => deleteReservation,
     });
@@ -275,7 +284,7 @@ const ReservationDetails = ({
           />
           <Stack w="100%" gap="sm">
             <Group w="100%" justify="space-between">
-              <Text>Άτομα</Text>
+              <Text>{t('generic.form.fields.people')}</Text>
               {editState && (
                 <ActionIcon
                   disabled={
@@ -355,7 +364,7 @@ const ReservationDetails = ({
             {updatedReservation.errors.people && (
               <Input.Error>
                 {Array.isArray(updatedReservation.errors.people)
-                  ? 'please add all names'
+                  ? t('generic.form.errors.noPeopleNames')
                   : updatedReservation.errors.people}
               </Input.Error>
             )}

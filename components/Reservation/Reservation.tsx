@@ -12,6 +12,7 @@ import { IconUser } from '@tabler/icons-react';
 import React, { useState } from 'react';
 
 import { formatDate } from '@/lib/common';
+import { useTranslation } from '@/lib/i18n/i18n';
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
 
@@ -37,6 +38,7 @@ const Reservation = ({
   editable,
 }: ReservationProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { t } = useTranslation();
 
   const date = new Date(r.datetime);
   const formatedDate = formatDate(new Date(r.datetime)).split('T');
@@ -52,7 +54,7 @@ const Reservation = ({
     const days = Math.floor(hours / 24);
 
     // eslint-disable-next-line no-nested-ternary
-    timeUntil = `${days ? `${days}ημ ` : ''}${days ? `${hours % 24}ωρ ` : hours ? `${hours}ωρ ` : ''}${minutes}λ`;
+    timeUntil = `${days ? `${days}${t('generic.date.d')} ` : ''}${days ? `${hours % 24}${t('generic.date.h')} ` : hours ? `${hours}${t('generic.date.h')} ` : ''}${minutes}${t('generic.date.m')}`;
   }
 
   const openDetailsModal = () => {

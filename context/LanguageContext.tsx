@@ -50,7 +50,7 @@ export function useLanguage() {
     throw new Error('useLanguage must be used within an LanguageProvider');
   }
 
-  return context;
+  return [context.language, context.setLanguage] as const;
 }
 
 export default LanguageContext;
