@@ -20,6 +20,10 @@ const handleResponse = async <ReturnDataType, Endpoint extends string>(
   try {
     if (!res.ok) {
       if (res.status === 401) {
+        if (window) {
+          window.location.pathname = '/';
+        }
+
         return {
           success: false,
           errors: [{ message: Errors.UNAUTHORIZED }],
@@ -109,14 +113,14 @@ export const endpoints = {
 
       if (date) {
         if (Array.isArray(date)) {
-          query += `date=${date[0]}&date=${date[1]}`;
+          query += `date=${date[0]}&date=${date[1]}&`;
         } else {
-          query += `date=${date}`;
+          query += `date=${date}&`;
         }
       }
 
       if (typeof offset === 'number') {
-        query += `offset=${offset >= 0 ? offset : 0}`;
+        query += `offset=${offset >= 0 ? offset : 0}&`;
       }
 
       return handleResponse<Array<ReservationType>, `reservations`>(

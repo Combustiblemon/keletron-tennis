@@ -103,13 +103,17 @@ export const authOptions = (
 
             user.session = session;
 
-            if (FCMToken) {
+            if (FCMToken && FCMToken !== 'undefined') {
               if (user.FCMTokens) {
                 user.FCMTokens.push(FCMToken);
                 user.FCMTokens = Array.from(new Set(user.FCMTokens));
               } else {
                 user.FCMTokens = [FCMToken];
               }
+            }
+
+            if (user.FCMTokens) {
+              subscribeUser(user.role, user.FCMTokens);
             }
 
             await user.save();
@@ -198,6 +202,10 @@ export const authOptions = (
 
         // If no error and we have user data, return it
         if (user) {
+          if (user.FCMTokens) {
+            subscribeUser(user.role, user.FCMTokens);
+          }
+
           return {
             name: user.name,
             email: user.email,
@@ -262,10 +270,13 @@ export const authOptions = (
           }
 
           if (dbUser) {
+            if (dbUser.FCMTokens) {
+              unsubscribeUser(dbUser.role, dbUser.FCMTokens);
+            }
+
             dbUser.session = undefined;
             dbUser.FCMTokens = undefined;
 
-            unsubscribeUser(dbUser.role, dbUser.FCMTokens);
             dbUser.save();
           }
         } catch (error) {

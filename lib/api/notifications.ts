@@ -1,5 +1,6 @@
 import { credential, messaging } from 'firebase-admin';
 import { initializeApp } from 'firebase-admin/app';
+import signale from 'signale';
 
 export enum Topics {
   Admin = 'yoORfs84Inuo0nX4uBQKB',
@@ -15,14 +16,27 @@ const topicMap = {
 let app: boolean = false;
 
 const initApp = () => {
-  if (!app) {
-    initializeApp({
-      credential: credential.cert(
-        JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS || '{}')
-      ),
-    });
+  try {
+    if (!app) {
+      initializeApp({
+        credential: credential.cert(
+          JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS || '{}')
+        ),
+      });
 
-    app = true;
+      app = true;
+    }
+  } catch (err) {
+    if (
+      (err as Error).message.startsWith(
+        'The default Firebase app already exists.'
+      )
+    ) {
+      app = true;
+      return;
+    }
+
+    signale.error(err);
   }
 };
 
@@ -30,6 +44,10 @@ export const sendMessageToTokens = (
   tokens: string[],
   data: Record<string, string>
 ) => {
+  if (!tokens.length) {
+    return;
+  }
+
   initApp();
 
   // Send a message to the device corresponding to the provided
@@ -41,10 +59,10 @@ export const sendMessageToTokens = (
     })
     .then((response) => {
       // Response is a message ID string.
-      console.log('Successfully sent message:', response);
+      signale.info('Successfully sent message to tokens:', response);
     })
     .catch((error) => {
-      console.error('Error sending message:', error);
+      signale.error('Error sending message to tokens:', error);
     });
 };
 
@@ -60,10 +78,10 @@ export const sendMessageToTopic = (
       data,
     })
     .then((response) => {
-      console.log('Successfully sent message:', response);
+      signale.info(`Successfully sent message to topic ${topic}:`, response);
     })
     .catch((error) => {
-      console.error('Error sending message:', error);
+      signale.error(`Error sending message to topic ${topic}:`, error);
     });
 };
 
@@ -71,13 +89,17 @@ export const subscribeToTopic = async (
   tokens: string[],
   topic: Topics | Array<Topics>
 ) => {
+  if (!tokens.length) {
+    return;
+  }
+
   initApp();
 
   if (typeof topic === 'string') {
     const res = await messaging().subscribeToTopic(tokens, topic);
 
     if (res.errors.length > 0) {
-      console.error(res.errors);
+      signale.error(res.errors);
     }
   } else {
     const res = await Promise.allSettled(
@@ -99,13 +121,19 @@ export const subscribeToTopic = async (
         }
 
         if (p.value[0].failureCount > 0) {
-          return [p.value[0].errors, p.value[1]] as const;
+          return [
+            p.value[0].errors,
+            p.value[1],
+            p.value[0].errors[0].index,
+          ] as const;
         }
 
         return [];
       });
 
-      console.error(JSON.stringify(errors, null, 2));
+      signale.error('subscribeToTopic', JSON.stringify(errors, null, 2));
+    } else {
+      signale.info(`subscribed tokens to topics`);
     }
   }
 };
@@ -114,18 +142,22 @@ export const unsubscribeFromTopic = async (
   tokens: string[],
   topic: Topics | Array<Topics>
 ) => {
+  if (!tokens.length) {
+    return;
+  }
+
   initApp();
 
   if (typeof topic === 'string') {
-    const res = await messaging().subscribeToTopic(tokens, topic);
+    const res = await messaging().unsubscribeFromTopic(tokens, topic);
 
     if (res.errors.length > 0) {
-      console.error(res.errors);
+      signale.error(res.errors);
     }
   } else {
     const res = await Promise.allSettled(
       topic.map(async (t) => {
-        return [await messaging().subscribeToTopic(tokens, t), t] as const;
+        return [await messaging().unsubscribeFromTopic(tokens, t), t] as const;
       })
     );
 
@@ -148,14 +180,16 @@ export const unsubscribeFromTopic = async (
         return [];
       });
 
-      console.error(JSON.stringify(errors, null, 2));
+      signale.error(JSON.stringify(errors, null, 2));
+    } else {
+      signale.info(`unsubscribed tokens to topics`);
     }
   }
 };
 
 export const subscribeUser = async (
   userType: keyof typeof topicMap,
-  tokens?: Array<string>
+  tokens: Array<string>
 ) => {
   if (!tokens || !tokens.length) {
     return;
@@ -172,7 +206,7 @@ export const subscribeUser = async (
 
 export const unsubscribeUser = async (
   userType: keyof typeof topicMap,
-  tokens?: Array<string>
+  tokens: Array<string>
 ) => {
   if (!tokens || !tokens.length) {
     return;

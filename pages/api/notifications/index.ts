@@ -1,5 +1,6 @@
 /* eslint-disable consistent-return */
 import { NextApiRequest, NextApiResponse } from 'next';
+import signale from 'signale';
 import { z } from 'zod';
 
 import { Errors, onError, onSuccess } from '@/lib/api/common';
@@ -10,7 +11,7 @@ import { authUserHelpers } from '../auth/[...nextauth]';
 
 const validator = z.object({
   _id: z.string().length(24).optional(),
-  FCMToken: z.string(),
+  token: z.string(),
 });
 
 export default async function handler(
@@ -45,12 +46,28 @@ export default async function handler(
             .json(onError(error as Error, 'notifications', 'PUT'));
         }
 
-        const user = await UserModel.findByIdAndUpdate(
-          data._id || sessionUser._id,
-          {
-            FCMToken: data.FCMToken,
+        const user = await UserModel.findById(data._id || sessionUser._id);
+
+        if (!user) {
+          return;
+        }
+
+        if (data.token !== 'undefined') {
+          if (user?.FCMTokens) {
+            user.FCMTokens.push(data.token);
+            user.FCMTokens = Array.from(new Set(user.FCMTokens));
+          } else {
+            user.FCMTokens = [data.token];
           }
-        );
+
+          await user.save();
+
+          signale.success(
+            `token updated for user _id:${user._id} name: ${user.name}`
+          );
+        } else {
+          signale.error('FCMToken is ivalid:', data);
+        }
 
         res.status(201).json(onSuccess(user?.sanitize, 'courts', 'PUT'));
       } catch (error) {
