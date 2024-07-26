@@ -11,7 +11,7 @@ import {
   useMantineColorScheme,
   useMantineTheme,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure, useMounted } from '@mantine/hooks';
 import { IconMoonStars, IconSun } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -43,6 +43,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const [lang, setLang] = useLanguage();
   const { setColorScheme, colorScheme } = useMantineColorScheme();
   const theme = useMantineTheme();
+  const mounted = useMounted();
 
   function getNavItems(items: Array<NavItem>) {
     return items.map((item, index) => {
@@ -121,109 +122,115 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
   );
 
   return (
-    <AppShell
-      suppressHydrationWarning
-      styles={{
-        navbar: {
-          borderWidth: 2,
-        },
-        header: {
-          borderWidth: 2,
-        },
-      }}
-      header={{ height: 60 }}
-      navbar={{
-        width: 300,
-        breakpoint: 'sm',
-        collapsed: { desktop: true, mobile: !opened },
-      }}
-      padding="md"
-    >
-      <AppShell.Header>
-        <Group h="100%" px="md">
-          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-          <Group justify="space-between" style={{ flex: 1 }}>
-            <Group ml="xl" gap={0} visibleFrom="sm">
-              {getNavItems(navItems)}
+    mounted && (
+      <AppShell
+        styles={{
+          navbar: {
+            borderWidth: 2,
+          },
+          header: {
+            borderWidth: 2,
+          },
+        }}
+        header={{ height: 60 }}
+        navbar={{
+          width: 300,
+          breakpoint: 'sm',
+          collapsed: { desktop: true, mobile: !opened },
+        }}
+        padding="md"
+      >
+        <AppShell.Header>
+          <Group h="100%" px="md">
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              hiddenFrom="sm"
+              size="sm"
+            />
+            <Group justify="space-between" style={{ flex: 1 }}>
+              <Group ml="xl" gap={0} visibleFrom="sm">
+                {getNavItems(navItems)}
+              </Group>
+            </Group>
+            <Group visibleFrom="sm" gap="lg">
+              <Select
+                visibleFrom="sm"
+                value={lang}
+                styles={{
+                  wrapper: {
+                    width: '40px',
+                  },
+                  section: {
+                    display: 'none',
+                  },
+                  input: {
+                    padding: '10px',
+                  },
+                }}
+                data={[
+                  { value: 'en', label: '🇬🇧' },
+                  { value: 'el', label: '🇬🇷' },
+                ]}
+                onChange={(v) => {
+                  setLang(v as Language);
+                }}
+                comboboxProps={{ width: 80, position: 'bottom-start' }}
+                allowDeselect={false}
+              />
+              <Switch
+                size="md"
+                color="dark.4"
+                onLabel={sunIcon}
+                offLabel={moonIcon}
+              />
             </Group>
           </Group>
-          <Group visibleFrom="sm" gap="lg">
-            <Select
-              visibleFrom="sm"
-              value={lang}
-              styles={{
-                wrapper: {
-                  width: '40px',
-                },
-                section: {
-                  display: 'none',
-                },
-                input: {
-                  padding: '10px',
-                },
-              }}
-              data={[
-                { value: 'en', label: '🇬🇧' },
-                { value: 'el', label: '🇬🇷' },
-              ]}
-              onChange={(v) => {
-                setLang(v as Language);
-              }}
-              comboboxProps={{ width: 80, position: 'bottom-start' }}
-              allowDeselect={false}
-            />
-            <Switch
-              size="md"
-              color="dark.4"
-              onLabel={sunIcon}
-              offLabel={moonIcon}
-            />
-          </Group>
-        </Group>
-      </AppShell.Header>
+        </AppShell.Header>
 
-      <AppShell.Navbar py="md" px={4}>
-        <Stack justify="space-between" h="100%">
-          <Stack gap="xs">{getNavItems(navItems)}</Stack>
-          <Group w="100%" justify="center" gap="lg">
-            <Select
-              value={lang}
-              styles={{
-                wrapper: {
-                  width: '40px',
-                },
-                section: {
-                  display: 'none',
-                },
-                input: {
-                  padding: '10px',
-                },
-              }}
-              data={[
-                { value: 'en', label: '🇬🇧' },
-                { value: 'el', label: '🇬🇷' },
-              ]}
-              onChange={(v) => {
-                setLang(v as Language);
-              }}
-              comboboxProps={{ width: 80, position: 'bottom-start' }}
-              allowDeselect={false}
-            />
-            <Switch
-              size="md"
-              color="dark.4"
-              onLabel={sunIcon}
-              offLabel={moonIcon}
-              checked={colorScheme === 'dark'}
-              onChange={() =>
-                setColorScheme(colorScheme === 'light' ? 'dark' : 'light')
-              }
-            />
-          </Group>
-        </Stack>
-      </AppShell.Navbar>
+        <AppShell.Navbar py="md" px={4}>
+          <Stack justify="space-between" h="100%">
+            <Stack gap="xs">{getNavItems(navItems)}</Stack>
+            <Group w="100%" justify="center" gap="lg">
+              <Select
+                value={lang}
+                styles={{
+                  wrapper: {
+                    width: '40px',
+                  },
+                  section: {
+                    display: 'none',
+                  },
+                  input: {
+                    padding: '10px',
+                  },
+                }}
+                data={[
+                  { value: 'en', label: '🇬🇧' },
+                  { value: 'el', label: '🇬🇷' },
+                ]}
+                onChange={(v) => {
+                  setLang(v as Language);
+                }}
+                comboboxProps={{ width: 80, position: 'bottom-start' }}
+                allowDeselect={false}
+              />
+              <Switch
+                size="md"
+                color="dark.4"
+                onLabel={sunIcon}
+                offLabel={moonIcon}
+                checked={colorScheme === 'dark'}
+                onChange={() =>
+                  setColorScheme(colorScheme === 'light' ? 'dark' : 'light')
+                }
+              />
+            </Group>
+          </Stack>
+        </AppShell.Navbar>
 
-      <AppShell.Main>{children}</AppShell.Main>
-    </AppShell>
+        <AppShell.Main>{children}</AppShell.Main>
+      </AppShell>
+    )
   );
 };
