@@ -1,4 +1,5 @@
 /* eslint-disable consistent-return */
+import mongoose from 'mongoose';
 import { NextApiRequest, NextApiResponse } from 'next';
 import signale from 'signale';
 import { z } from 'zod';
@@ -22,7 +23,11 @@ export default async function handler(
 
   await dbConnect();
 
-  const { isLoggedIn, user: sessionUser } = await authUserHelpers(req, res);
+  const {
+    isLoggedIn,
+    user: sessionUser,
+    isAdmin,
+  } = await authUserHelpers(req, res);
 
   switch (method) {
     case 'PUT':
@@ -46,7 +51,17 @@ export default async function handler(
             .json(onError(error as Error, 'notifications', 'PUT'));
         }
 
-        const user = await UserModel.findById(data._id || sessionUser._id);
+        if (data._id && !isAdmin) {
+          return res
+            .status(401)
+            .json(
+              onError(new Error(Errors.UNAUTHORIZED), 'notifications', 'PUT')
+            );
+        }
+
+        const user = await UserModel.findById(
+          new mongoose.Types.ObjectId(data._id || sessionUser._id)
+        );
 
         if (!user) {
           return;

@@ -14,13 +14,15 @@ import {
 import { Errors, onError, onSuccess } from './common';
 import { APIResponse } from './responseTypes';
 
+const publicPages = ['/auth', '/'];
+
 const handleResponse = async <ReturnDataType, Endpoint extends string>(
   res: Response
 ): Promise<APIResponse<ReturnDataType, Endpoint> | undefined> => {
   try {
     if (!res.ok) {
       if (res.status === 401) {
-        if (window) {
+        if (window && !publicPages.includes(window.location.pathname)) {
           window.location.pathname = '/';
         }
 
@@ -43,7 +45,8 @@ const handleResponse = async <ReturnDataType, Endpoint extends string>(
       typeof onSuccess<ReturnDataType, Endpoint>
     > satisfies APIResponse<ReturnDataType, Endpoint>;
   } catch (err) {
-    console.log(err);
+    // eslint-disable-next-line no-console
+    console.error(err);
   }
 
   return undefined;
