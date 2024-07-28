@@ -38,7 +38,7 @@ export type NavItem =
 export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const [opened, { toggle }] = useDisclosure();
   const router = useRouter();
-  const { status } = useSession();
+  const { status, data } = useSession();
   const { t } = useTranslation();
   const [lang, setLang] = useLanguage();
   const { setColorScheme, colorScheme } = useMantineColorScheme();
@@ -89,6 +89,14 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
             }
           : null,
       ],
+      ...[
+        data?.user?.role === 'ADMIN'
+          ? {
+              title: 'Admin',
+              href: '/admin',
+            }
+          : null,
+      ],
       'divider',
       { title: t('Navbar.settings'), href: '/settings' },
       // { title: 'About', href: '/about' },
@@ -102,7 +110,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
           }
         : { title: t('auth.login'), href: '/auth?type=login' },
     ],
-    [router, status, t]
+    [data?.user?.role, router, status, t]
   );
 
   const sunIcon = (
@@ -140,7 +148,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
         }}
         padding="md"
       >
-        <AppShell.Header>
+        <AppShell.Header h="60px">
           <Group h="100%" px="md">
             <Burger
               opened={opened}
@@ -229,7 +237,9 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
           </Stack>
         </AppShell.Navbar>
 
-        <AppShell.Main>{children}</AppShell.Main>
+        <AppShell.Main h="calc(100dvh - 60px)" display="flex" w="100dvw">
+          {children}
+        </AppShell.Main>
       </AppShell>
     )
   );

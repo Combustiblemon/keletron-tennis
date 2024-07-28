@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 import {
-  CourtType,
+  CourtDataType,
   CourtValidator,
   CourtValidatorPartial,
 } from '@/models/Court';
 import {
-  ReservationType,
+  ReservationDataType,
   ReservationValidator,
   ReservationValidatorPartial,
 } from '@/models/Reservation';
@@ -60,10 +60,10 @@ const commonHeaders = {
  * Only for FE use, it uses react hooks under the hood
  */
 export const endpoints = {
-  courts: <IDString extends string | undefined>(id: IDString) => ({
+  courts: <IDString extends string | undefined>(id?: IDString) => ({
     GET: async () =>
       handleResponse<
-        IDString extends undefined ? Array<CourtType> : CourtType,
+        IDString extends undefined ? Array<CourtDataType> : CourtDataType,
         `courts${IDString extends undefined ? '' : '/id'}`
       >(
         await fetch(`/api/courts${id ? `/${id}` : ''}`, {
@@ -71,40 +71,6 @@ export const endpoints = {
           headers: commonHeaders,
         })
       ),
-    POST: async (body: z.infer<typeof CourtValidator>) =>
-      handleResponse<
-        CourtType,
-        `courts${IDString extends undefined ? '' : '/id'}`
-      >(
-        await fetch('/api/courts', {
-          method: 'POST',
-          headers: commonHeaders,
-          body: JSON.stringify(body),
-        })
-      ),
-    PUT: async (body: z.infer<typeof CourtValidatorPartial>) =>
-      handleResponse<
-        CourtType,
-        `courts${IDString extends undefined ? '' : '/id'}`
-      >(
-        await fetch(`/api/courts/${id ? `/${id}` : ''}`, {
-          method: 'PUT',
-          headers: commonHeaders,
-          body: JSON.stringify(body),
-        })
-      ),
-    DELETE: async (idToDelete: string) => {
-      if (!idToDelete) {
-        return null;
-      }
-
-      return handleResponse<CourtType, `courts/id`>(
-        await fetch(`/api/courts/${idToDelete}`, {
-          method: 'DELETE',
-          headers: commonHeaders,
-        })
-      );
-    },
   }),
   reservations: {
     GET: async <IDS extends Array<string> | undefined>(
@@ -126,7 +92,7 @@ export const endpoints = {
         query += `offset=${offset >= 0 ? offset : 0}&`;
       }
 
-      return handleResponse<Array<ReservationType>, `reservations`>(
+      return handleResponse<Array<ReservationDataType>, `reservations`>(
         await fetch(
           `/api/reservations${ids ? `/${ids?.join(',')}` : ''}${query ? `?${query}` : ''}`,
           {
@@ -144,7 +110,7 @@ export const endpoints = {
         owner?: string;
       }
     ) =>
-      handleResponse<ReservationType, `reservations`>(
+      handleResponse<ReservationDataType, `reservations`>(
         await fetch('/api/reservations', {
           method: 'POST',
           headers: commonHeaders,
@@ -155,7 +121,7 @@ export const endpoints = {
       id: string,
       body: z.infer<typeof ReservationValidatorPartial>
     ) =>
-      handleResponse<ReservationType, `reservations`>(
+      handleResponse<ReservationDataType, `reservations`>(
         await fetch(`/api/reservations/${id}`, {
           method: 'PUT',
           headers: commonHeaders,
@@ -167,7 +133,7 @@ export const endpoints = {
         return null;
       }
 
-      return handleResponse<Array<ReservationType>, `reservations`>(
+      return handleResponse<Array<ReservationDataType>, `reservations`>(
         await fetch(`/api/reservations`, {
           method: 'DELETE',
           headers: commonHeaders,
@@ -180,7 +146,7 @@ export const endpoints = {
   },
   notifications: {
     PUT: async (token: string, userId?: string) =>
-      handleResponse<ReservationType, `notifications`>(
+      handleResponse<ReservationDataType, `notifications`>(
         await fetch(`/api/notifications/`, {
           method: 'PUT',
           headers: commonHeaders,
@@ -190,5 +156,120 @@ export const endpoints = {
           }),
         })
       ),
+  },
+  admin: {
+    courts: <IDString extends string | undefined>(id?: IDString) => ({
+      GET: async () =>
+        handleResponse<
+          IDString extends undefined ? Array<CourtDataType> : CourtDataType,
+          `courts${IDString extends undefined ? '' : '/id'}`
+        >(
+          await fetch(`/api/courts${id ? `/${id}` : ''}`, {
+            method: 'GET',
+            headers: commonHeaders,
+          })
+        ),
+      POST: async (body: z.infer<typeof CourtValidator>) =>
+        handleResponse<
+          CourtDataType,
+          `courts${IDString extends undefined ? '' : '/id'}`
+        >(
+          await fetch('/api/courts', {
+            method: 'POST',
+            headers: commonHeaders,
+            body: JSON.stringify(body),
+          })
+        ),
+      PUT: async (body: z.infer<typeof CourtValidatorPartial>) =>
+        handleResponse<
+          CourtDataType,
+          `courts${IDString extends undefined ? '' : '/id'}`
+        >(
+          await fetch(`/api/courts/${id ? `/${id}` : ''}`, {
+            method: 'PUT',
+            headers: commonHeaders,
+            body: JSON.stringify(body),
+          })
+        ),
+      DELETE: async (idToDelete: string) => {
+        if (!idToDelete) {
+          return null;
+        }
+
+        return handleResponse<CourtDataType, `courts/id`>(
+          await fetch(`/api/courts/${idToDelete}`, {
+            method: 'DELETE',
+            headers: commonHeaders,
+          })
+        );
+      },
+    }),
+    reservations: {
+      GET: async <IDS extends Array<string> | undefined>(
+        ids?: IDS,
+        date?: string | [string, string],
+        offset?: number
+      ) => {
+        let query: string = '';
+
+        if (date) {
+          if (Array.isArray(date)) {
+            query += `date=${date[0]}&date=${date[1]}&`;
+          } else {
+            query += `date=${date}&`;
+          }
+        }
+
+        if (typeof offset === 'number') {
+          query += `offset=${offset >= 0 ? offset : 0}&`;
+        }
+
+        return handleResponse<Array<ReservationDataType>, `reservations`>(
+          await fetch(`/api/admin/reservations${query ? `?${query}` : ''}`, {
+            method: 'GET',
+            headers: commonHeaders,
+          })
+        );
+      },
+      POST: async (
+        body: Pick<
+          z.infer<typeof ReservationValidator>,
+          'court' | 'type' | 'datetime' | 'people' | 'owner'
+        >
+      ) =>
+        handleResponse<ReservationDataType, `reservations`>(
+          await fetch('/api/admin/reservations', {
+            method: 'POST',
+            headers: commonHeaders,
+            body: JSON.stringify(body),
+          })
+        ),
+      // PUT: async (
+      //   id: string,
+      //   body: z.infer<typeof ReservationValidatorPartial>
+      // ) =>
+      //   handleResponse<ReservationDataType, `reservations`>(
+      //     await fetch(`/api/admin/reservations/${id}`, {
+      //       method: 'PUT',
+      //       headers: commonHeaders,
+      //       body: JSON.stringify(body),
+      //     })
+      //   ),
+      DELETE: async (idsToDelete: Array<string>) => {
+        if (!idsToDelete || !idsToDelete.length) {
+          return null;
+        }
+
+        return handleResponse<Array<ReservationDataType>, `reservations`>(
+          await fetch(`/api/admin/reservations`, {
+            method: 'DELETE',
+            headers: commonHeaders,
+            body: JSON.stringify({
+              ids: idsToDelete,
+            }),
+          })
+        );
+      },
+    },
   },
 };

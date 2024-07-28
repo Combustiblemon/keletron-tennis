@@ -1,7 +1,7 @@
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { signOut } from 'next-auth/react';
 
-import { ReservationType } from '@/models/Reservation';
+import { ReservationDataType } from '@/models/Reservation';
 
 import { firebaseCloudMessaging } from './webPush';
 
@@ -46,7 +46,7 @@ export const formatDate = (date: Date) =>
     .substring(0, 5)}`;
 
 export const isReservationTimeFree = (
-  courtReservations: Array<ReservationType>,
+  courtReservations: Array<ReservationDataType>,
   datetime: string,
   duration: number
 ): boolean => {

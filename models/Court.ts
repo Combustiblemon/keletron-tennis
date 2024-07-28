@@ -51,7 +51,6 @@ export const CourtSchema = new mongoose.Schema<CourtType>({
     },
     reservedTimes: [
       {
-        _id: false,
         startTime: {
           type: String,
           required: [true, 'Please add a start time'],

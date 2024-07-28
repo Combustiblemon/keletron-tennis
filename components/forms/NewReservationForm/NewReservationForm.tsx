@@ -73,7 +73,7 @@ const NewReservationForm = ({
   const newReservation = useForm({
     mode: 'uncontrolled',
     initialValues: {
-      court: courtData?.success ? courtData.data[0]._id : '',
+      court: '',
       date: new Date(),
       time: '09:00',
       people: [] as string[],
@@ -249,6 +249,12 @@ const NewReservationForm = ({
     );
   };
 
+  useEffect(() => {
+    if (courtData && courtData.success && !newReservation.getValues().court) {
+      newReservation.setFieldValue('court', courtData.data[0]._id);
+    }
+  }, [courtData, newReservation]);
+
   return (
     <Drawer
       opened={opened}
@@ -327,6 +333,7 @@ const NewReservationForm = ({
           </Stack>
 
           <Select
+            allowDeselect={false}
             error={newReservation.errors.court}
             data={courtsSelectionData}
             defaultValue={courtData?.success ? courtData.data[0]._id : ''}

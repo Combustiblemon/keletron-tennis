@@ -1,12 +1,10 @@
 /* eslint-disable consistent-return */
 import { NextApiRequest, NextApiResponse } from 'next';
-import { z } from 'zod';
 
 import { onError, onSuccess } from '@/lib/api/common';
 
 import dbConnect from '../../../lib/api/dbConnect';
-import Court, { CourtValidator } from '../../../models/Court';
-import { authUserHelpers } from '../auth/[...nextauth]';
+import Court from '../../../models/Court';
 
 export default async function handler(
   req: NextApiRequest,
@@ -15,8 +13,6 @@ export default async function handler(
   const { method } = req;
 
   await dbConnect();
-
-  const { isAdmin } = await authUserHelpers(req, res);
 
   switch (method) {
     case 'GET':
@@ -27,30 +23,6 @@ export default async function handler(
         res.status(200).json(onSuccess(courts, 'courts', 'GET'));
       } catch (error) {
         res.status(400).json(onError(error as Error, 'courts', 'GET'));
-      }
-      break;
-    case 'POST':
-      // create a new court
-      try {
-        if (!isAdmin) {
-          return res.status(401).json({ success: false });
-        }
-
-        let courtData: z.infer<typeof CourtValidator>;
-
-        try {
-          courtData = CourtValidator.parse(req.body);
-        } catch (error) {
-          return res
-            .status(400)
-            .json(onError(error as Error, 'courts', 'POST'));
-        }
-
-        const court = await Court.create(courtData);
-
-        res.status(201).json(onSuccess(court, 'courts', 'POST'));
-      } catch (error) {
-        res.status(400).json(onError(error as Error, 'courts', 'POST'));
       }
       break;
     default:
