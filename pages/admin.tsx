@@ -1,4 +1,4 @@
-import { Tabs } from '@mantine/core';
+import { Tabs, Text } from '@mantine/core';
 
 import AdminReservations from '@/components/admin/AdminReservations/AdminReservations';
 
@@ -20,17 +20,33 @@ const Admin = () => {
     >
       <Tabs.List>
         <Tabs.Tab value="reservations">Κρατήσεις</Tabs.Tab>
+        <Tabs.Tab value="new-reservation">Νέα Κράτηση</Tabs.Tab>
       </Tabs.List>
 
       <Tabs.Panel
         value="reservations"
         flex={1}
-        display="flex"
         styles={{
-          panel: { flexDirection: 'column' },
+          panel: {
+            display: 'flex',
+            flexDirection: 'column',
+          },
         }}
       >
         <AdminReservations />
+      </Tabs.Panel>
+
+      <Tabs.Panel
+        value="new-reservation"
+        flex={1}
+        styles={{
+          panel: {
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
+      >
+        <Text>meow</Text>
       </Tabs.Panel>
     </Tabs>
   );

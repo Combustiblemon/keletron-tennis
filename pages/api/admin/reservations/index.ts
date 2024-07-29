@@ -105,13 +105,14 @@ export default async function handler(
         /* find all the data in our database */
         const reservationsData = await ReservationModel.find({
           ...(date ? dateQuery : {}),
-        }).lean();
-
-        const reservationsSanitized = reservationsData;
+        })
+          .populate('owner', 'name email _id role')
+          .populate('court')
+          .lean();
 
         return res
           .status(200)
-          .json(onSuccess(reservationsSanitized, 'reservations', 'GET'));
+          .json(onSuccess(reservationsData, 'reservations', 'GET'));
       } catch (error) {
         signale.error(error);
         return res

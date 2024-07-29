@@ -10,6 +10,7 @@ import {
   ReservationValidator,
   ReservationValidatorPartial,
 } from '@/models/Reservation';
+import { UserDataType } from '@/models/User';
 
 import { Errors, onError, onSuccess } from './common';
 import { APIResponse } from './responseTypes';
@@ -54,6 +55,11 @@ const handleResponse = async <ReturnDataType, Endpoint extends string>(
 
 const commonHeaders = {
   'Content-Type': 'application/json',
+};
+
+export type AdminReservationDataType = ReservationDataType & {
+  owner: UserDataType;
+  court: CourtDataType;
 };
 
 /**
@@ -224,7 +230,7 @@ export const endpoints = {
           query += `offset=${offset >= 0 ? offset : 0}&`;
         }
 
-        return handleResponse<Array<ReservationDataType>, `reservations`>(
+        return handleResponse<Array<AdminReservationDataType>, `reservations`>(
           await fetch(`/api/admin/reservations${query ? `?${query}` : ''}`, {
             method: 'GET',
             headers: commonHeaders,

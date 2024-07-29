@@ -14,7 +14,6 @@ import React, { useMemo, useState } from 'react';
 import { endpoints } from '@/lib/api/utils';
 import { formatDate } from '@/lib/common';
 import { CourtDataType } from '@/models/Court';
-import { ReservationDataType } from '@/models/Reservation';
 
 import ReservationVisual from './ReservationVisual';
 
@@ -70,10 +69,7 @@ const AdminReservations = () => {
   );
 
   const reservationData = useMemo(
-    () =>
-      reservations.data?.success
-        ? (reservations.data?.data as Array<ReservationDataType>)
-        : [],
+    () => (reservations.data?.success ? reservations.data?.data : []),
     [reservations]
   );
 
@@ -93,7 +89,7 @@ const AdminReservations = () => {
           const reservation = reservationData.filter(
             (r) =>
               // same court
-              r.court === c._id &&
+              r.court._id === c._id &&
               // same day
               r.datetime.split('T')[0] === formatedDate &&
               // reservation time starts with current time
@@ -146,7 +142,13 @@ const AdminReservations = () => {
       <Box flex={1} w="100%" ref={calendarWrapperRef}>
         <ScrollArea h={`${calendarWrapperHeight}px`} type="never" w="100%">
           <Table stickyHeader stickyHeaderOffset={0} withColumnBorders>
-            <Table.Thead>
+            <Table.Thead
+              styles={{
+                thead: {
+                  zIndex: 2,
+                },
+              }}
+            >
               <Table.Tr>
                 <Table.Th w="50px">Ώρα</Table.Th>
                 {courtData.map((c) => {

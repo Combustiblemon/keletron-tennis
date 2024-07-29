@@ -1,3 +1,4 @@
+import { rem } from '@mantine/core';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { signOut } from 'next-auth/react';
 
@@ -75,3 +76,5 @@ export const isReservationTimeFree = (
       );
     });
 };
+
+export const iconStyles = { width: rem(16), height: rem(16) };

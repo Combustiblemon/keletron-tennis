@@ -1,3 +1,4 @@
+/* eslint-disable func-names */
 import mongoose, { Model } from 'mongoose';
 import z from 'zod';
 
