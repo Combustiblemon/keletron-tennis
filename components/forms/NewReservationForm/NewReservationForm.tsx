@@ -27,8 +27,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { APIResponse } from '@/lib/api/responseTypes';
 import { endpoints } from '@/lib/api/utils';
-import { formatDate, isReservationTimeFree } from '@/lib/common';
+import { formatDate, isReservationTimeFree, weekDayMap } from '@/lib/common';
 import { CourtDataType } from '@/models/Court';
+import { ReservationDataType } from '@/models/Reservation';
 
 const DEFAULT_RESERVATION_DURATION = 90;
 
@@ -73,7 +74,7 @@ const NewReservationForm = ({
   const newReservation = useForm({
     mode: 'uncontrolled',
     initialValues: {
-      court: courtData?.success ? courtData.data[0]._id : '',
+      court: '',
       date: new Date(),
       time: '09:00',
       people: [] as string[],
@@ -165,11 +166,14 @@ const NewReservationForm = ({
     </ActionIcon>
   );
 
-  const selectedCourt = newReservation.getValues().court;
+  const selectedCourtId = newReservation.getValues().court;
+  const selectedCourt = courtData?.success
+    ? courtData?.data?.find((c) => c._id === selectedCourtId)
+    : undefined;
 
   const [minCourtTime, maxCourtTime] = useMemo(
-    () => getCourtTimes(courtData, selectedCourt),
-    [selectedCourt, courtData]
+    () => getCourtTimes(courtData, selectedCourtId),
+    [selectedCourtId, courtData]
   );
 
   const handleNewReservationSubmit = newReservation.onSubmit(async (values) => {
@@ -182,6 +186,7 @@ const NewReservationForm = ({
       reservationData.filter(
         (r) => r.datetime.includes(date) && r.court === values.court
       ),
+      selectedCourt?.reservationsInfo.reservedTimes || [],
       datetime,
       DEFAULT_RESERVATION_DURATION
     );
@@ -248,6 +253,12 @@ const NewReservationForm = ({
       })
     );
   };
+
+  useEffect(() => {
+    if (courtData && courtData.success && !newReservation.getValues().court) {
+      newReservation.setFieldValue('court', courtData.data[0]._id);
+    }
+  }, [courtData, newReservation]);
 
   return (
     <Drawer
@@ -327,6 +338,7 @@ const NewReservationForm = ({
           </Stack>
 
           <Select
+            allowDeselect={false}
             error={newReservation.errors.court}
             data={courtsSelectionData}
             defaultValue={courtData?.success ? courtData.data[0]._id : ''}
@@ -432,23 +444,49 @@ const NewReservationForm = ({
               }
             </Text>
             <SimpleGrid cols={1} verticalSpacing="xs">
-              {reservationData
-                ?.filter((r) => r.court === newReservation.getValues().court)
-                .sort(
-                  (a, b) =>
-                    new Date(a.datetime).getTime() -
-                    new Date(b.datetime).getTime()
-                )
+              {[
+                ...(reservationData?.filter(
+                  (r) => r.court === newReservation.getValues().court
+                ) || []),
+                ...(selectedCourt?.reservationsInfo.reservedTimes.filter((r) =>
+                  r.days?.includes(
+                    weekDayMap[
+                      newReservation
+                        .getValues()
+                        .date.getDay()
+                        .toString() as keyof typeof weekDayMap
+                    ]
+                  )
+                ) || []),
+              ]
+                .sort((a, b) => {
+                  return (
+                    new Date(
+                      (a as ReservationDataType).datetime
+                        ? (a as ReservationDataType).datetime
+                        : `${formatDate(newReservation.getValues().date).split('T')[0]}T${(a as CourtDataType['reservationsInfo']['reservedTimes'][number]).startTime}`
+                    ).getTime() -
+                    new Date(
+                      (b as ReservationDataType).datetime
+                        ? (b as ReservationDataType).datetime
+                        : `${formatDate(newReservation.getValues().date).split('T')[0]}T${(b as CourtDataType['reservationsInfo']['reservedTimes'][number]).startTime}`
+                    ).getTime()
+                  );
+                })
                 .map((reservation) => {
-                  const startTime = new Date(reservation.datetime);
-                  const endTime = new Date(reservation.datetime);
+                  const datetime = (reservation as ReservationDataType).datetime
+                    ? (reservation as ReservationDataType).datetime
+                    : `${formatDate(newReservation.getValues().date).split('T')[0]}T${(reservation as CourtDataType['reservationsInfo']['reservedTimes'][number]).startTime}`;
+
+                  const startTime = new Date(datetime);
+                  const endTime = new Date(datetime);
                   endTime.setMinutes(
                     startTime.getMinutes() + reservation.duration
                   );
 
                   return (
                     <Paper
-                      key={reservation._id as string}
+                      key={datetime}
                       withBorder
                       p="md"
                       radius="md"

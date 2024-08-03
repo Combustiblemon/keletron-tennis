@@ -19,6 +19,8 @@ type SanitizedUserFields =
   | 'FCMTokens'
   | 'session';
 
+export type UserDataType = z.infer<typeof UserValidator>;
+
 export type Users = mongoose.Document &
   z.infer<typeof UserValidator> & {
     resetKey?: {

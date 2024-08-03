@@ -1,50 +1,56 @@
-import { Drawer, Group, Stack, Text } from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { useDisclosure } from '@mantine/hooks';
+import { Tabs } from '@mantine/core';
+
+import AdminCourts from '@/components/admin/AdminCourts/AdminCourts';
+import AdminReservations from '@/components/admin/AdminReservations/AdminReservations';
 
 const Admin = () => {
-  const [opened, { close }] = useDisclosure(false);
-
-  // const result = useQuery({
-  //   queryKey: ['reservations'],
-  //   queryFn: fetchReservations,
-  // });
-
-  // console.log(result);
-
-  const form = useForm({
-    mode: 'uncontrolled',
-    initialValues: {
-      email: '',
-      termsOfService: false,
-    },
-
-    validate: {
-      email: (value) => (/^\S+@\S+$/.test(value) ? null : 'Invalid email'),
-    },
-  });
-
   return (
-    <div>
-      <Drawer
-        opened={opened}
-        onClose={close}
-        title="New reservation"
-        position="bottom"
-        size="92%"
-        overlayProps={{ backgroundOpacity: 0.5, blur: 2 }}
+    <Tabs
+      color="red"
+      variant="outline"
+      radius="xs"
+      defaultValue="reservations"
+      w="100%"
+      h="100%"
+      display="flex"
+      styles={{
+        root: {
+          flexDirection: 'column',
+        },
+      }}
+      keepMounted={false}
+    >
+      <Tabs.List>
+        <Tabs.Tab value="reservations">Κρατήσεις</Tabs.Tab>
+        <Tabs.Tab value="courts">Γήπεδα</Tabs.Tab>
+      </Tabs.List>
+
+      <Tabs.Panel
+        value="reservations"
+        flex={1}
+        styles={{
+          panel: {
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
       >
-        <form onSubmit={form.onSubmit((values) => console.log(values))}>
-          I am a drawer
-        </form>
-      </Drawer>
+        <AdminReservations />
+      </Tabs.Panel>
 
-      <Group justify="space-between">
-        <Text>Admin</Text>
-      </Group>
-
-      <Stack>Admin stuff</Stack>
-    </div>
+      <Tabs.Panel
+        value="courts"
+        flex={1}
+        styles={{
+          panel: {
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
+      >
+        <AdminCourts />
+      </Tabs.Panel>
+    </Tabs>
   );
 };
 

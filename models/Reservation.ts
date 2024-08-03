@@ -1,13 +1,17 @@
+/* eslint-disable func-names */
 import mongoose, { Model } from 'mongoose';
 import z from 'zod';
 
+const statusEnumValues = ['PENDING', 'APPROVED', 'REJECTED'] as const;
+const typeEnumValues = ['SINGLE', 'DOUBLE', 'TRAINING', 'PERSONAL'] as const;
+
 export const ReservationValidator = z.object({
-  type: z.enum(['SINGLE', 'DOUBLE', 'TRAINING']),
+  type: z.enum(typeEnumValues),
   datetime: z.string(),
   people: z.array(z.string().max(50)),
   owner: z.string().optional(),
   court: z.string(),
-  status: z.enum(['PENDING', 'APPROVED', 'REJECTED']).default('APPROVED'),
+  status: z.enum(statusEnumValues).default('APPROVED'),
   paid: z.boolean().default(false),
   duration: z.number().positive().optional().default(90),
   notes: z.string().max(500).optional(),
@@ -33,10 +37,10 @@ export type ReservationType = mongoose.Document &
 export const ReservationSchema = new mongoose.Schema<ReservationType>({
   type: {
     type: String,
-    enum: ['SINGLE', 'DOUBLE'],
+    enum: typeEnumValues,
   },
   datetime: {
-    // !THIS IS NOT ISO DATE EVEN THOUGH IT IS IN THE SAME FORMAT
+    // !THIS IS NOT AN ISO DATE EVEN THOUGH IT IS IN THE SAME FORMAT
     type: String,
     required: [true, 'Please add a date and time'],
   },
@@ -53,7 +57,7 @@ export const ReservationSchema = new mongoose.Schema<ReservationType>({
   },
   status: {
     type: String,
-    enum: ['PENDING', 'APPROVED', 'REJECTED'],
+    enum: statusEnumValues,
   },
   paid: {
     type: Boolean,

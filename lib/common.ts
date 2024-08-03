@@ -1,7 +1,9 @@
+import { rem } from '@mantine/core';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { signOut } from 'next-auth/react';
 
-import { ReservationType } from '@/models/Reservation';
+import { CourtDataType } from '@/models/Court';
+import { ReservationDataType } from '@/models/Reservation';
 
 import { firebaseCloudMessaging } from './webPush';
 
@@ -45,33 +47,108 @@ export const formatDate = (date: Date) =>
     })
     .substring(0, 5)}`;
 
+export const weekDayMap = {
+  '1': 'MONDAY',
+  '2': 'TUESDAY',
+  '3': 'WEDNESDAY',
+  '4': 'THURSDAY',
+  '5': 'FRIDAY',
+  '6': 'SATURDAY',
+  '0': 'SUNDAY',
+} as const;
+
+const isTimeOverlapping = (
+  reservation: { startTime: string; endTime: string; duration: number },
+  against: { startTime: string; endTime: string; duration: number }
+) => {
+  return (
+    // if start time is within the reservation time
+    (against.startTime < reservation.startTime &&
+      reservation.startTime < against.endTime) ||
+    // or end time is within the reservation time
+    (against.startTime < reservation.endTime &&
+      reservation.endTime < against.endTime) ||
+    // or if the times are the same
+    (against.startTime === reservation.startTime &&
+      reservation.duration === against.duration)
+  );
+};
+
 export const isReservationTimeFree = (
-  courtReservations: Array<ReservationType>,
+  courtReservations: Array<ReservationDataType>,
+  courtReservedTimes: CourtDataType['reservationsInfo']['reservedTimes'],
   datetime: string,
   duration: number
 ): boolean => {
-  if (courtReservations.length === 0) {
-    return true;
-  }
+  let reservationCheck = true;
 
   const startTime = datetime.split('T')[1];
   const endTime = addMinutesToTime(startTime, duration);
 
-  return !courtReservations
-    .filter((r) => {
-      return r.datetime.split('T')[0] === datetime.split('T')[0];
-    })
-    .some((r) => {
-      const rstartTime = r.datetime.split('T')[1];
-      const rendTime = addMinutesToTime(rstartTime, r.duration);
+  if (courtReservations.length) {
+    reservationCheck = !courtReservations
+      .filter((r) => {
+        return r.datetime.split('T')[0] === datetime.split('T')[0];
+      })
+      .some((r) => {
+        const rstartTime = r.datetime.split('T')[1];
 
-      return (
-        // if start time is within the reservation time
-        (rstartTime < startTime && startTime < rendTime) ||
-        // or end time is within the reservation time
-        (rstartTime < endTime && endTime < rendTime) ||
-        // or if the times are the same
-        (rstartTime === startTime && r.duration === duration)
+        return isTimeOverlapping(
+          {
+            duration,
+            endTime,
+            startTime,
+          },
+          {
+            duration: r.duration,
+            endTime: addMinutesToTime(rstartTime, r.duration),
+            startTime: rstartTime,
+          }
+        );
+      });
+  }
+
+  if (!reservationCheck) {
+    return false;
+  }
+
+  if (!courtReservedTimes.length) {
+    return reservationCheck;
+  }
+
+  const weekDay =
+    weekDayMap[
+      new Date(datetime).getDay().toString() as keyof typeof weekDayMap
+    ];
+
+  const reservedCheck = !courtReservedTimes
+    .filter((r) => r.days?.includes(weekDay))
+    .some((r) => {
+      return isTimeOverlapping(
+        {
+          duration,
+          endTime,
+          startTime,
+        },
+        {
+          duration: r.duration,
+          endTime: addMinutesToTime(r.startTime, r.duration),
+          startTime: r.startTime,
+        }
       );
     });
+
+  return reservationCheck && reservedCheck;
 };
+
+export const iconStyles = { width: rem(16), height: rem(16) };
+
+export const weekDays = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+] as const;

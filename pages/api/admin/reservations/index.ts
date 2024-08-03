@@ -8,11 +8,11 @@ import { sendMessageToTopic, Topics } from '@/lib/api/notifications';
 import { formatDate, isReservationTimeFree } from '@/lib/common';
 import Court from '@/models/Court';
 
-import dbConnect from '../../../lib/api/dbConnect';
+import dbConnect from '../../../../lib/api/dbConnect';
 import ReservationModel, {
   ReservationValidator,
-} from '../../../models/Reservation';
-import { authUserHelpers } from '../auth/[...nextauth]';
+} from '../../../../models/Reservation';
+import { authUserHelpers } from '../../auth/[...nextauth]';
 
 export default async function handler(
   req: NextApiRequest,
@@ -26,6 +26,12 @@ export default async function handler(
   await dbConnect();
 
   const { user, isAdmin, isLoggedIn } = await authUserHelpers(req, res);
+
+  if (!isAdmin) {
+    return res
+      .status(401)
+      .json(onError(new Error(Errors.UNAUTHORIZED), 'admin/courts/id'));
+  }
 
   switch (method) {
     case 'GET':
@@ -95,25 +101,18 @@ export default async function handler(
             .status(200)
             .json(onSuccess(reservations, 'reservations', 'GET'));
         }
+
         /* find all the data in our database */
         const reservationsData = await ReservationModel.find({
-          ...dateQuery,
-          ...(user.role !== 'ADMIN' ? { owner: user._id } : {}),
-        }).lean();
-
-        const reservationsSanitized = isAdmin
-          ? reservationsData
-          : reservationsData.map((r) => {
-              if (r.owner === user._id) {
-                return r;
-              }
-
-              return r.sanitize();
-            });
+          ...(date ? dateQuery : {}),
+        })
+          .populate('owner', 'name email _id role')
+          .populate('court')
+          .lean();
 
         return res
           .status(200)
-          .json(onSuccess(reservationsSanitized, 'reservations', 'GET'));
+          .json(onSuccess(reservationsData, 'reservations', 'GET'));
       } catch (error) {
         signale.error(error);
         return res
@@ -137,7 +136,7 @@ export default async function handler(
           datetime: true,
           people: true,
           duration: true,
-          ...(isAdmin ? { owner: true } : {}),
+          owner: true,
         });
 
         let data: z.infer<typeof validator>;
@@ -188,7 +187,7 @@ export default async function handler(
 
         const reservation = await ReservationModel.create({
           ...data,
-          owner: isAdmin ? data.owner || user._id : user._id,
+          owner: data.owner,
         });
 
         sendMessageToTopic(Topics.Admin, {
@@ -232,36 +231,8 @@ export default async function handler(
 
         const reservations = await ReservationModel.find({
           _id: { $in: ids },
-          ...(isAdmin ? {} : { owner: user.id }),
+          owner: user.id,
         });
-
-        for (let i = 0; i < reservations.length; i += 1) {
-          const reservation = reservations[i];
-
-          if (!isAdmin && reservation.owner !== user.id) {
-            return res
-              .status(401)
-              .json(
-                onError(
-                  new Error(Errors.UNAUTHORIZED),
-                  'reservations',
-                  'DELETE'
-                )
-              );
-          }
-
-          if (new Date(reservation.datetime) < new Date()) {
-            return res
-              .status(400)
-              .json(
-                onError(
-                  new Error('Cannot delete past reservations'),
-                  'reservations',
-                  'DELETE'
-                )
-              );
-          }
-        }
 
         const deletedCount = await ReservationModel.deleteMany({
           _id: { $in: reservations.map((r) => r._id) },
