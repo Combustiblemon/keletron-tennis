@@ -17,8 +17,8 @@ export const dayData: Array<{
   { value: 'SUNDAY', label: 'Κυριακή' },
 ];
 
-export const reasonData: Array<{
-  value: CourtDataType['reservationsInfo']['reservedTimes'][number]['reason'];
+export const typeData: Array<{
+  value: CourtDataType['reservationsInfo']['reservedTimes'][number]['type'];
   label: string;
 }> = [
   { value: 'TRAINING', label: 'Προπόνηση' },

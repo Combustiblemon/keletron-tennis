@@ -34,7 +34,7 @@ import { iconStyles } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { CourtDataType } from '@/models/Court';
 
-import { dayData, reasonData } from '../common';
+import { dayData, typeData } from '../common';
 import ReservationInfoForm from './ReservationInfoForm';
 
 const AdminCourts = () => {
@@ -155,10 +155,10 @@ const AdminCourts = () => {
     days:
       | CourtDataType['reservationsInfo']['reservedTimes'][number]['days']
       | null;
-    reason:
-      | CourtDataType['reservationsInfo']['reservedTimes'][number]['reason']
+    type:
+      | CourtDataType['reservationsInfo']['reservedTimes'][number]['type']
       | null;
-  }>({ days: null, reason: null });
+  }>({ days: null, type: null });
 
   const [showFilter, setShowFilter] = useState(false);
   const [infoIndex, setInfoIndex] = useState(-1);
@@ -189,8 +189,6 @@ const AdminCourts = () => {
                 return v;
               }),
           });
-
-          console.log({ values, index });
         }}
         key={infoIndex}
         info={courtForm.getValues().reservationsInfo.reservedTimes[infoIndex]}
@@ -355,7 +353,7 @@ const AdminCourts = () => {
                                   duration:
                                     courtForm.getValues().reservationsInfo
                                       .duration,
-                                  reason: 'TRAINING',
+                                  type: 'TRAINING',
                                   repeat: 'WEEKLY',
                                   startTime: '09:00',
                                   days: ['MONDAY'],
@@ -386,14 +384,14 @@ const AdminCourts = () => {
                           }}
                         />
                         <Select
-                          label="Λόγος"
-                          data={reasonData}
-                          defaultValue={reservationFilters.reason}
+                          label="Τύπος"
+                          data={typeData}
+                          defaultValue={reservationFilters.type}
                           onChange={(v) => {
                             setReservationFilters({
                               ...reservationFilters,
-                              reason: v as
-                                | (typeof reasonData)[number]['value']
+                              type: v as
+                                | (typeof typeData)[number]['value']
                                 | null,
                             });
                           }}
@@ -414,8 +412,8 @@ const AdminCourts = () => {
                         }
 
                         if (
-                          reservationFilters.reason &&
-                          reservationFilters.reason !== r.reason
+                          reservationFilters.type &&
+                          reservationFilters.type !== r.type
                         ) {
                           return false;
                         }
@@ -461,7 +459,7 @@ const AdminCourts = () => {
                               </ActionIcon>
                             </Box>
                             <Stack>
-                              <Text size="sm">Λόγος: {res.reason}</Text>
+                              <Text size="sm">Τύπος: {res.type}</Text>
                               <Text size="sm">
                                 Ημέρες:{' '}
                                 {res.days

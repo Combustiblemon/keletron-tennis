@@ -61,7 +61,7 @@ const Reservations = () => {
   );
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" w="100%">
       <LoadingOverlay
         visible={courts.isPending || isLoading}
         zIndex={1000}

@@ -17,7 +17,7 @@ import React, { useRef } from 'react';
 
 import { CourtDataType } from '@/models/Court';
 
-import { dayData, reasonData } from '../common';
+import { dayData, typeData } from '../common';
 
 const formId = 'new-reservation-info';
 
@@ -43,7 +43,7 @@ const ReservationInfoForm = ({
     mode: 'uncontrolled',
     initialValues: {
       duration: info?.duration || 60,
-      reason: info?.reason || 'OTHER',
+      type: info?.type || 'OTHER',
       repeat: info?.repeat || 'DAILY',
       startTime: info?.startTime || '09:00',
       notes: info?.notes || '',
@@ -124,11 +124,11 @@ const ReservationInfoForm = ({
           />
           <Select
             label="Λόγος"
-            data={reasonData}
+            data={typeData}
             allowDeselect={false}
-            defaultValue={res.getValues().reason}
+            defaultValue={res.getValues().type}
             onChange={(v) => {
-              res.setFieldValue('reason', v as ReservationInfo['reason']);
+              res.setFieldValue('type', v as ReservationInfo['type']);
             }}
           />
           <TimeInput

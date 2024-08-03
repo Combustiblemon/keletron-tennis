@@ -174,6 +174,7 @@ export default async function handler(
         if (
           !isReservationTimeFree(
             courtReservations,
+            court.reservationsInfo.reservedTimes,
             data.datetime,
             data.duration
           )

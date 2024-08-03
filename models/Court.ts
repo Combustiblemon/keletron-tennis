@@ -13,7 +13,7 @@ export const CourtValidator = z.object({
       z.object({
         startTime: z.string(),
         duration: z.number().positive().default(90),
-        reason: z.enum(['TRAINING', 'OTHER']),
+        type: z.enum(['TRAINING', 'OTHER']),
         repeat: z.enum(['WEEKLY']).optional().default('WEEKLY'),
         days: z.array(z.enum(weekDays)).optional(),
         notes: z.string().max(200).optional(),
@@ -60,11 +60,11 @@ export const CourtSchema = new mongoose.Schema<CourtType>({
         duration: {
           type: Number,
         },
-        reason: {
+        type: {
           type: String,
           enum: CourtValidator.shape.reservationsInfo.shape.reservedTimes
-            .element.shape.reason.options,
-          required: [true, 'Please add a reason'],
+            .element.shape.type.options,
+          required: [true, 'Please add a type'],
         },
         repeat: {
           type: String,

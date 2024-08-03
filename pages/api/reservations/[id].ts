@@ -138,6 +138,7 @@ export default async function handler(
           if (
             !isReservationTimeFree(
               courtReservations,
+              court.reservationsInfo.reservedTimes,
               data.datetime || reservation.datetime,
               data.duration || reservation.duration
             )
