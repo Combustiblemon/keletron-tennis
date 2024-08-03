@@ -38,11 +38,12 @@ export const getErrorTranslation = (error: Errors, language: Language) => {
   return i18n(`errors.${error}`, language);
 };
 
-export const useTranslation = () => {
+export const useTranslation = (overrideLang?: Language) => {
   const [language] = useLanguage();
 
   return {
-    t: (key: LocaleKeys) => i18n(key, language),
-    tError: (error: Errors) => getErrorTranslation(error, language),
+    t: (key: LocaleKeys) => i18n(key, overrideLang || language),
+    tError: (error: Errors) =>
+      getErrorTranslation(error, overrideLang || language),
   };
 };

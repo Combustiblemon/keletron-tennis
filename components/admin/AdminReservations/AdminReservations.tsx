@@ -1,5 +1,6 @@
 import {
   Box,
+  Group,
   LoadingOverlay,
   ScrollArea,
   Stack,
@@ -52,25 +53,25 @@ const AdminReservations = () => {
   const { ref: calendarWrapperRef, height: calendarWrapperHeight } =
     useElementSize();
 
-  const courts = useQuery({
-    queryKey: ['courts'],
-    queryFn: async () => endpoints.admin.courts().GET(),
-  });
-
   const reservations = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => endpoints.admin.reservations.GET(),
+  });
+
+  const reservationData = useMemo(
+    () => (reservations.data?.success ? reservations.data?.data : []),
+    [reservations]
+  );
+
+  const courts = useQuery({
+    queryKey: ['courts'],
+    queryFn: async () => endpoints.admin.courts().GET(),
   });
 
   const courtData = useMemo(
     () =>
       courts.data?.success ? (courts.data?.data as Array<CourtDataType>) : [],
     [courts]
-  );
-
-  const reservationData = useMemo(
-    () => (reservations.data?.success ? reservations.data?.data : []),
-    [reservations]
   );
 
   const [formatedDate] = formatDate(SelectedDate).split('T');
@@ -120,25 +121,27 @@ const AdminReservations = () => {
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
       />
+      <Group>
+        <DateInput
+          label="Ημερομηνια"
+          defaultValue={new Date()}
+          renderDay={(date) => {
+            const reservationCount = reservationData.filter(
+              (r) => r.datetime.split('T')[0] === formatDate(date).split('T')[0]
+            ).length;
 
-      <DateInput
-        defaultValue={new Date()}
-        renderDay={(date) => {
-          const reservationCount = reservationData.filter(
-            (r) => r.datetime.split('T')[0] === formatDate(date).split('T')[0]
-          ).length;
-
-          return (
-            <Stack justify="center" align="center" gap="0px">
-              <Text size="sm">{date.getDate()}</Text>
-              <Text size="xs">{reservationCount}</Text>
-            </Stack>
-          );
-        }}
-        onChange={(v) => {
-          if (v) setSelectedDate(v);
-        }}
-      />
+            return (
+              <Stack justify="center" align="center" gap="0px">
+                <Text size="sm">{date.getDate()}</Text>
+                <Text size="xs">{reservationCount}</Text>
+              </Stack>
+            );
+          }}
+          onChange={(v) => {
+            if (v) setSelectedDate(v);
+          }}
+        />
+      </Group>
       <Box flex={1} w="100%" ref={calendarWrapperRef}>
         <ScrollArea h={`${calendarWrapperHeight}px`} type="never" w="100%">
           <Table stickyHeader stickyHeaderOffset={0} withColumnBorders>

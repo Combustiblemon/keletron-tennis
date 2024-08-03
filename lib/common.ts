@@ -78,3 +78,13 @@ export const isReservationTimeFree = (
 };
 
 export const iconStyles = { width: rem(16), height: rem(16) };
+
+export const weekDays = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+] as const;

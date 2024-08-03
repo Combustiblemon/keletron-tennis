@@ -1,5 +1,6 @@
-import { Tabs, Text } from '@mantine/core';
+import { Tabs } from '@mantine/core';
 
+import AdminCourts from '@/components/admin/AdminCourts/AdminCourts';
 import AdminReservations from '@/components/admin/AdminReservations/AdminReservations';
 
 const Admin = () => {
@@ -17,10 +18,11 @@ const Admin = () => {
           flexDirection: 'column',
         },
       }}
+      keepMounted={false}
     >
       <Tabs.List>
         <Tabs.Tab value="reservations">Κρατήσεις</Tabs.Tab>
-        <Tabs.Tab value="new-reservation">Νέα Κράτηση</Tabs.Tab>
+        <Tabs.Tab value="courts">Γήπεδα</Tabs.Tab>
       </Tabs.List>
 
       <Tabs.Panel
@@ -37,7 +39,7 @@ const Admin = () => {
       </Tabs.Panel>
 
       <Tabs.Panel
-        value="new-reservation"
+        value="courts"
         flex={1}
         styles={{
           panel: {
@@ -46,7 +48,7 @@ const Admin = () => {
           },
         }}
       >
-        <Text>meow</Text>
+        <AdminCourts />
       </Tabs.Panel>
     </Tabs>
   );

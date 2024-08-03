@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import z from 'zod';
 
+import { weekDays } from '@/lib/common';
+
 export const CourtValidator = z.object({
   name: z.string().max(60),
   type: z.enum(['ASPHALT', 'HARD']),
@@ -11,11 +13,10 @@ export const CourtValidator = z.object({
       z.object({
         startTime: z.string(),
         duration: z.number().positive().default(90),
-        reason: z.string(),
-        repeat: z
-          .enum(['WEEKLY', 'MONTHLY', 'DAILY'])
-          .optional()
-          .default('WEEKLY'),
+        reason: z.enum(['TRAINING', 'OTHER']),
+        repeat: z.enum(['WEEKLY']).optional().default('WEEKLY'),
+        days: z.array(z.enum(weekDays)).optional(),
+        notes: z.string().max(200).optional(),
       })
     ),
     duration: z.number(),
@@ -51,6 +52,7 @@ export const CourtSchema = new mongoose.Schema<CourtType>({
     },
     reservedTimes: [
       {
+        _id: false,
         startTime: {
           type: String,
           required: [true, 'Please add a start time'],
@@ -60,11 +62,22 @@ export const CourtSchema = new mongoose.Schema<CourtType>({
         },
         reason: {
           type: String,
+          enum: CourtValidator.shape.reservationsInfo.shape.reservedTimes
+            .element.shape.reason.options,
           required: [true, 'Please add a reason'],
         },
         repeat: {
           type: String,
           enum: ['WEEKLY', 'MONTHLY', 'DAILY'],
+        },
+        days: [
+          {
+            type: String,
+            enum: weekDays,
+          },
+        ],
+        notes: {
+          type: String,
         },
       },
     ],

@@ -170,7 +170,7 @@ export const endpoints = {
           IDString extends undefined ? Array<CourtDataType> : CourtDataType,
           `courts${IDString extends undefined ? '' : '/id'}`
         >(
-          await fetch(`/api/courts${id ? `/${id}` : ''}`, {
+          await fetch(`/api/admin/courts${id ? `/${id}` : ''}`, {
             method: 'GET',
             headers: commonHeaders,
           })
@@ -180,7 +180,7 @@ export const endpoints = {
           CourtDataType,
           `courts${IDString extends undefined ? '' : '/id'}`
         >(
-          await fetch('/api/courts', {
+          await fetch('/api/admin/courts', {
             method: 'POST',
             headers: commonHeaders,
             body: JSON.stringify(body),
@@ -191,7 +191,7 @@ export const endpoints = {
           CourtDataType,
           `courts${IDString extends undefined ? '' : '/id'}`
         >(
-          await fetch(`/api/courts/${id ? `/${id}` : ''}`, {
+          await fetch(`/api/admin/courts/${id ? `/${id}` : ''}`, {
             method: 'PUT',
             headers: commonHeaders,
             body: JSON.stringify(body),
@@ -203,7 +203,7 @@ export const endpoints = {
         }
 
         return handleResponse<CourtDataType, `courts/id`>(
-          await fetch(`/api/courts/${idToDelete}`, {
+          await fetch(`/api/admin/courts/${idToDelete}`, {
             method: 'DELETE',
             headers: commonHeaders,
           })
