@@ -1,8 +1,10 @@
 import {
   AppShell,
+  Box,
   Burger,
   Divider,
   Group,
+  Image,
   rem,
   Select,
   Stack,
@@ -149,14 +151,28 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
         padding="md"
       >
         <AppShell.Header h="60px">
-          <Group h="100%" px="md">
+          <Group h="100%" px="md" pos="relative">
             <Burger
               opened={opened}
               onClick={toggle}
               hiddenFrom="sm"
               size="sm"
             />
-            <Group justify="space-between" style={{ flex: 1 }}>
+            <Image
+              src="/android-chrome-192x192.png"
+              alt="logo"
+              visibleFrom="sm"
+              h="50px"
+            />
+            <Box pos="absolute" right="16px">
+              <Image
+                src="/android-chrome-192x192.png"
+                alt="logo"
+                h="50px"
+                hiddenFrom="sm"
+              />
+            </Box>
+            <Group justify="space-between" style={{ flex: 1 }} visibleFrom="sm">
               <Group ml="xl" gap={0} visibleFrom="sm">
                 {getNavItems(navItems)}
               </Group>
