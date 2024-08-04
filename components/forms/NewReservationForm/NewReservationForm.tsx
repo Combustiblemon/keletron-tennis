@@ -564,11 +564,6 @@ const NewReservationForm = ({
                             })}
                           </Text>
                         </Group>
-                        {reservation.type === 'TRAINING' && (
-                          <Text c="white" fw="bold">
-                            Προπόνηση
-                          </Text>
-                        )}
                       </Group>
                     </Paper>
                   );
