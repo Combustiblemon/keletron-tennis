@@ -42,10 +42,12 @@ const Reservations = () => {
   const courtsSelectionData = useMemo(
     () =>
       courts.data?.success
-        ? courts.data?.data.map((court) => ({
-            label: court.name,
-            value: court._id as string,
-          }))
+        ? courts.data?.data
+            .map((court) => ({
+              label: court.name,
+              value: court._id as string,
+            }))
+            .sort((a, b) => (a.label > b.label ? 1 : -1))
         : [],
     [courts]
   );
@@ -68,13 +70,15 @@ const Reservations = () => {
         overlayProps={{ radius: 'sm', blur: 2 }}
       />
 
-      <NewReservationForm
-        onClose={close}
-        opened={opened}
-        sessionData={session.data}
-        courtData={courts.data}
-        courtsSelectionData={courtsSelectionData}
-      />
+      {!!courtsSelectionData.length && (
+        <NewReservationForm
+          onClose={close}
+          opened={opened}
+          sessionData={session.data}
+          courtData={courts.data}
+          courtsSelectionData={courtsSelectionData}
+        />
+      )}
 
       <Group justify="space-between">
         <Text>{t('reservations.title')}</Text>

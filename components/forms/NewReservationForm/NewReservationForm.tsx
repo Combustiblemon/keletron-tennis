@@ -4,8 +4,8 @@ import {
   Group,
   Input,
   LoadingOverlay,
+  NumberInput,
   Paper,
-  rem,
   Select,
   SimpleGrid,
   Stack,
@@ -27,7 +27,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { APIResponse } from '@/lib/api/responseTypes';
 import { endpoints } from '@/lib/api/utils';
-import { formatDate, isReservationTimeFree, weekDayMap } from '@/lib/common';
+import {
+  formatDate,
+  iconStyles,
+  isReservationTimeFree,
+  weekDayMap,
+} from '@/lib/common';
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
 
@@ -59,6 +64,7 @@ export interface NewReservationFormProps {
   opened: boolean;
   onClose: () => void;
   courtsSelectionData: Array<{ label: string; value: string }>;
+  isAdmin?: boolean;
 }
 
 const NewReservationForm = ({
@@ -67,6 +73,7 @@ const NewReservationForm = ({
   onClose,
   courtData,
   courtsSelectionData,
+  isAdmin,
 }: NewReservationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -79,6 +86,7 @@ const NewReservationForm = ({
       time: '09:00',
       people: [] as string[],
       notes: '',
+      duration: 90,
     },
     validate: {
       people: (value) => {
@@ -148,7 +156,7 @@ const NewReservationForm = ({
       newReservation.getValues().people.length === 0 &&
       sessionData?.user?.name
     ) {
-      newReservation.setFieldValue('people', [sessionData?.user.name]);
+      newReservation.setFieldValue('people', [sessionData?.user.name, ' ']);
     }
   }, [newReservation, sessionData?.user?.name]);
 
@@ -162,7 +170,7 @@ const NewReservationForm = ({
         timePickerRef.current?.showPicker();
       }}
     >
-      <IconClock style={{ width: rem(16), height: rem(16) }} stroke={1.5} />
+      <IconClock style={iconStyles} stroke={1.5} />
     </ActionIcon>
   );
 
@@ -203,12 +211,21 @@ const NewReservationForm = ({
     }
 
     try {
-      const res = await endpoints.reservations.POST({
-        court: values.court,
-        datetime,
-        people: values.people,
-        type: values.people.length > 2 ? 'DOUBLE' : 'SINGLE',
-      });
+      const res = isAdmin
+        ? await endpoints.admin.reservations.POST({
+            court: values.court,
+            datetime,
+            people: values.people,
+            type: values.people.length > 2 ? 'DOUBLE' : 'SINGLE',
+            duration:
+              values.duration || selectedCourt?.reservationsInfo.duration || 90,
+          })
+        : await endpoints.reservations.POST({
+            court: values.court,
+            datetime,
+            people: values.people,
+            type: values.people.length > 2 ? 'DOUBLE' : 'SINGLE',
+          });
 
       setIsSubmitting(false);
 
@@ -255,24 +272,63 @@ const NewReservationForm = ({
   };
 
   useEffect(() => {
-    if (courtData && courtData.success && !newReservation.getValues().court) {
-      newReservation.setFieldValue('court', courtData.data[0]._id);
+    if (courtsSelectionData[0] && !newReservation.getValues().court) {
+      newReservation.setFieldValue('court', courtsSelectionData[0].value);
+      newReservation.setFieldValue(
+        'duration',
+        selectedCourt?.reservationsInfo.duration || 90
+      );
     }
-  }, [courtData, newReservation]);
+  }, [
+    courtsSelectionData,
+    newReservation,
+    selectedCourt?.reservationsInfo.duration,
+  ]);
+
+  const existingReservationData = useMemo(
+    () => [
+      ...(reservationData?.filter(
+        (r) => r.court === newReservation.getValues().court
+      ) || []),
+      ...(selectedCourt?.reservationsInfo.reservedTimes.filter((r) =>
+        r.days?.includes(
+          weekDayMap[
+            newReservation
+              .getValues()
+              .date.getDay()
+              .toString() as keyof typeof weekDayMap
+          ]
+        )
+      ) || []),
+    ],
+    [
+      newReservation,
+      reservationData,
+      selectedCourt?.reservationsInfo.reservedTimes,
+    ]
+  );
 
   return (
     <Drawer
       opened={opened}
       onClose={() => {
         newReservation.reset();
-        newReservation.setFieldValue('people', [sessionData?.user?.name || '']);
+        newReservation.setFieldValue('people', [
+          sessionData?.user?.name || '',
+          ' ',
+        ]);
         onClose?.();
       }}
       title={
         <Group justify="space-between">
           <Text>Νέα Κράτηση</Text>
-          <ActionIcon variant="subtle" type="submit" form={formId} color="gray">
-            <IconDeviceFloppy style={{ width: rem(16), height: rem(16) }} />
+          <ActionIcon
+            variant="filled"
+            type="submit"
+            form={formId}
+            color="green"
+          >
+            <IconDeviceFloppy style={iconStyles} />
           </ActionIcon>
         </Group>
       }
@@ -291,6 +347,7 @@ const NewReservationForm = ({
           position: 'relative',
         }}
         onSubmit={handleNewReservationSubmit}
+        key={newReservation.getValues().court}
       >
         <Stack gap="lg">
           <Stack
@@ -336,15 +393,32 @@ const NewReservationForm = ({
               />
             </Group>
           </Stack>
-
+          {isAdmin && (
+            <NumberInput
+              label="Διάρκεια κράτησης"
+              defaultValue={selectedCourt?.reservationsInfo.duration}
+              onChange={(v) => {
+                newReservation.setFieldValue('duration', Number(v));
+              }}
+              allowDecimal={false}
+              trimLeadingZeroesOnBlur
+              allowNegative={false}
+              hideControls
+              suffix="λ"
+            />
+          )}
           <Select
             allowDeselect={false}
             error={newReservation.errors.court}
             data={courtsSelectionData}
-            defaultValue={courtData?.success ? courtData.data[0]._id : ''}
+            defaultValue={courtsSelectionData[0].value}
             onChange={(value) => {
               newReservation.setValues({
                 court: value || '',
+                duration: courtData?.success
+                  ? courtData?.data?.find((c) => c._id === value)
+                      ?.reservationsInfo.duration
+                  : 90,
               });
             }}
             label="Γήπεδο"
@@ -362,7 +436,7 @@ const NewReservationForm = ({
 
           <Stack w="100%" gap="sm">
             <Group w="100%" justify="space-between">
-              <Text>People</Text>
+              <Text>Άτομα</Text>
               <ActionIcon
                 disabled={newReservation.getValues().people.length >= 4}
                 variant="subtle"
@@ -377,7 +451,7 @@ const NewReservationForm = ({
                   newReservation.setFieldValue('people', [...people, '']);
                 }}
               >
-                <IconUserPlus style={{ width: rem(16), height: rem(16) }} />
+                <IconUserPlus style={iconStyles} />
               </ActionIcon>
             </Group>
             <Stack gap="sm" w="100%">
@@ -407,7 +481,7 @@ const NewReservationForm = ({
                       error={error}
                     />
                     <ActionIcon
-                      disabled={index === 0}
+                      disabled={newReservation.getValues().people.length <= 2}
                       variant="subtle"
                       color="red"
                       onClick={() => {
@@ -419,7 +493,7 @@ const NewReservationForm = ({
                         );
                       }}
                     >
-                      <IconCancel style={{ width: rem(16), height: rem(16) }} />
+                      <IconCancel style={iconStyles} />
                     </ActionIcon>
                   </Group>
                 );
@@ -435,30 +509,11 @@ const NewReservationForm = ({
           </Stack>
 
           <Stack gap="sm">
-            <Text>
-              Existing reservations for court{' '}
-              {
-                courtsSelectionData.find(
-                  (c) => c.value === newReservation.getValues().court
-                )?.label
-              }
-            </Text>
+            {!!existingReservationData.length && (
+              <Text>Μη διαθέσημες ώρες</Text>
+            )}
             <SimpleGrid cols={1} verticalSpacing="xs">
-              {[
-                ...(reservationData?.filter(
-                  (r) => r.court === newReservation.getValues().court
-                ) || []),
-                ...(selectedCourt?.reservationsInfo.reservedTimes.filter((r) =>
-                  r.days?.includes(
-                    weekDayMap[
-                      newReservation
-                        .getValues()
-                        .date.getDay()
-                        .toString() as keyof typeof weekDayMap
-                    ]
-                  )
-                ) || []),
-              ]
+              {existingReservationData
                 .sort((a, b) => {
                   return (
                     new Date(

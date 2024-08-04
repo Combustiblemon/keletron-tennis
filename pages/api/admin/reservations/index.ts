@@ -187,7 +187,7 @@ export default async function handler(
 
         const reservation = await ReservationModel.create({
           ...data,
-          owner: data.owner,
+          owner: data.owner || user._id,
         });
 
         sendMessageToTopic(Topics.Admin, {
