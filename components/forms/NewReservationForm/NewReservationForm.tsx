@@ -4,8 +4,8 @@ import {
   Group,
   Input,
   LoadingOverlay,
+  NumberInput,
   Paper,
-  rem,
   Select,
   SimpleGrid,
   Stack,
@@ -64,6 +64,7 @@ export interface NewReservationFormProps {
   opened: boolean;
   onClose: () => void;
   courtsSelectionData: Array<{ label: string; value: string }>;
+  isAdmin?: boolean;
 }
 
 const NewReservationForm = ({
@@ -72,6 +73,7 @@ const NewReservationForm = ({
   onClose,
   courtData,
   courtsSelectionData,
+  isAdmin,
 }: NewReservationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -84,6 +86,7 @@ const NewReservationForm = ({
       time: '09:00',
       people: [] as string[],
       notes: '',
+      duration: 90,
     },
     validate: {
       people: (value) => {
@@ -167,7 +170,7 @@ const NewReservationForm = ({
         timePickerRef.current?.showPicker();
       }}
     >
-      <IconClock style={{ width: rem(16), height: rem(16) }} stroke={1.5} />
+      <IconClock style={iconStyles} stroke={1.5} />
     </ActionIcon>
   );
 
@@ -208,12 +211,21 @@ const NewReservationForm = ({
     }
 
     try {
-      const res = await endpoints.reservations.POST({
-        court: values.court,
-        datetime,
-        people: values.people,
-        type: values.people.length > 2 ? 'DOUBLE' : 'SINGLE',
-      });
+      const res = isAdmin
+        ? await endpoints.admin.reservations.POST({
+            court: values.court,
+            datetime,
+            people: values.people,
+            type: values.people.length > 2 ? 'DOUBLE' : 'SINGLE',
+            duration:
+              values.duration || selectedCourt?.reservationsInfo.duration || 90,
+          })
+        : await endpoints.reservations.POST({
+            court: values.court,
+            datetime,
+            people: values.people,
+            type: values.people.length > 2 ? 'DOUBLE' : 'SINGLE',
+          });
 
       setIsSubmitting(false);
 
@@ -260,10 +272,18 @@ const NewReservationForm = ({
   };
 
   useEffect(() => {
-    if (courtData && courtData.success && !newReservation.getValues().court) {
-      newReservation.setFieldValue('court', courtData.data[0]._id);
+    if (courtsSelectionData[0] && !newReservation.getValues().court) {
+      newReservation.setFieldValue('court', courtsSelectionData[0].value);
+      newReservation.setFieldValue(
+        'duration',
+        selectedCourt?.reservationsInfo.duration || 90
+      );
     }
-  }, [courtData, newReservation]);
+  }, [
+    courtsSelectionData,
+    newReservation,
+    selectedCourt?.reservationsInfo.duration,
+  ]);
 
   const existingReservationData = useMemo(
     () => [
@@ -327,6 +347,7 @@ const NewReservationForm = ({
           position: 'relative',
         }}
         onSubmit={handleNewReservationSubmit}
+        key={newReservation.getValues().court}
       >
         <Stack gap="lg">
           <Stack
@@ -372,7 +393,20 @@ const NewReservationForm = ({
               />
             </Group>
           </Stack>
-
+          {isAdmin && (
+            <NumberInput
+              label="Διάρκεια κράτησης"
+              defaultValue={selectedCourt?.reservationsInfo.duration}
+              onChange={(v) => {
+                newReservation.setFieldValue('duration', Number(v));
+              }}
+              allowDecimal={false}
+              trimLeadingZeroesOnBlur
+              allowNegative={false}
+              hideControls
+              suffix="λ"
+            />
+          )}
           <Select
             allowDeselect={false}
             error={newReservation.errors.court}
@@ -381,6 +415,10 @@ const NewReservationForm = ({
             onChange={(value) => {
               newReservation.setValues({
                 court: value || '',
+                duration: courtData?.success
+                  ? courtData?.data?.find((c) => c._id === value)
+                      ?.reservationsInfo.duration
+                  : 90,
               });
             }}
             label="Γήπεδο"
@@ -455,7 +493,7 @@ const NewReservationForm = ({
                         );
                       }}
                     >
-                      <IconCancel style={{ width: rem(16), height: rem(16) }} />
+                      <IconCancel style={iconStyles} />
                     </ActionIcon>
                   </Group>
                 );

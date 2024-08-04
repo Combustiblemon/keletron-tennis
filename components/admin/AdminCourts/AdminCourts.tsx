@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   Box,
+  Button,
   Card,
   CardSection,
   Divider,
@@ -27,8 +28,10 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 import React, { useMemo, useRef, useState } from 'react';
 
+import NewReservationForm from '@/components/forms/NewReservationForm/NewReservationForm';
 import { endpoints } from '@/lib/api/utils';
 import { iconStyles } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
@@ -39,10 +42,15 @@ import ReservationInfoForm from './ReservationInfoForm';
 
 const AdminCourts = () => {
   const [opened, { open, close }] = useDisclosure();
+  const [
+    newReservationFormOpened,
+    { open: openNewReservationForm, close: closeNewReservationForm },
+  ] = useDisclosure();
   const startTimeRef = useRef(null);
   const endTimeRef = useRef(null);
   const { t } = useTranslation('el');
   const { ref: wrapperRef, height: wrapperHeight } = useElementSize();
+  const session = useSession();
 
   const courtForm = useForm({
     initialValues: {
@@ -90,7 +98,7 @@ const AdminCourts = () => {
 
   const courts = useQuery({
     queryKey: ['courts'],
-    queryFn: async () => endpoints.admin.courts().GET(),
+    queryFn: async () => endpoints.admin.courts(undefined).GET(),
   });
 
   const courtData = useMemo(
@@ -172,6 +180,19 @@ const AdminCourts = () => {
     setIsLoading(false);
   };
 
+  const courtsSelectionData = useMemo(
+    () =>
+      courts.data?.success
+        ? courts.data?.data
+            .map((court) => ({
+              label: court.name,
+              value: court._id as string,
+            }))
+            .sort((a, b) => (a.label > b.label ? 1 : -1))
+        : [],
+    [courts]
+  );
+
   return (
     <>
       <ReservationInfoForm
@@ -198,6 +219,14 @@ const AdminCourts = () => {
         visible={isLoading || courts.isFetching}
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
+      />
+      <NewReservationForm
+        onClose={closeNewReservationForm}
+        opened={newReservationFormOpened}
+        sessionData={session.data}
+        courtData={courts.data}
+        courtsSelectionData={courtsSelectionData}
+        isAdmin
       />
       <Box h="100%" flex={1} w="100%" ref={wrapperRef}>
         <ScrollArea
@@ -229,6 +258,11 @@ const AdminCourts = () => {
                 key={selectedCourt._id}
                 pos="relative"
               >
+                <Box pos="absolute" top="8px" left="8px">
+                  <Button variant="default" onClick={openNewReservationForm}>
+                    Νέα κράτηση
+                  </Button>
+                </Box>
                 <Box pos="absolute" top="8px" right="8px">
                   <Group>
                     {/* <ActionIcon
@@ -253,7 +287,7 @@ const AdminCourts = () => {
                     </ActionIcon>
                   </Group>
                 </Box>
-                <CardSection p="sm">
+                <CardSection p="sm" pt="xl">
                   <Stack w="100%">
                     <TextInput
                       label="Όνομα"

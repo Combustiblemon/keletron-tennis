@@ -240,7 +240,7 @@ export const endpoints = {
       POST: async (
         body: Pick<
           z.infer<typeof ReservationValidator>,
-          'court' | 'type' | 'datetime' | 'people' | 'owner'
+          'court' | 'type' | 'datetime' | 'people' | 'owner' | 'duration'
         >
       ) =>
         handleResponse<ReservationDataType, `reservations`>(
