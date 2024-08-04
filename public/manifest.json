@@ -3,20 +3,27 @@
   "display": "standalone",
   "icons": [
     {
-      "purpose": "any maskable",
-      "sizes": "268x268",
-      "src": "/logo-android-square.png",
+      "sizes": "192x192",
+      "src": "/android-chrome-192x192.png",
       "type": "image/png"
     },
     {
-      "sizes": "144x144",
-      "src": "/logo-android-small.png",
+      "sizes": "512x512",
+      "src": "/android-chrome-512x512.png",
       "type": "image/png"
     }
   ],
   "id": "/",
   "name": "Keletron Tennis Academy",
   "orientation": "portrait",
+  "screenshots": [
+    {
+      "label": "Reservations page",
+      "sizes": "509x1104",
+      "src": "reservations.png",
+      "type": "image/png"
+    }
+  ],
   "short_name": "Keletron",
   "start_url": "/",
   "theme_color": "#FFFFFF"
