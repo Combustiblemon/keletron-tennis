@@ -5,6 +5,10 @@ const Document = () => {
   return (
     <Html lang="en" className="h-screen w-screen overflow-hidden">
       <Head>
+        <meta
+          name="google-site-verification"
+          content="aTA0W1x02ZyTKKdyO8wRCleEsvv6KRQOAlRCvhwUUPY"
+        />
         <ColorSchemeScript defaultColorScheme="auto" />
         <meta
           name="viewport"
