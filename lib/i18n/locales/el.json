@@ -1,1 +1,115 @@
-{}
+{
+  "Navbar": {
+    "home": "Αρχική",
+    "login": "Σύνδεση",
+    "logout": "Αποσύνδεση",
+    "register": "Εγγραφή",
+    "reservations": "Κρατήσεις",
+    "settings": "Ρυθμίσεις"
+  },
+  "auth": {
+    "button": {
+      "login": "Σύνδεση",
+      "register": "Εγγραφή"
+    },
+    "form": {
+      "emailInput": {
+        "invalid": "Το email δεν είναι έγκυρο.",
+        "label": "email",
+        "placeholder": "tasos@example.com"
+      },
+      "nameInput": {
+        "label": "Όνομα",
+        "placeholder": "Τάσος Τασούλης"
+      },
+      "passwordInput": {
+        "label": "Κωδικός",
+        "minLength": "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες.",
+        "placeholder": "Κωδικός"
+      },
+      "repeatPasswordInput": {
+        "label": "Επανάληψη κωδικού",
+        "noMatch": "Οι κωδικοί δεν ταιριάζουν.",
+        "placeholder": "Επανάληψη κωδικού"
+      }
+    },
+    "google": "Σύνδεση με Google",
+    "googleLogin": {
+      "login": "Σύνδεση με Google",
+      "register": "Εγγραφή με Google"
+    },
+    "login": "Συνδεθείτε στον λογαριασμό σας.",
+    "loginPrompt": "Δεν έχετε λογαριασμό; Εγγραφείτε.",
+    "loginSuccess": "Επιτυχής σύνδεση.",
+    "logout": "Αποσύνδεση",
+    "logoutSuccess": "Επιτυχής αποσύνδεση.",
+    "register": "Εγγραφή νέου λογαριασμού.",
+    "registerPrompt": "Έχετε ήδη λογαριασμό; Συνδεθείτε.",
+    "registerSuccess": "Επιτυχής εγγραφή."
+  },
+  "errors": {
+    "internal_server_error": "Παρουσιάστηκε σφάλμα.",
+    "invalid_credentials": "Μη έγκυρο email ή κωδικός.",
+    "invalid_email": "Μη έγκυρο email.",
+    "invalid_password": "Μη έγκυρος κωδικός.",
+    "invalid_reset_key": "Μη έγκυρο κλειδί επαναφοράς.",
+    "invalid_reset_request": "Μη έγκυρο αίτημα επαναφοράς.",
+    "login_error": "Μη έγκυρο email ή κωδικός.",
+    "passwords_do_not_match": "Οι κωδικοί δεν ταιριάζουν.",
+    "reset_key_expired": "Το κλειδί επαναφοράς έχει λήξει. Παρακαλώ ζητήστε νέο.",
+    "reset_key_not_found": "Το κλειδί επαναφοράς δεν βρέθηκε.",
+    "resource_not_found": "Η πηγή δεν βρέθηκε.",
+    "unauthorized": "Σφάλμα εξουσιοδότησης.",
+    "unexpected_error": "Παρουσιάστηκε σφάλμα.",
+    "user_exists": "Ο χρήστης υπάρχει ήδη.",
+    "user_not_found": "Ο χρήστης δεν βρέθηκε."
+  },
+  "generic": {
+    "components": {
+      "ReservationDetails": {
+        "deleteModal": {
+          "body": "Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.",
+          "cancel": "Ακύρωση",
+          "confirm": "Διαγραφή",
+          "title": "Είστε σίγουροι ότι θέλετε να διαγράψετε την κράτηση;"
+        },
+        "deleted": "Η κράτηση διαγράφηκε επιτυχώς.",
+        "updated": "H κράτηση ενημερώθηκε επιτυχώς."
+      }
+    },
+    "date": {
+      "d": "ημ",
+      "h": "ώρ",
+      "m": "λ"
+    },
+    "days": {
+      "FRIDAY": "Παρασκευή",
+      "MONDAY": "Δευτέρα",
+      "SATURDAY": "Σάββατο",
+      "SUNDAY": "Κυριακή",
+      "THURSDAY": "Πέμπτη",
+      "TUESDAY": "Τρίτη",
+      "WEDNESDAY": "Τετάρτη"
+    },
+    "form": {
+      "errors": {
+        "noPeople": "Πρέπει να επιλέξετε τουλάχιστον ένα άτομο.",
+        "noPeopleNames": "Πρέπει να εισάγετε το όνομα όλων των ατόμων.",
+        "required": "Το πεδίο είναι υποχρεωτικό.",
+        "time": "Η ώρα δεν είναι έγκυρη."
+      },
+      "fields": {
+        "court": "Γήπεδο",
+        "date": "Ημερομηνία",
+        "notes": "Σημειώσεις",
+        "people": "Άτομα",
+        "time": "Ώρα"
+      }
+    }
+  },
+  "reservations": {
+    "newReservation": "Νέα κράτηση",
+    "title": "Κρατήσεις",
+    "upcomingReservations": "Επερχόμενες κρατήσεις:"
+  }
+}

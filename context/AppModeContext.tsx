@@ -1,5 +1,12 @@
 'use client';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 export type AppMode = 'light' | 'dark';
 
@@ -21,10 +28,18 @@ export const AppModeProvider = ({
 
   useEffect(() => {
     changeModeCallback(mode);
-  }, [mode]);
+  }, [mode, changeModeCallback]);
 
   return (
-    <AppModeContext.Provider value={{ mode, setMode }}>
+    <AppModeContext.Provider
+      value={useMemo(
+        () => ({
+          mode,
+          setMode,
+        }),
+        [mode]
+      )}
+    >
       {children}
     </AppModeContext.Provider>
   );
@@ -32,6 +47,7 @@ export const AppModeProvider = ({
 
 export function useAppMode() {
   const context = useContext(AppModeContext);
+
   if (context === undefined) {
     throw new Error('useAppMode must be used within an AppModeProvider');
   }

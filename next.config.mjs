@@ -7,6 +7,7 @@ const withWPA = withPWAInit({
   cacheOnFrontEndNav: true,
   cacheStartUrl: true,
   reloadOnOnline: true,
+  sw: 'firebase-messaging-sw.js',
 });
 
 export default withWPA({

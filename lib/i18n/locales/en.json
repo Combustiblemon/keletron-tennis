@@ -1,1 +1,106 @@
-{}
+{
+  "Navbar": {
+    "home": "Home",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "reservations": "Reservations",
+    "settings": "Settings"
+  },
+  "auth": {
+    "button": {
+      "login": "Login",
+      "register": "Register"
+    },
+    "form": {
+      "emailInput": {
+        "invalid": "The email is invalid.",
+        "label": "Email",
+        "placeholder": "tasos@example.com"
+      },
+      "nameInput": {
+        "label": "Name",
+        "placeholder": "John Doe"
+      },
+      "passwordInput": {
+        "label": "Password",
+        "minLength": "The password must be at least 6 characters long.",
+        "placeholder": "Password"
+      },
+      "repeatPasswordInput": {
+        "label": "Repeat Password",
+        "noMatch": "The passwords do not match.",
+        "placeholder": "Repeat Password"
+      }
+    },
+    "google": "Login with Google",
+    "googleLogin": {
+      "login": "Login with Google",
+      "register": "Register with Google"
+    },
+    "login": "Login to your account.",
+    "loginPrompt": "Don't have an account? Register.",
+    "loginSuccess": "Login successful.",
+    "logout": "Logout",
+    "logoutSuccess": "Logout successful.",
+    "register": "Register a new account.",
+    "registerPrompt": "Already have an account? Login.",
+    "registerSuccess": "Registration successful."
+  },
+  "errors": {
+    "internal_server_error": "An error occurred. Please try again later.",
+    "invalid_credentials": "Invalid email or password.",
+    "invalid_email": "Invalid email.",
+    "invalid_password": "Invalid password.",
+    "invalid_reset_key": "Invalid reset key. Please request a new one.",
+    "invalid_reset_request": "Invalid reset request. Please request a new one.",
+    "login_error": "Invalid email or password.",
+    "passwords_do_not_match": "Passwords do not match.",
+    "reset_key_expired": "The reset key has expired. Please request a new one.",
+    "reset_key_not_found": "Reset key not found. Please request a new one.",
+    "resource_not_found": "Resource not found.",
+    "unauthorized": "Unauthorized.",
+    "unexpected_error": "An error occurred. Please try again later.",
+    "user_exists": "User already exists. Please login.",
+    "user_not_found": "User not found."
+  },
+  "generic": {
+    "components": {
+      "ReservationDetails": {
+        "deleteModal": {
+          "body": "This action cannot be undone.",
+          "cancel": "Cancel",
+          "confirm": "Delete",
+          "title": "Are you sure you want to delete the reservation?"
+        },
+        "deleted": "Reservation deleted successfully.",
+        "updated": "Reservation updated successfully."
+      }
+    },
+    "date": {
+      "d": "d",
+      "h": "h",
+      "m": "m"
+    },
+    "form": {
+      "errors": {
+        "noPeople": "You must select at least one person.",
+        "noPeopleNames": "You must enter the name of all people.",
+        "required": "This field is required.",
+        "time": "The time is invalid."
+      },
+      "fields": {
+        "court": "Court",
+        "date": "Date",
+        "notes": "Notes",
+        "people": "People",
+        "time": "Time"
+      }
+    }
+  },
+  "reservations": {
+    "newReservation": "New Reservation",
+    "title": "Reservations",
+    "upcomingReservations": "Upcoming Reservations:"
+  }
+}
