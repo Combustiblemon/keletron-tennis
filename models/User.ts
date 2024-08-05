@@ -9,6 +9,7 @@ export const UserValidator = z.object({
   role: z.enum(['ADMIN', 'USER']).default('USER'),
   email: z.string().email(),
   password: z.string().min(6),
+  accountType: z.enum(['GOOGLE', 'PASSWORD']).optional(),
 });
 
 type SanitizedUserFields =
@@ -76,6 +77,10 @@ export const UserSchema = new mongoose.Schema<Users>({
   },
   session: {
     type: String,
+  },
+  accountType: {
+    type: String,
+    enum: ['GOOGLE', 'PASSWORD'],
   },
 });
 
