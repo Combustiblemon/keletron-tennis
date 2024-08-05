@@ -10,7 +10,7 @@ const Document = () => {
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=1, viewport-fit=cover"
         />
-        <meta name="description" content="Keletron tennis club" />
+        <meta name="description" content="Keletron tennis academy" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="mask-icon" href="/logo.webp" color="#FFFFFF" />
         <meta name="theme-color" content="#ffffff" />
@@ -60,9 +60,9 @@ const Document = () => {
         {/* <meta name="twitter:image" content="/icons/twitter.png" /> */}
         {/* <meta name="twitter:creator" content="@DavidWShadow" /> */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Keletron tennis app" />
+        <meta property="og:title" content="Keletron tennis academy" />
         {/* <meta property="og:description" content="Best PWA app in the world!" /> */}
-        <meta property="og:site_name" content="Keletron tennis app" />
+        <meta property="og:site_name" content="Keletron tennis academy" />
         {/* <meta property="og:url" content="https://yourdomain.com" /> */}
         {/* <meta property="og:image" content="/icons/og.png" /> */}
         {/* add the following only if you want to add a startup image for Apple devices. */}

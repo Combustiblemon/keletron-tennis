@@ -45,6 +45,39 @@ export const authOptions = (
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      async profile(profile, tokens) {
+        let user = await UserModel.findOne({
+          email: { $regex: new RegExp(`^${profile.email}`, 'i') },
+        });
+
+        if (user) {
+          user.session = nanoid();
+          user.save();
+        } else {
+          user = await UserModel.create({
+            name: profile.name,
+            email: profile.email,
+            password: '',
+            role: 'USER',
+            FCMTokens: [],
+            session: nanoid(),
+            accountType: 'GOOGLE',
+          });
+        }
+
+        return {
+          ...profile,
+          id: profile.sub,
+          user: {
+            _id: user._id?.toString() || '',
+            email: user.email,
+            FCMTokens: user.FCMTokens,
+            name: user.name,
+            role: user.role,
+            session: user.session,
+          },
+        };
+      },
     }),
     CredentialsProvider({
       id: 'login',
@@ -187,6 +220,7 @@ export const authOptions = (
               role: 'USER',
               FCMTokens: [FCMToken],
               session,
+              accountType: 'PASSWORD',
             })
           ).sanitize();
         } catch (error) {
@@ -248,18 +282,22 @@ export const authOptions = (
       token = {};
       session = {};
 
-      if (FCMTokens && FCMTokens.length) {
+      if (FCMTokens?.length) {
         unsubscribeUser(role, FCMTokens);
       }
 
-      UserModel.findByIdAndUpdate(_id, { session: '', FCMToken: '' });
+      if (_id) {
+        await UserModel.findByIdAndUpdate(_id, { session: '', FCMToken: '' });
+      }
     },
   },
   callbacks: {
     async session({ session, token }) {
       if (token.user) {
         try {
-          const dbUser = await UserModel.findById(token.user?._id);
+          const dbUser = token.user?._id
+            ? await UserModel.findById(token.user?._id)
+            : undefined;
 
           if (dbUser?.compareSessions(token.user?.session)) {
             session.user = {
@@ -289,7 +327,11 @@ export const authOptions = (
 
       return session;
     },
-    async jwt({ token, user, account, profile, session, trigger }) {
+    async jwt({ token, user: adapterUser }) {
+      const user =
+        (adapterUser as unknown as { user: typeof adapterUser })?.user ||
+        adapterUser;
+
       if (user) {
         token.user = {
           role: user.role || 'USER',

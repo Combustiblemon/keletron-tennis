@@ -18,6 +18,7 @@ import { useRouter } from 'next/router';
 import { signIn, useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 
+import { GoogleButton } from '@/components/GoogleButton/GoogleButton';
 import { Errors } from '@/lib/api/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { firebaseCloudMessaging } from '@/lib/webPush';
@@ -175,6 +176,15 @@ const AuthenticationForm = (props: PaperProps) => {
         <Text size="lg" fw={500}>
           {t(`auth.${type}`)}
         </Text>
+        {type === 'login' && (
+          <GoogleButton
+            onClick={() => {
+              signIn('google');
+            }}
+          >
+            {t('auth.googleLogin.login')}
+          </GoogleButton>
+        )}
       </Stack>
 
       <Divider my="lg" />
