@@ -163,13 +163,15 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
               alt="logo"
               visibleFrom="sm"
               h="50px"
+              w="50px"
             />
             <Box pos="absolute" right="16px">
               <Image
                 src="/android-chrome-192x192.png"
                 alt="logo"
-                h="50px"
                 hiddenFrom="sm"
+                h="50px"
+                w="50px"
               />
             </Box>
             <Group justify="space-between" style={{ flex: 1 }} visibleFrom="sm">

@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { Errors, onError, onSuccess } from '@/lib/api/common';
 import { sendMessageToTopic, Topics } from '@/lib/api/notifications';
 import { formatDate, isReservationTimeFree } from '@/lib/common';
-import Court from '@/models/Court';
+import Court, { CourtType } from '@/models/Court';
 
 import dbConnect from '../../../lib/api/dbConnect';
 import ReservationModel, {
@@ -233,7 +233,7 @@ export default async function handler(
         const reservations = await ReservationModel.find({
           _id: { $in: ids },
           ...(isAdmin ? {} : { owner: user.id }),
-        });
+        }).populate('court');
 
         for (let i = 0; i < reservations.length; i += 1) {
           const reservation = reservations[i];
@@ -267,7 +267,12 @@ export default async function handler(
           _id: { $in: reservations.map((r) => r._id) },
         });
 
-        // TODO: send notification to the admins
+        reservations.forEach((reservation) => {
+          sendMessageToTopic(Topics.Admin, {
+            title: 'Διαγραφή κράτησης',
+            body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${(reservation.court as unknown as CourtType).name}\nΌνομα: ${user.name || ''}`,
+          });
+        });
 
         res.status(200).json(onSuccess(deletedCount, 'reservations', 'DELETE'));
       } catch (error) {
