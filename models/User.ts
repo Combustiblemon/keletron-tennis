@@ -8,7 +8,7 @@ export const UserValidator = z.object({
   name: z.string().max(60),
   role: z.enum(['ADMIN', 'USER']).default('USER'),
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(6).optional(),
   accountType: z.enum(['GOOGLE', 'PASSWORD']).optional(),
 });
 
@@ -61,7 +61,6 @@ export const UserSchema = new mongoose.Schema<Users>({
   },
   password: {
     type: String,
-    required: [true, 'Please add a User password'],
   },
   resetKey: {
     _id: false,
@@ -85,11 +84,12 @@ export const UserSchema = new mongoose.Schema<Users>({
 });
 
 UserSchema.methods.comparePasswords = function (candidatePassword?: string) {
-  if (!candidatePassword) {
+  const user = this as Users;
+
+  if (!candidatePassword || !user.password) {
     return false;
   }
 
-  const user = this as Users;
   return bcrypt.compareSync(candidatePassword, user.password);
 };
 
@@ -129,7 +129,7 @@ UserSchema.methods.sanitize = function (): UserSanitized {
 };
 
 UserSchema.pre<Users>('save', function (next) {
-  if (this.isModified('password')) {
+  if (this.isModified('password') && this.password) {
     this.password = bcrypt.hashSync(this.password, 10);
   }
 
