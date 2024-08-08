@@ -86,30 +86,33 @@ const AdminReservations = () => {
         <Table.Td p="xs" align="right">
           {time}
         </Table.Td>
-        {courtData.map((c) => {
-          const reservation = reservationData.filter(
-            (r) =>
-              // same court
-              r.court._id === c._id &&
-              // same day
-              r.datetime.split('T')[0] === formatedDate &&
-              // reservation time starts with current time
-              r.datetime.split('T')[1].substring(0, 2) === time.substring(0, 2)
-          )[0];
+        {courtData
+          .sort((a, b) => (a.name > b.name ? 1 : -1))
+          .map((c) => {
+            const reservation = reservationData.filter(
+              (r) =>
+                // same court
+                r.court._id === c._id &&
+                // same day
+                r.datetime.split('T')[0] === formatedDate &&
+                // reservation time starts with current time
+                r.datetime.split('T')[1].substring(0, 2) ===
+                  time.substring(0, 2)
+            )[0];
 
-          return (
-            <Table.Td key={`${c._id}${time}`} p={0} pos="relative">
-              {reservation ? (
-                <ReservationVisual
-                  reservation={reservation}
-                  width={`${TABLE_CELL_WIDTH}px`}
-                />
-              ) : (
-                ''
-              )}
-            </Table.Td>
-          );
-        })}
+            return (
+              <Table.Td key={`${c._id}${time}`} p={0} pos="relative">
+                {reservation ? (
+                  <ReservationVisual
+                    reservation={reservation}
+                    width={`${TABLE_CELL_WIDTH}px`}
+                  />
+                ) : (
+                  ''
+                )}
+              </Table.Td>
+            );
+          })}
       </Table.Tr>
     ));
   }, [courtData, formatedDate, reservationData]);
@@ -154,9 +157,11 @@ const AdminReservations = () => {
             >
               <Table.Tr>
                 <Table.Th w="50px">Ώρα</Table.Th>
-                {courtData.map((c) => {
-                  return <Table.Th key={c._id}>{c.name}</Table.Th>;
-                })}
+                {courtData
+                  .sort((a, b) => (a.name > b.name ? 1 : -1))
+                  .map((c) => {
+                    return <Table.Th key={c._id}>{c.name}</Table.Th>;
+                  })}
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>{rows}</Table.Tbody>

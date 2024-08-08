@@ -17,6 +17,7 @@ export const CourtValidator = z.object({
         repeat: z.enum(['WEEKLY']).optional().default('WEEKLY'),
         days: z.array(z.enum(weekDays)).optional(),
         notes: z.string().max(200).optional(),
+        datesNotApplied: z.array(z.string()).optional(),
       })
     ),
     duration: z.number(),
@@ -78,6 +79,9 @@ export const CourtSchema = new mongoose.Schema<CourtType>({
         ],
         notes: {
           type: String,
+        },
+        datesNotApplied: {
+          type: [String],
         },
       },
     ],
