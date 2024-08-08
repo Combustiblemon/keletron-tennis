@@ -107,6 +107,15 @@
       }
     }
   },
+  "loggedInHomepage": {
+    "reservation": {
+      "label": "Επόμενη κράτηση:"
+    },
+    "welcome": "Καλώς ήρθες"
+  },
+  "loggedOutHomepage": {
+    "welcome": "Καλώς ήρθες στο Κέλετρον."
+  },
   "reservations": {
     "newReservation": "Νέα κράτηση",
     "title": "Κρατήσεις",

@@ -98,6 +98,15 @@
       }
     }
   },
+  "loggedInHomepage": {
+    "reservation": {
+      "label": "Next reservation:"
+    },
+    "welcome": "Welcome"
+  },
+  "loggedOutHomepage": {
+    "welcome": "Welcome to Keletron."
+  },
   "reservations": {
     "newReservation": "New Reservation",
     "title": "Reservations",
