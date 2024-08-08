@@ -278,4 +278,15 @@ export const endpoints = {
       },
     },
   },
+  user: {
+    PUT: async (_id: string, body: { name: string }) => {
+      return handleResponse<Array<ReservationDataType>, `reservations`>(
+        await fetch(`/api/user/${_id}`, {
+          method: 'PUT',
+          headers: commonHeaders,
+          body: JSON.stringify(body),
+        })
+      );
+    },
+  },
 };

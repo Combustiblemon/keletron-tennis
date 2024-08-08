@@ -102,5 +102,15 @@
     "newReservation": "New Reservation",
     "title": "Reservations",
     "upcomingReservations": "Upcoming Reservations:"
+  },
+  "settings": {
+    "header": "Settings",
+    "nameInput": {
+      "label": "Name"
+    },
+    "toast": {
+      "fail": "Failed to save settings.",
+      "success": "Settings saved successfully."
+    }
   }
 }

@@ -100,7 +100,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
           : null,
       ],
       'divider',
-      // { title: t('Navbar.settings'), href: '/settings' },
+      { title: t('Navbar.settings'), href: '/settings' },
       // { title: 'About', href: '/about' },
       // { title: 'Contact', href: '/contact' },
       status === 'authenticated'
