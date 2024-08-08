@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
 import { Errors, onError, onSuccess } from '@/lib/api/common';
+import { formatDate } from '@/lib/common';
 
 import dbConnect from '../../../../lib/api/dbConnect';
 import Court, { CourtValidatorPartial } from '../../../../models/Court';
@@ -56,6 +57,22 @@ export default async function handler(
           return res
             .status(400)
             .json(onError(error as Error, 'courts/id', 'PUT'));
+        }
+
+        if (data.reservationsInfo?.reservedTimes?.length) {
+          const today = formatDate(new Date()).split('T')[0];
+
+          data.reservationsInfo.reservedTimes =
+            data.reservationsInfo.reservedTimes.map((reser) => {
+              if (reser.datesNotApplied) {
+                // eslint-disable-next-line no-param-reassign
+                reser.datesNotApplied = reser.datesNotApplied.filter(
+                  (d) => d >= today
+                );
+              }
+
+              return reser;
+            });
         }
 
         const court = await Court.findByIdAndUpdate(id, data, {

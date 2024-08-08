@@ -135,6 +135,10 @@ const NewReservationForm = ({
     },
   });
 
+  const selectedDayFormated = formatDate(newReservation.getValues().date).split(
+    'T'
+  );
+
   const reservations = useQuery({
     queryKey: [
       'reservations',
@@ -290,21 +294,23 @@ const NewReservationForm = ({
       ...(reservationData?.filter(
         (r) => r.court === newReservation.getValues().court
       ) || []),
-      ...(selectedCourt?.reservationsInfo.reservedTimes.filter((r) =>
-        r.days?.includes(
-          weekDayMap[
-            newReservation
-              .getValues()
-              .date.getDay()
-              .toString() as keyof typeof weekDayMap
-          ]
-        )
+      ...(selectedCourt?.reservationsInfo.reservedTimes.filter(
+        (r) =>
+          r.days?.includes(
+            weekDayMap[
+              newReservation
+                .getValues()
+                .date.getDay()
+                .toString() as keyof typeof weekDayMap
+            ]
+          ) && !r.datesNotApplied?.includes(selectedDayFormated[0])
       ) || []),
     ],
     [
       newReservation,
       reservationData,
       selectedCourt?.reservationsInfo.reservedTimes,
+      selectedDayFormated,
     ]
   );
 

@@ -20,6 +20,7 @@ import {
 import { TimeInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { useDisclosure, useElementSize } from '@mantine/hooks';
+import { notifications } from '@mantine/notifications';
 import {
   IconClock,
   IconDeviceFloppy,
@@ -27,7 +28,7 @@ import {
   IconPlus,
   IconTrash,
 } from '@tabler/icons-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import React, { useMemo, useRef, useState } from 'react';
 
@@ -51,6 +52,7 @@ const AdminCourts = () => {
   const { t } = useTranslation('el');
   const { ref: wrapperRef, height: wrapperHeight } = useElementSize();
   const session = useSession();
+  const queryClient = useQueryClient();
 
   const courtForm = useForm({
     initialValues: {
@@ -174,9 +176,26 @@ const AdminCourts = () => {
 
   const saveCourt = async () => {
     setIsLoading(true);
-    await endpoints.admin
+    const res = await endpoints.admin
       .courts(courtForm.getValues()._id)
       .PUT(courtForm.getValues());
+
+    if (!res?.success) {
+      notifications.show({
+        message: 'Σφάλμα κατά την αποθήκευση του Γηπέδου',
+        color: 'red',
+      });
+    } else {
+      queryClient.invalidateQueries({
+        queryKey: ['courts'],
+      });
+
+      notifications.show({
+        message: 'Αποθήκευση επιτυχής',
+        color: 'green',
+      });
+    }
+
     setIsLoading(false);
   };
 
@@ -505,6 +524,14 @@ const AdminCourts = () => {
                                 <Text size="sm">Αρχή: {res.startTime}</Text>
                                 <Text size="sm">Διάρκεια: {res.duration}</Text>
                               </Group>
+                              {!!res.datesNotApplied?.length && (
+                                <Stack>
+                                  <Text size="sm">Ημ/νίες μη ισχύουσες:</Text>
+                                  <Text size="sm">
+                                    {res.datesNotApplied.join(', ')}
+                                  </Text>
+                                </Stack>
+                              )}
                               {res.notes && (
                                 <Text size="sm">
                                   Σημειώσεις:
