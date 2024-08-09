@@ -30,12 +30,11 @@ onBackgroundMessage(messaging, (payload) => {
     payload
   );
 
-  // Customize notification here
-  const notificationTitle =
-    payload.notification?.title || payload.data?.title || '';
-  const notificationOptions = {
-    body: payload.notification?.body || payload.data?.body,
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  self.registration.showNotification(
+    payload.notification?.title || payload.data?.title || '',
+    {
+      body: payload.notification?.body || payload.data?.body,
+      icon: '/icons/ball-tennis.svg',
+    }
+  );
 });
