@@ -75,7 +75,7 @@ const ReservationDetails = ({
         const errors: number[] = [];
 
         value.forEach((p, index) => {
-          if (!p) {
+          if (!p.trim()) {
             errors.push(index);
           }
         });
@@ -340,7 +340,9 @@ const ReservationDetails = ({
                     />
                     {editState && (
                       <ActionIcon
-                        disabled={index === 0}
+                        disabled={
+                          updatedReservation.getValues().people.length <= 2
+                        }
                         variant="subtle"
                         color="red"
                         onClick={() => {

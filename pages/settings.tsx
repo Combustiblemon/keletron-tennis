@@ -37,7 +37,8 @@ const Settings = () => {
     if (session.data?.user?.name && !userForm.getValues().name) {
       userForm.setFieldValue('name', session.data?.user?.name);
     }
-  }, [session.data?.user?.name, userForm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.data?.user?.name]);
 
   const saveUser = async () => {
     if (userForm.validate().hasErrors && session.data?.user?._id) {

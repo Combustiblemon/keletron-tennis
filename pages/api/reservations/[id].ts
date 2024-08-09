@@ -140,7 +140,8 @@ export default async function handler(
               courtReservations,
               court.reservationsInfo.reservedTimes,
               data.datetime || reservation.datetime,
-              data.duration || reservation.duration
+              data.duration || reservation.duration,
+              reservation._id
             )
           ) {
             return res.status(400).json(

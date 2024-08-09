@@ -79,7 +79,8 @@ export const isReservationTimeFree = (
   courtReservations: Array<ReservationDataType>,
   courtReservedTimes: CourtDataType['reservationsInfo']['reservedTimes'],
   datetime: string,
-  duration: number
+  duration: number,
+  reservationId?: string
 ): boolean => {
   let reservationCheck = true;
 
@@ -87,26 +88,34 @@ export const isReservationTimeFree = (
   const endTime = addMinutesToTime(startTime, duration);
 
   if (courtReservations.length) {
-    reservationCheck = !courtReservations
-      .filter((r) => {
-        return r.datetime.split('T')[0] === datetime.split('T')[0];
-      })
-      .some((r) => {
-        const rstartTime = r.datetime.split('T')[1];
+    const reservationsToCheck = courtReservations.filter((r) => {
+      const dateCheck = r.datetime.split('T')[0] === datetime.split('T')[0];
 
-        return isTimeOverlapping(
-          {
-            duration,
-            endTime,
-            startTime,
-          },
-          {
-            duration: r.duration,
-            endTime: addMinutesToTime(rstartTime, r.duration),
-            startTime: rstartTime,
-          }
-        );
-      });
+      if (reservationId) {
+        return r._id.toString() !== reservationId.toString() && dateCheck;
+      }
+
+      return dateCheck;
+    });
+
+    reservationCheck = !reservationsToCheck.length
+      ? true
+      : !reservationsToCheck.some((r) => {
+          const rstartTime = r.datetime.split('T')[1];
+
+          return isTimeOverlapping(
+            {
+              duration,
+              endTime,
+              startTime,
+            },
+            {
+              duration: r.duration,
+              endTime: addMinutesToTime(rstartTime, r.duration),
+              startTime: rstartTime,
+            }
+          );
+        });
   }
 
   if (!reservationCheck) {

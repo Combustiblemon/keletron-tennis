@@ -93,7 +93,7 @@ const NewReservationForm = ({
         const errors: number[] = [];
 
         value.forEach((p, index) => {
-          if (!p) {
+          if (!p.trim()) {
             errors.push(index);
           }
         });
@@ -418,6 +418,7 @@ const NewReservationForm = ({
             error={newReservation.errors.court}
             data={courtsSelectionData}
             defaultValue={courtsSelectionData[0].value}
+            value={newReservation.getValues().court}
             onChange={(value) => {
               newReservation.setValues({
                 court: value || '',
@@ -429,7 +430,7 @@ const NewReservationForm = ({
             }}
             label="Γήπεδο"
             multiple={false}
-            withCheckIcon={false}
+            withCheckIcon
           />
 
           <Textarea
