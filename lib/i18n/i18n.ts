@@ -24,8 +24,9 @@ const access = (
   obj: (typeof locales)[keyof typeof locales]
 ): string => {
   return path.split('.').reduce(
-    // @ts-expect-error will need advanced TS that i don't want to write atm :)
-    (acc, key) => acc[key as keyof typeof acc],
+    (acc, key) =>
+      // @ts-expect-error will need advanced TS that i don't want to write atm :)
+      typeof acc === 'object' ? acc[key as keyof typeof acc] : path,
     obj
   ) as unknown as string;
 };

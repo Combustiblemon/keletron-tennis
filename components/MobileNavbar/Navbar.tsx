@@ -83,14 +83,15 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const navItems: NavItem[] = useMemo(
     () => [
       { title: t('Navbar.home'), href: '/' },
-      ...[
-        status === 'authenticated'
-          ? {
+      ...(status === 'authenticated'
+        ? [
+            {
               title: t('Navbar.reservations'),
               href: '/reservations',
-            }
-          : null,
-      ],
+            },
+            { title: t('Navbar.settings'), href: '/settings' },
+          ]
+        : []),
       ...[
         data?.user?.role === 'ADMIN'
           ? {
@@ -100,7 +101,6 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
           : null,
       ],
       'divider',
-      { title: t('Navbar.settings'), href: '/settings' },
       // { title: 'About', href: '/about' },
       // { title: 'Contact', href: '/contact' },
       status === 'authenticated'

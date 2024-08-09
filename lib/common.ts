@@ -5,6 +5,7 @@ import { signOut } from 'next-auth/react';
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
 
+import { useTranslation } from './i18n/i18n';
 import { firebaseCloudMessaging } from './webPush';
 
 /**
@@ -152,3 +153,22 @@ export const weekDays = [
   'SATURDAY',
   'SUNDAY',
 ] as const;
+
+export const useTimeUntil = (date1: Date, date2?: Date): string => {
+  const { t } = useTranslation();
+
+  const now = date2 || new Date();
+
+  if (date1 <= now) {
+    return '';
+  }
+
+  const diff = Math.floor((date1.getTime() - now.getTime()) / 1000 / 60);
+
+  const hours = Math.floor(diff / 60);
+  const minutes = diff % 60;
+  const days = Math.floor(hours / 24);
+
+  // eslint-disable-next-line no-nested-ternary
+  return `${days ? `${days}${t('generic.date.d')} ` : ''}${days ? `${hours % 24}${t('generic.date.h')} ` : hours ? `${hours}${t('generic.date.h')} ` : ''}${minutes}${t('generic.date.m')}`;
+};
