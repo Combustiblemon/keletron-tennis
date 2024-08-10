@@ -5,6 +5,7 @@ import signale from 'signale';
 import { z } from 'zod';
 
 import { Errors, onError, onSuccess } from '@/lib/api/common';
+import { subscribeUser } from '@/lib/api/notifications';
 
 import dbConnect from '../../../lib/api/dbConnect';
 import UserModel from '../../../models/User';
@@ -69,10 +70,16 @@ export default async function handler(
 
         if (data.token !== 'undefined') {
           if (user?.FCMTokens) {
+            const tokenLength = user.FCMTokens.length;
             user.FCMTokens.push(data.token);
             user.FCMTokens = Array.from(new Set(user.FCMTokens));
+
+            if (user.FCMTokens.length !== tokenLength) {
+              subscribeUser(user.role, [data.token]);
+            }
           } else {
             user.FCMTokens = [data.token];
+            subscribeUser(user.role, [data.token]);
           }
 
           await user.save();
