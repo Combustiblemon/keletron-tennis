@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { useMemo } from 'react';
 
+import Announcements from '@/components/Announcements/Announcements';
 import { endpoints } from '@/lib/api/utils';
 import { useTimeUntil } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
@@ -35,6 +36,7 @@ const LoggedInHomepage = ({ session }: LoggedInHomepageProps) => {
       <Text size="lg" ta="center">
         {`${t('loggedInHomepage.welcome')}, ${session.data?.user?.name}`}
       </Text>
+      <Announcements />
       {!!userReservationData?.[0] && (
         <Paper
           p="sm"

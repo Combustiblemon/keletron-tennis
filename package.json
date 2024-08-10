@@ -10,7 +10,8 @@
     "start": "next start",
     "start:prod": "next build && next start",
     "lint": "next lint",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "checkTranslations": "node ./scripts/translation-key-checker.js"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.4.1",

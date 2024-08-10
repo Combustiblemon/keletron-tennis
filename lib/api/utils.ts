@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { AnnouncementDataType } from '@/models/Announcement';
+import {
+  AnnouncementDataType,
+  AnnouncementValidator,
+  AnnouncementValidatorPartial,
+} from '@/models/Announcement';
 import {
   CourtDataType,
   CourtValidator,
@@ -67,6 +71,15 @@ export type AdminReservationDataType = ReservationDataType & {
  * Only for FE use, it uses react hooks under the hood
  */
 export const endpoints = {
+  announcements: {
+    GET: async () =>
+      handleResponse<Array<AnnouncementDataType>, `announcements`>(
+        await fetch(`/api/announcements`, {
+          method: 'GET',
+          headers: commonHeaders,
+        })
+      ),
+  },
   courts: <IDString extends string | undefined>(id?: IDString) => ({
     GET: async () =>
       handleResponse<
@@ -173,7 +186,7 @@ export const endpoints = {
             headers: commonHeaders,
           })
         ),
-      POST: async (body: z.infer<typeof CourtValidator>) =>
+      POST: async (body: z.infer<typeof AnnouncementValidator>) =>
         handleResponse<AnnouncementDataType, `admin/announcements`>(
           await fetch('/api/admin/announcements', {
             method: 'POST',
@@ -181,7 +194,10 @@ export const endpoints = {
             body: JSON.stringify(body),
           })
         ),
-      PUT: async (_id: string, body: z.infer<typeof CourtValidatorPartial>) =>
+      PUT: async (
+        _id: string,
+        body: z.infer<typeof AnnouncementValidatorPartial>
+      ) =>
         handleResponse<AnnouncementDataType, `admin/announcements/id`>(
           await fetch(`/api/admin/announcements/${_id}`, {
             method: 'PUT',

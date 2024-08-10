@@ -1,5 +1,6 @@
 import { Tabs } from '@mantine/core';
 
+import AdminAnnouncements from '@/components/admin/AdminAnnouncements/AdminAnnouncements';
 import AdminCourts from '@/components/admin/AdminCourts/AdminCourts';
 import AdminReservations from '@/components/admin/AdminReservations/AdminReservations';
 
@@ -23,6 +24,7 @@ const Admin = () => {
       <Tabs.List>
         <Tabs.Tab value="reservations">Κρατήσεις</Tabs.Tab>
         <Tabs.Tab value="courts">Γήπεδα</Tabs.Tab>
+        <Tabs.Tab value="announcements">Ανακοινώσεις</Tabs.Tab>
       </Tabs.List>
 
       <Tabs.Panel
@@ -49,6 +51,19 @@ const Admin = () => {
         }}
       >
         <AdminCourts />
+      </Tabs.Panel>
+
+      <Tabs.Panel
+        value="announcements"
+        flex={1}
+        styles={{
+          panel: {
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
+      >
+        <AdminAnnouncements />
       </Tabs.Panel>
     </Tabs>
   );

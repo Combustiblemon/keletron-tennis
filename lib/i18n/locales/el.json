@@ -66,6 +66,9 @@
   },
   "generic": {
     "components": {
+      "Announcements": {
+        "header": "Τελευταιες ανακοινώσεις"
+      },
       "ReservationDetails": {
         "deleteModal": {
           "body": "Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.",
