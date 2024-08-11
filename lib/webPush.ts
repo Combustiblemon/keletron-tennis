@@ -74,9 +74,6 @@ const firebaseCloudMessagingBuilder = () => {
                 });
             });
 
-            // return the FCM token after saving it
-            saveToken(FCMToken);
-
             return FCMToken;
           }
         }
