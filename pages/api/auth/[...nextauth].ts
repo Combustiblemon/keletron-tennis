@@ -73,7 +73,7 @@ export const authOptions = (
           user: {
             _id: user._id?.toString() || '',
             email: user.email,
-            FCMTokens: user.FCMTokens,
+            FCMToken: '',
             name: user.name,
             role: user.role,
             session,
@@ -148,8 +148,8 @@ export const authOptions = (
               }
             }
 
-            if (user.FCMTokens) {
-              subscribeUser(user.role, user.FCMTokens);
+            if (FCMToken) {
+              subscribeUser(user.role, [FCMToken]);
             }
 
             await user.save();
@@ -159,7 +159,7 @@ export const authOptions = (
               email: user.email,
               role: user.role,
               _id: user._id as string,
-              FCMTokens: user.FCMTokens,
+              FCMToken: FCMToken || '',
               session,
             };
           } catch (err) {
@@ -243,8 +243,8 @@ export const authOptions = (
 
         // If no error and we have user data, return it
         if (user) {
-          if (user.FCMTokens) {
-            subscribeUser(user.role, user.FCMTokens);
+          if (FCMToken) {
+            subscribeUser(user.role, [FCMToken]);
           }
 
           return {
@@ -252,7 +252,7 @@ export const authOptions = (
             email: user.email,
             role: user.role,
             _id: user._id as string,
-            FCMTokens: user.FCMTokens,
+            FCMToken: FCMToken || '',
             session,
           };
         }
@@ -264,8 +264,8 @@ export const authOptions = (
   ],
   events: {
     signIn: ({ user }) => {
-      if (user.FCMTokens && user.role && user.FCMTokens.length) {
-        subscribeUser(user.role, user.FCMTokens);
+      if (user.FCMToken && user.role) {
+        subscribeUser(user.role, [user.FCMToken]);
       }
     },
     signOut: async ({ token, session }) => {
@@ -281,13 +281,13 @@ export const authOptions = (
         return;
       }
 
-      const { FCMTokens, _id, role } = token.user;
+      const { FCMToken, _id, role } = token.user;
 
       token = {};
       session = {};
 
-      if (FCMTokens?.length) {
-        unsubscribeUser(role, FCMTokens);
+      if (FCMToken) {
+        unsubscribeUser(role, [FCMToken]);
       }
 
       if (_id) {
@@ -343,7 +343,7 @@ export const authOptions = (
           _id: user._id || '',
           email: user.email || '',
           name: user.name || '',
-          FCMTokens: user.FCMTokens || [],
+          FCMToken: user.FCMToken || '',
           session: user.session || '',
         };
 
