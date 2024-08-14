@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Checkbox,
   Drawer,
   Group,
   rem,
@@ -36,10 +37,10 @@ const NewAnnouncementForm = ({
       validUntil: formatDate(new Date()).split('T')[0],
       visible: true,
       body: '',
-    } as Omit<AnnouncementDataType, '_id'> satisfies Omit<
-      AnnouncementDataType,
-      '_id'
-    >,
+      notification: false,
+    } satisfies Omit<AnnouncementDataType, '_id'> & {
+      notification: boolean;
+    } as Omit<AnnouncementDataType, '_id'> & { notification: boolean },
     validate: {
       title: (value) => {
         return value.trim().length === 0 && 'Υποχρεωτικό πεδίο';
@@ -63,7 +64,7 @@ const NewAnnouncementForm = ({
       }}
       title={
         <Group justify="space-between">
-          <Text>Νέα Κράτηση</Text>
+          <Text>Νέα Ανακοίνωση</Text>
           <ActionIcon
             variant="subtle"
             type="submit"
@@ -85,23 +86,32 @@ const NewAnnouncementForm = ({
         }}
         onSubmit={handleNewAnnouncementSubmit}
       >
-        <DateInput
-          required
-          label="Εμφάνιση έως"
-          defaultValue={new Date(newAnnouncement.getValues().validUntil)}
-          onChange={(v) => {
-            if (!v) {
-              return;
-            }
+        <Group align="flex-end">
+          <DateInput
+            required
+            label="Εμφάνιση έως"
+            defaultValue={new Date(newAnnouncement.getValues().validUntil)}
+            onChange={(v) => {
+              if (!v) {
+                return;
+              }
 
-            newAnnouncement.setFieldValue(
-              'validUntil',
-              formatDate(v).split('T')[0]
-            );
-          }}
-          allowDeselect={false}
-          error={newAnnouncement.errors.validUntil}
-        />
+              newAnnouncement.setFieldValue(
+                'validUntil',
+                formatDate(v).split('T')[0]
+              );
+            }}
+            allowDeselect={false}
+            error={newAnnouncement.errors.validUntil}
+          />
+          <Checkbox
+            mb="10px"
+            label="Ειδοποίηση"
+            onChange={(e) => {
+              newAnnouncement.setFieldValue('notification', e.target.checked);
+            }}
+          />
+        </Group>
         <Stack>
           <TextInput
             label="Τίτλος"

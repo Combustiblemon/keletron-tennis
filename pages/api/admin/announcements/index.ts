@@ -45,10 +45,12 @@ export default async function handler(
     case 'POST':
       // create a new announcement
       try {
-        let announcementData: z.infer<typeof AnnouncementValidator>;
+        let announcementData;
 
         try {
-          announcementData = AnnouncementValidator.parse(req.body);
+          announcementData = AnnouncementValidator.extend({
+            notification: z.boolean().optional().default(false),
+          }).parse(req.body);
         } catch (error) {
           return res
             .status(400)
@@ -57,10 +59,12 @@ export default async function handler(
 
         const announcement = await AnnouncementModel.create(announcementData);
 
-        sendMessageToTopic(Topics.User, {
-          title: announcementData.title,
-          body: announcementData.body || '',
-        });
+        if (announcementData.notification) {
+          sendMessageToTopic(Topics.User, {
+            title: announcementData.title,
+            body: announcementData.body || '',
+          });
+        }
 
         return res
           .status(201)

@@ -107,6 +107,11 @@ const AdminAnnouncements = () => {
                   a.title.toLowerCase().includes(searchTerm)
                 : true
             )
+            .sort(
+              (a, b) =>
+                new Date(b.validUntil).getTime() -
+                new Date(a.validUntil).getTime()
+            )
             .map((a, index) => (
               <Paper
                 key={a._id}
