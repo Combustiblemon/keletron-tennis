@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { nanoid } from 'nanoid';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 import dbConnect from '@/lib/api/dbConnect';
 
@@ -18,20 +19,29 @@ const JunkData =
     JunkDataSchema
   );
 
-export default async function handler() {
-  await dbConnect();
+export default async function handler(
+  req: NextApiRequest,
+  resp: NextApiResponse
+) {
+  try {
+    await dbConnect();
 
-  const res = await JunkData.findOne({});
+    const res = await JunkData.findOne({});
 
-  if (!res) {
-    await JunkData.create({
-      junkData: nanoid(),
-    });
+    if (!res) {
+      await JunkData.create({
+        junkData: nanoid(),
+      });
 
-    return;
+      return;
+    }
+
+    res.junkData = nanoid();
+
+    await res.save();
+
+    resp.status(200).end();
+  } catch {
+    resp.status(500).end();
   }
-
-  res.junkData = nanoid();
-
-  await res.save();
 }
