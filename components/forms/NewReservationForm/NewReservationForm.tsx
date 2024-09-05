@@ -365,7 +365,7 @@ const NewReservationForm = ({
             }}
           >
             <Text>
-              Το γήπεδο είναι ανοιχτό από {minCourtTime} έως {maxCourtTime}
+              Το γήπεδο είναι διαθέσιμο από {minCourtTime} έως {maxCourtTime}
             </Text>
 
             <Group gap="sm" justify="space-between" w="100%" align="flex-start">
