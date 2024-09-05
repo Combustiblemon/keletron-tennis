@@ -5,6 +5,7 @@ import { signOut } from 'next-auth/react';
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
 
+import { useTranslation } from './i18n/i18n';
 import { firebaseCloudMessaging } from './webPush';
 
 /**
@@ -78,7 +79,8 @@ export const isReservationTimeFree = (
   courtReservations: Array<ReservationDataType>,
   courtReservedTimes: CourtDataType['reservationsInfo']['reservedTimes'],
   datetime: string,
-  duration: number
+  duration: number,
+  reservationId?: string
 ): boolean => {
   let reservationCheck = true;
 
@@ -86,26 +88,34 @@ export const isReservationTimeFree = (
   const endTime = addMinutesToTime(startTime, duration);
 
   if (courtReservations.length) {
-    reservationCheck = !courtReservations
-      .filter((r) => {
-        return r.datetime.split('T')[0] === datetime.split('T')[0];
-      })
-      .some((r) => {
-        const rstartTime = r.datetime.split('T')[1];
+    const reservationsToCheck = courtReservations.filter((r) => {
+      const dateCheck = r.datetime.split('T')[0] === datetime.split('T')[0];
 
-        return isTimeOverlapping(
-          {
-            duration,
-            endTime,
-            startTime,
-          },
-          {
-            duration: r.duration,
-            endTime: addMinutesToTime(rstartTime, r.duration),
-            startTime: rstartTime,
-          }
-        );
-      });
+      if (reservationId) {
+        return r._id.toString() !== reservationId.toString() && dateCheck;
+      }
+
+      return dateCheck;
+    });
+
+    reservationCheck = !reservationsToCheck.length
+      ? true
+      : !reservationsToCheck.some((r) => {
+          const rstartTime = r.datetime.split('T')[1];
+
+          return isTimeOverlapping(
+            {
+              duration,
+              endTime,
+              startTime,
+            },
+            {
+              duration: r.duration,
+              endTime: addMinutesToTime(rstartTime, r.duration),
+              startTime: rstartTime,
+            }
+          );
+        });
   }
 
   if (!reservationCheck) {
@@ -152,3 +162,22 @@ export const weekDays = [
   'SATURDAY',
   'SUNDAY',
 ] as const;
+
+export const useTimeUntil = (date1: Date, date2?: Date): string => {
+  const { t } = useTranslation();
+
+  const now = date2 || new Date();
+
+  if (date1 <= now) {
+    return '';
+  }
+
+  const diff = Math.floor((date1.getTime() - now.getTime()) / 1000 / 60);
+
+  const hours = Math.floor(diff / 60);
+  const minutes = diff % 60;
+  const days = Math.floor(hours / 24);
+
+  // eslint-disable-next-line no-nested-ternary
+  return `${days ? `${days}${t('generic.date.d')} ` : ''}${days ? `${hours % 24}${t('generic.date.h')} ` : hours ? `${hours}${t('generic.date.h')} ` : ''}${minutes}${t('generic.date.m')}`;
+};

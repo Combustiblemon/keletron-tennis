@@ -66,6 +66,9 @@
   },
   "generic": {
     "components": {
+      "Announcements": {
+        "header": "Latest Announcements"
+      },
       "ReservationDetails": {
         "deleteModal": {
           "body": "This action cannot be undone.",
@@ -81,6 +84,15 @@
       "d": "d",
       "h": "h",
       "m": "m"
+    },
+    "days": {
+      "FRIDAY": "Friday",
+      "MONDAY": "Monday",
+      "SATURDAY": "Saturday",
+      "SUNDAY": "Sunday",
+      "THURSDAY": "Thursday",
+      "TUESDAY": "Tuesday",
+      "WEDNESDAY": "Wednesday"
     },
     "form": {
       "errors": {
@@ -98,9 +110,28 @@
       }
     }
   },
+  "loggedInHomepage": {
+    "reservation": {
+      "label": "Next reservation:"
+    },
+    "welcome": "Welcome"
+  },
+  "loggedOutHomepage": {
+    "welcome": "Welcome to Keletron."
+  },
   "reservations": {
     "newReservation": "New Reservation",
     "title": "Reservations",
     "upcomingReservations": "Upcoming Reservations:"
+  },
+  "settings": {
+    "header": "Settings",
+    "nameInput": {
+      "label": "Name"
+    },
+    "toast": {
+      "fail": "Failed to save settings.",
+      "success": "Settings saved successfully."
+    }
   }
 }

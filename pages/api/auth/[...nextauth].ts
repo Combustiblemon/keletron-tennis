@@ -50,8 +50,10 @@ export const authOptions = (
           email: { $regex: new RegExp(`^${profile.email}`, 'i') },
         });
 
+        const session = nanoid();
+
         if (user) {
-          user.session = nanoid();
+          user.session = session;
           user.save();
         } else {
           user = await UserModel.create({
@@ -60,7 +62,7 @@ export const authOptions = (
             password: '',
             role: 'USER',
             FCMTokens: [],
-            session: nanoid(),
+            session,
             accountType: 'GOOGLE',
           });
         }
@@ -71,10 +73,10 @@ export const authOptions = (
           user: {
             _id: user._id?.toString() || '',
             email: user.email,
-            FCMTokens: user.FCMTokens,
+            FCMToken: '',
             name: user.name,
             role: user.role,
-            session: user.session,
+            session,
           },
         };
       },
@@ -93,13 +95,12 @@ export const authOptions = (
         try {
           data = loginValidator.parse(credentials);
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error('Error parsing credentials', error);
           throw new Error(Errors.INVALID_CREDENTIALS);
         }
 
         const { email, password, FCMToken } = data;
-
-        console.log(FCMToken);
 
         let user: Users | null;
 
@@ -108,6 +109,7 @@ export const authOptions = (
             email,
           });
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error('Error finding user', error);
 
           res
@@ -127,6 +129,7 @@ export const authOptions = (
           throw new Error(Errors.LOGIN_ERROR);
         }
 
+        // eslint-disable-next-line no-console
         console.log('User logged in', user.email);
 
         // If no error and we have user data, return it
@@ -145,8 +148,8 @@ export const authOptions = (
               }
             }
 
-            if (user.FCMTokens) {
-              subscribeUser(user.role, user.FCMTokens);
+            if (FCMToken) {
+              subscribeUser(user.role, [FCMToken]);
             }
 
             await user.save();
@@ -156,10 +159,11 @@ export const authOptions = (
               email: user.email,
               role: user.role,
               _id: user._id as string,
-              FCMTokens: user.FCMTokens,
+              FCMToken: FCMToken || '',
               session,
             };
           } catch (err) {
+            // eslint-disable-next-line no-console
             console.error(err);
 
             return null;
@@ -185,6 +189,7 @@ export const authOptions = (
         try {
           data = registerValidator.parse(credentials);
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error('Error parsing credentials', error);
           throw new Error(Errors.INVALID_CREDENTIALS);
         }
@@ -196,6 +201,7 @@ export const authOptions = (
         try {
           userExists = Boolean(await UserModel.exists({ email }));
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error('Error checking if user exists', error);
 
           res
@@ -224,6 +230,7 @@ export const authOptions = (
             })
           ).sanitize();
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error('Error creating user', error);
 
           res
@@ -231,13 +238,13 @@ export const authOptions = (
             .json(onError(new Error(Errors.INTERNAL_SERVER_ERROR), 'register'));
           return null;
         }
-
+        // eslint-disable-next-line no-console
         console.log('User created', user.email);
 
         // If no error and we have user data, return it
         if (user) {
-          if (user.FCMTokens) {
-            subscribeUser(user.role, user.FCMTokens);
+          if (FCMToken) {
+            subscribeUser(user.role, [FCMToken]);
           }
 
           return {
@@ -245,7 +252,7 @@ export const authOptions = (
             email: user.email,
             role: user.role,
             _id: user._id as string,
-            FCMTokens: user.FCMTokens,
+            FCMToken: FCMToken || '',
             session,
           };
         }
@@ -257,14 +264,11 @@ export const authOptions = (
   ],
   events: {
     signIn: ({ user }) => {
-      console.log('signIn event');
-
-      if (user.FCMTokens && user.role && user.FCMTokens.length) {
-        subscribeUser(user.role, user.FCMTokens);
+      if (user.FCMToken && user.role) {
+        subscribeUser(user.role, [user.FCMToken]);
       }
     },
     signOut: async ({ token, session }) => {
-      console.log('signOut event');
       // Delete auth cookie on signout so it doesn't persist past log out
       res.setHeader('Set-Cookie', '');
 
@@ -277,13 +281,13 @@ export const authOptions = (
         return;
       }
 
-      const { FCMTokens, _id, role } = token.user;
+      const { FCMToken, _id, role } = token.user;
 
       token = {};
       session = {};
 
-      if (FCMTokens?.length) {
-        unsubscribeUser(role, FCMTokens);
+      if (FCMToken) {
+        unsubscribeUser(role, [FCMToken]);
       }
 
       if (_id) {
@@ -318,7 +322,8 @@ export const authOptions = (
             dbUser.save();
           }
         } catch (error) {
-          console.log(error);
+          // eslint-disable-next-line no-console
+          console.error(error);
         }
       }
 
@@ -327,7 +332,7 @@ export const authOptions = (
 
       return session;
     },
-    async jwt({ token, user: adapterUser }) {
+    async jwt({ token, user: adapterUser, trigger }) {
       const user =
         (adapterUser as unknown as { user: typeof adapterUser })?.user ||
         adapterUser;
@@ -338,15 +343,38 @@ export const authOptions = (
           _id: user._id || '',
           email: user.email || '',
           name: user.name || '',
-          FCMTokens: user.FCMTokens || [],
+          FCMToken: user.FCMToken || '',
           session: user.session || '',
         };
-      } else if (token.user?._id && token.user?.session) {
+
+        return token;
+      }
+
+      if (token.user?._id && token.user?.session) {
         const dbUser = await UserModel.findById(token.user._id);
 
-        if (!dbUser?.compareSessions(token.user?.session)) {
-          console.log('undefining token user');
+        if (!dbUser) {
+          // eslint-disable-next-line no-console
+          console.log('undefining token user (no user found)');
           token.user = undefined;
+          return token;
+        }
+
+        if (
+          dbUser?.accountType === 'PASSWORD' &&
+          !dbUser?.compareSessions(token.user?.session)
+        ) {
+          // eslint-disable-next-line no-console
+          console.log('undefining token user (passwords don"t match)');
+          token.user = undefined;
+          return token;
+        }
+
+        if (!dbUser?.compareSessions(token.user?.session)) {
+          // eslint-disable-next-line no-console
+          console.log('undefining token user (sessions don"t match)');
+          token.user = undefined;
+          return token;
         }
       }
 

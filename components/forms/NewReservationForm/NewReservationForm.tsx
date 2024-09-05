@@ -93,7 +93,7 @@ const NewReservationForm = ({
         const errors: number[] = [];
 
         value.forEach((p, index) => {
-          if (!p) {
+          if (!p.trim()) {
             errors.push(index);
           }
         });
@@ -134,6 +134,10 @@ const NewReservationForm = ({
       },
     },
   });
+
+  const selectedDayFormated = formatDate(newReservation.getValues().date).split(
+    'T'
+  );
 
   const reservations = useQuery({
     queryKey: [
@@ -290,21 +294,23 @@ const NewReservationForm = ({
       ...(reservationData?.filter(
         (r) => r.court === newReservation.getValues().court
       ) || []),
-      ...(selectedCourt?.reservationsInfo.reservedTimes.filter((r) =>
-        r.days?.includes(
-          weekDayMap[
-            newReservation
-              .getValues()
-              .date.getDay()
-              .toString() as keyof typeof weekDayMap
-          ]
-        )
+      ...(selectedCourt?.reservationsInfo.reservedTimes.filter(
+        (r) =>
+          r.days?.includes(
+            weekDayMap[
+              newReservation
+                .getValues()
+                .date.getDay()
+                .toString() as keyof typeof weekDayMap
+            ]
+          ) && !r.datesNotApplied?.includes(selectedDayFormated[0])
       ) || []),
     ],
     [
       newReservation,
       reservationData,
       selectedCourt?.reservationsInfo.reservedTimes,
+      selectedDayFormated,
     ]
   );
 
@@ -359,7 +365,7 @@ const NewReservationForm = ({
             }}
           >
             <Text>
-              Το γήπεδο είναι ανοιχτό από {minCourtTime} έως {maxCourtTime}
+              Το γήπεδο είναι διαθέσιμο από {minCourtTime} έως {maxCourtTime}
             </Text>
 
             <Group gap="sm" justify="space-between" w="100%" align="flex-start">
@@ -412,6 +418,7 @@ const NewReservationForm = ({
             error={newReservation.errors.court}
             data={courtsSelectionData}
             defaultValue={courtsSelectionData[0].value}
+            value={newReservation.getValues().court}
             onChange={(value) => {
               newReservation.setValues({
                 court: value || '',
@@ -423,7 +430,7 @@ const NewReservationForm = ({
             }}
             label="Γήπεδο"
             multiple={false}
-            withCheckIcon={false}
+            withCheckIcon
           />
 
           <Textarea

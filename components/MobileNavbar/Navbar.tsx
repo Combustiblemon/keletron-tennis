@@ -83,14 +83,15 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const navItems: NavItem[] = useMemo(
     () => [
       { title: t('Navbar.home'), href: '/' },
-      ...[
-        status === 'authenticated'
-          ? {
+      ...(status === 'authenticated'
+        ? [
+            {
               title: t('Navbar.reservations'),
               href: '/reservations',
-            }
-          : null,
-      ],
+            },
+            { title: t('Navbar.settings'), href: '/settings' },
+          ]
+        : []),
       ...[
         data?.user?.role === 'ADMIN'
           ? {
@@ -100,7 +101,6 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
           : null,
       ],
       'divider',
-      { title: t('Navbar.settings'), href: '/settings' },
       // { title: 'About', href: '/about' },
       // { title: 'Contact', href: '/contact' },
       status === 'authenticated'
@@ -163,13 +163,15 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
               alt="logo"
               visibleFrom="sm"
               h="50px"
+              w="50px"
             />
             <Box pos="absolute" right="16px">
               <Image
                 src="/android-chrome-192x192.png"
                 alt="logo"
-                h="50px"
                 hiddenFrom="sm"
+                h="50px"
+                w="50px"
               />
             </Box>
             <Group justify="space-between" style={{ flex: 1 }} visibleFrom="sm">

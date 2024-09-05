@@ -38,7 +38,7 @@
       "login": "Σύνδεση με Google",
       "register": "Εγγραφή με Google"
     },
-    "login": "Συνδεθείτε στον λογαριασμό σας.",
+    "login": "Σύνδεση",
     "loginPrompt": "Δεν έχετε λογαριασμό; Εγγραφείτε.",
     "loginSuccess": "Επιτυχής σύνδεση.",
     "logout": "Αποσύνδεση",
@@ -66,6 +66,9 @@
   },
   "generic": {
     "components": {
+      "Announcements": {
+        "header": "Τελευταιες ανακοινώσεις"
+      },
       "ReservationDetails": {
         "deleteModal": {
           "body": "Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.",
@@ -107,9 +110,28 @@
       }
     }
   },
+  "loggedInHomepage": {
+    "reservation": {
+      "label": "Επόμενη κράτηση:"
+    },
+    "welcome": "Καλώς ήρθες"
+  },
+  "loggedOutHomepage": {
+    "welcome": "Καλώς ήρθες στο Κέλετρον."
+  },
   "reservations": {
     "newReservation": "Νέα κράτηση",
     "title": "Κρατήσεις",
     "upcomingReservations": "Επερχόμενες κρατήσεις:"
+  },
+  "settings": {
+    "header": "Ρυθμίσεις",
+    "nameInput": {
+      "label": "Όνομα"
+    },
+    "toast": {
+      "fail": "Παρουσιάστηκε σφάλμα κατά την αποθήκευση των ρυθμίσεων.",
+      "success": "Οι ρυθμίσεις αποθηκεύτηκαν επιτυχώς."
+    }
   }
 }

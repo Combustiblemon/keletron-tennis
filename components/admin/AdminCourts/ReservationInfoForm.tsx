@@ -1,20 +1,23 @@
 import {
   ActionIcon,
+  Button,
   Drawer,
   Group,
   MultiSelect,
   NumberInput,
+  Popover,
   rem,
   Select,
   Stack,
   Text,
   Textarea,
 } from '@mantine/core';
-import { TimeInput } from '@mantine/dates';
+import { DatePicker, TimeInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { IconClock, IconDeviceFloppy } from '@tabler/icons-react';
 import React, { useRef } from 'react';
 
+import { formatDate } from '@/lib/common';
 import { CourtDataType } from '@/models/Court';
 
 import { dayData, typeData } from '../common';
@@ -48,6 +51,7 @@ const ReservationInfoForm = ({
       startTime: info?.startTime || '09:00',
       notes: info?.notes || '',
       days: info?.days || ['MONDAY'],
+      datesNotApplied: info?.datesNotApplied || [],
     } as CourtDataType['reservationsInfo']['reservedTimes'][number] satisfies CourtDataType['reservationsInfo']['reservedTimes'][number],
     validate: {},
   });
@@ -148,6 +152,37 @@ const ReservationInfoForm = ({
               res.setFieldValue('notes', v.target.value.trim());
             }}
           />
+          <Stack w="100%">
+            <Group w="100%" justify="space-between">
+              <Text size="sm">Ημ/νίες μη ισχύουσες:</Text>
+              <Popover position="top-end" shadow="md">
+                <Popover.Target>
+                  <Button variant="outline" w="100px">
+                    Επιλογή
+                  </Button>
+                </Popover.Target>
+                <Popover.Dropdown>
+                  <DatePicker
+                    inputMode="none"
+                    type="multiple"
+                    value={res
+                      .getValues()
+                      .datesNotApplied?.map((d) => new Date(d))}
+                    onChange={(value): void => {
+                      res.setFieldValue(
+                        'datesNotApplied',
+                        value
+                          .sort((a, b) => a.getTime() - b.getTime())
+                          .map((d) => formatDate(d).split('T')[0])
+                      );
+                    }}
+                    minDate={new Date()}
+                  />
+                </Popover.Dropdown>
+              </Popover>
+            </Group>
+            <Text size="sm">{res.getValues().datesNotApplied?.join(', ')}</Text>
+          </Stack>
         </Stack>
       </form>
     </Drawer>

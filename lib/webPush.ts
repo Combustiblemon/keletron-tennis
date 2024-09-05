@@ -59,19 +59,20 @@ const firebaseCloudMessagingBuilder = () => {
               // eslint-disable-next-line no-console
               console.log('firebase message received.', payload);
 
-              const title = payload.data?.title || 'empty notification';
+              const title =
+                payload.data?.title ||
+                payload.notification?.title ||
+                'empty notification';
 
               navigator.serviceWorker
                 .getRegistrations()
                 .then((registrations) => {
                   registrations[0].showNotification(title, {
-                    body: payload.data?.body,
+                    body: payload.data?.body || payload.notification?.body,
+                    icon: '/icons/ball-tennis.svg',
                   });
                 });
             });
-
-            // return the FCM token after saving it
-            saveToken(FCMToken);
 
             return FCMToken;
           }
