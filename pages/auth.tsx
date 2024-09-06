@@ -196,7 +196,6 @@ const AuthenticationForm = (props: PaperProps) => {
               required
               label={t('auth.form.nameInput.label')}
               placeholder={t('auth.form.nameInput.placeholder')}
-              value={form.values.name}
               onChange={(event) =>
                 form.setFieldValue('name', event.currentTarget.value.trim())
               }
