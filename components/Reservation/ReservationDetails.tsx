@@ -27,8 +27,8 @@ import React, { useRef, useState } from 'react';
 import { endpoints } from '@/lib/api/utils';
 import { addMinutesToTime, formatDate } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
-import { CourtDataType } from '@/models/Court';
-import { ReservationDataType } from '@/models/Reservation';
+import { CourtType } from '@/models/Court';
+import { ReservationType } from '@/models/Reservation';
 
 const iconStyle = { width: rem(16), height: rem(16) };
 
@@ -47,10 +47,10 @@ const updateDatetime = (datetime: string, date?: string, time?: string) => {
 };
 
 export type ReservationDetailsProps = {
-  reservation: ReservationDataType;
+  reservation: ReservationType;
   opened: boolean;
   close: () => void;
-  court: CourtDataType;
+  court: CourtType;
   editable?: boolean;
 };
 

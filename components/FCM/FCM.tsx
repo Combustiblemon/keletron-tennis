@@ -1,27 +1,27 @@
-import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 
 import { firebaseCloudMessaging } from '@/lib/webPush';
 
+import { useUser } from '../UserProvider/UserProvider';
+
 const FCM = () => {
-  const session = useSession();
+  const user = useUser();
   const [savedToken, setToken] = useState<string>();
 
   useEffect(() => {
     (async () => {
-      if (session.status === 'authenticated' && !savedToken) {
+      if (user.isAuthenticated && !savedToken) {
         const token = await firebaseCloudMessaging.init();
 
         if (token) {
           setToken(token);
           await firebaseCloudMessaging.saveToken();
         }
-      } else if (session.status !== 'authenticated' && savedToken) {
+      } else if (!user.isAuthenticated && savedToken) {
         setToken(undefined);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.status]);
+  }, [savedToken, user.isAuthenticated]);
 
   return null;
 };

@@ -14,18 +14,19 @@ import {
 import { useForm } from '@mantine/form';
 import { upperFirst, useDisclosure, useToggle } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { useRouter } from 'next/router';
-import { signIn, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { GoogleButton } from '@/components/GoogleButton/GoogleButton';
+import { useUser } from '@/components/UserProvider/UserProvider';
 import { Errors } from '@/lib/api/common';
+import { login } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { firebaseCloudMessaging } from '@/lib/webPush';
 
 const AuthenticationForm = (props: PaperProps) => {
   const router = useRouter();
-  const { status } = useSession();
+  const userData = useUser();
   const { t, tError } = useTranslation();
 
   const [isLoading, { close: setIsLoaded, open: setIsLoading }] =
@@ -114,11 +115,15 @@ const AuthenticationForm = (props: PaperProps) => {
       return;
     }
 
-    let res;
+    let res: Awaited<ReturnType<typeof login>> = {
+      endpoint: 'login',
+      success: false,
+      errors: [],
+    };
 
     switch (type) {
       case 'login':
-        res = await signIn('login', {
+        res = await login(router, 'login', {
           redirect: false,
           email: values.email,
           password: values.password,
@@ -127,7 +132,7 @@ const AuthenticationForm = (props: PaperProps) => {
         break;
 
       case 'register':
-        res = await signIn('register', {
+        res = await login(router, 'register', {
           redirect: false,
           email: values.email,
           password: values.password,
@@ -140,14 +145,14 @@ const AuthenticationForm = (props: PaperProps) => {
         break;
     }
 
-    if (res?.error) {
+    if (res?.errors?.length) {
       notifications.show({
-        message: tError(res.error as Errors),
+        message: tError(res.errors[0].message as Errors),
         color: 'red',
       });
     }
 
-    if (res?.ok) {
+    if (res?.data?.ok) {
       notifications.show({
         message: t(`auth.${type}Success`),
         color: 'green',
@@ -159,7 +164,7 @@ const AuthenticationForm = (props: PaperProps) => {
     setIsLoaded();
   });
 
-  if (status === 'authenticated') {
+  if (userData.isAuthenticated) {
     router.push('/');
     return null;
   }
@@ -179,7 +184,7 @@ const AuthenticationForm = (props: PaperProps) => {
         {type === 'login' && (
           <GoogleButton
             onClick={() => {
-              signIn('google');
+              login(router, 'google');
             }}
           >
             {t('auth.googleLogin.login')}

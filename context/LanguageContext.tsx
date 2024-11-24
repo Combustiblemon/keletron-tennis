@@ -8,7 +8,7 @@ import React, {
   useState,
 } from 'react';
 
-export type Language = 'el' | 'en';
+export type Language = 'GR' | 'EN';
 
 export type LanguageModeContext = {
   language: Language;

@@ -22,9 +22,9 @@ import {
   IconUserPlus,
 } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Session } from 'next-auth';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
+import { UserContextDataType } from '@/components/UserProvider/UserProvider';
 import { APIResponse } from '@/lib/api/responseTypes';
 import { endpoints } from '@/lib/api/utils';
 import {
@@ -33,8 +33,8 @@ import {
   isReservationTimeFree,
   weekDayMap,
 } from '@/lib/common';
-import { CourtDataType } from '@/models/Court';
-import { ReservationDataType } from '@/models/Reservation';
+import { CourtType } from '@/models/Court';
+import { ReservationType } from '@/models/Reservation';
 
 const DEFAULT_RESERVATION_DURATION = 90;
 
@@ -43,7 +43,7 @@ const fetchReservations = async (date?: string) => {
 };
 
 const getCourtTimes = (
-  courts: APIResponse<CourtDataType[], 'courts'> | undefined,
+  courts: APIResponse<CourtType[], 'courts'> | undefined,
   selectedCourt: string
 ) => {
   if (courts && !courts.errors) {
@@ -59,8 +59,8 @@ const getCourtTimes = (
 const formId = 'new-reservation';
 
 export interface NewReservationFormProps {
-  sessionData: Session | null;
-  courtData?: APIResponse<CourtDataType[], 'courts'>;
+  sessionData: UserContextDataType;
+  courtData?: APIResponse<CourtType[], 'courts'>;
   opened: boolean;
   onClose: () => void;
   courtsSelectionData: Array<{ label: string; value: string }>;
@@ -524,21 +524,21 @@ const NewReservationForm = ({
                 .sort((a, b) => {
                   return (
                     new Date(
-                      (a as ReservationDataType).datetime
-                        ? (a as ReservationDataType).datetime
-                        : `${formatDate(newReservation.getValues().date).split('T')[0]}T${(a as CourtDataType['reservationsInfo']['reservedTimes'][number]).startTime}`
+                      (a as ReservationType).datetime
+                        ? (a as ReservationType).datetime
+                        : `${formatDate(newReservation.getValues().date).split('T')[0]}T${(a as CourtType['reservationsInfo']['reservedTimes'][number]).startTime}`
                     ).getTime() -
                     new Date(
-                      (b as ReservationDataType).datetime
-                        ? (b as ReservationDataType).datetime
-                        : `${formatDate(newReservation.getValues().date).split('T')[0]}T${(b as CourtDataType['reservationsInfo']['reservedTimes'][number]).startTime}`
+                      (b as ReservationType).datetime
+                        ? (b as ReservationType).datetime
+                        : `${formatDate(newReservation.getValues().date).split('T')[0]}T${(b as CourtType['reservationsInfo']['reservedTimes'][number]).startTime}`
                     ).getTime()
                   );
                 })
                 .map((reservation) => {
-                  const datetime = (reservation as ReservationDataType).datetime
-                    ? (reservation as ReservationDataType).datetime
-                    : `${formatDate(newReservation.getValues().date).split('T')[0]}T${(reservation as CourtDataType['reservationsInfo']['reservedTimes'][number]).startTime}`;
+                  const datetime = (reservation as ReservationType).datetime
+                    ? (reservation as ReservationType).datetime
+                    : `${formatDate(newReservation.getValues().date).split('T')[0]}T${(reservation as CourtType['reservationsInfo']['reservedTimes'][number]).startTime}`;
 
                   const startTime = new Date(datetime);
                   const endTime = new Date(datetime);

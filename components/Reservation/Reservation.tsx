@@ -12,14 +12,14 @@ import { IconUser } from '@tabler/icons-react';
 import React, { useState } from 'react';
 
 import { formatDate, useTimeUntil } from '@/lib/common';
-import { CourtDataType } from '@/models/Court';
-import { ReservationDataType } from '@/models/Reservation';
+import { CourtType } from '@/models/Court';
+import { ReservationType } from '@/models/Reservation';
 
 import ReservationDetails from './ReservationDetails';
 
 export type ReservationProps = {
-  court: CourtDataType;
-  reservation: ReservationDataType;
+  court: CourtType;
+  reservation: ReservationType;
   bg?: StyleProp<DefaultMantineColor>;
   onClick?: () => void | Promise<void>;
   editable?: boolean;

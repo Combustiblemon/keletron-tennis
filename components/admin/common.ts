@@ -1,9 +1,9 @@
-import { CourtDataType } from '@/models/Court';
+import { CourtType } from '@/models/Court';
 
 export const dayData: Array<{
   value: NonNullable<
     NonNullable<
-      CourtDataType['reservationsInfo']['reservedTimes'][number]['days']
+      CourtType['reservationsInfo']['reservedTimes'][number]['days']
     >[number]
   >;
   label: string;
@@ -18,7 +18,7 @@ export const dayData: Array<{
 ];
 
 export const typeData: Array<{
-  value: CourtDataType['reservationsInfo']['reservedTimes'][number]['type'];
+  value: CourtType['reservationsInfo']['reservedTimes'][number]['type'];
   label: string;
 }> = [
   { value: 'TRAINING', label: 'Προπόνηση' },

@@ -29,14 +29,14 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSession } from 'next-auth/react';
 import React, { useMemo, useRef, useState } from 'react';
 
 import NewReservationForm from '@/components/forms/NewReservationForm/NewReservationForm';
+import { useUser } from '@/components/UserProvider/UserProvider';
 import { endpoints } from '@/lib/api/utils';
 import { iconStyles } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
-import { CourtDataType } from '@/models/Court';
+import { CourtType } from '@/models/Court';
 
 import { dayData, typeData } from '../common';
 import ReservationInfoForm from './ReservationInfoForm';
@@ -51,7 +51,7 @@ const AdminCourts = () => {
   const endTimeRef = useRef(null);
   const { t } = useTranslation('el');
   const { ref: wrapperRef, height: wrapperHeight } = useElementSize();
-  const session = useSession();
+  const user = useUser();
   const queryClient = useQueryClient();
 
   const courtForm = useForm({
@@ -65,7 +65,7 @@ const AdminCourts = () => {
         reservedTimes: [],
       },
       type: 'HARD',
-    } satisfies CourtDataType as CourtDataType,
+    } satisfies CourtType as CourtType,
     validate: {
       name: (value) => {
         return !!value.trim() || 'name error';
@@ -104,15 +104,14 @@ const AdminCourts = () => {
   });
 
   const courtData = useMemo(
-    () =>
-      courts.data?.success ? (courts.data?.data as Array<CourtDataType>) : [],
+    () => (courts.data?.success ? (courts.data?.data as Array<CourtType>) : []),
     [courts]
   );
 
   const courtSelectionData = useMemo(() => {
     const courtSelection = courtData
       .map((c) => ({
-        value: c._id,
+        value: c._id || '',
         label: c.name,
       }))
       .sort((a, b) => (a.label > b.label ? 1 : -1));
@@ -124,8 +123,7 @@ const AdminCourts = () => {
     }
 
     return courtSelection;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courtData]);
+  }, [courtData, courtForm]);
 
   const selectedCourt = courtData.find(
     (c) => c._id === courtForm.getValues()._id
@@ -162,12 +160,8 @@ const AdminCourts = () => {
   );
 
   const [reservationFilters, setReservationFilters] = useState<{
-    days:
-      | CourtDataType['reservationsInfo']['reservedTimes'][number]['days']
-      | null;
-    type:
-      | CourtDataType['reservationsInfo']['reservedTimes'][number]['type']
-      | null;
+    days: CourtType['reservationsInfo']['reservedTimes'][number]['days'] | null;
+    type: CourtType['reservationsInfo']['reservedTimes'][number]['type'] | null;
   }>({ days: null, type: null });
 
   const [showFilter, setShowFilter] = useState(false);
@@ -242,7 +236,7 @@ const AdminCourts = () => {
       <NewReservationForm
         onClose={closeNewReservationForm}
         opened={newReservationFormOpened}
-        sessionData={session.data}
+        sessionData={user}
         courtData={courts.data}
         courtsSelectionData={courtsSelectionData}
         isAdmin

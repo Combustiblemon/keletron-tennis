@@ -1,7 +1,6 @@
 import { Button, Group, LoadingOverlay, Stack, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useQuery } from '@tanstack/react-query';
-import { useSession } from 'next-auth/react';
 import { useMemo, useState } from 'react';
 
 import NewReservationForm from '@/components/forms/NewReservationForm/NewReservationForm';

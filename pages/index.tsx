@@ -1,13 +1,12 @@
-import { useSession } from 'next-auth/react';
-
 import LoggedInHomepage from '@/components/homepage/LoggedInHomepage/LoggedInHomepage';
 import LoggedOutHomepage from '@/components/homepage/LoggedOutHomepage/LoggedOutHomepage';
+import { useUser } from '@/components/UserProvider/UserProvider';
 
 const Home = () => {
-  const session = useSession();
+  const userData = useUser();
 
-  return session.status === 'authenticated' ? (
-    <LoggedInHomepage session={session} />
+  return userData.isAuthenticated ? (
+    <LoggedInHomepage />
   ) : (
     <LoggedOutHomepage />
   );

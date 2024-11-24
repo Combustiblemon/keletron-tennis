@@ -18,14 +18,13 @@ import { IconClock, IconDeviceFloppy } from '@tabler/icons-react';
 import React, { useRef } from 'react';
 
 import { formatDate } from '@/lib/common';
-import { CourtDataType } from '@/models/Court';
+import { CourtType } from '@/models/Court';
 
 import { dayData, typeData } from '../common';
 
 const formId = 'new-reservation-info';
 
-type ReservationInfo =
-  CourtDataType['reservationsInfo']['reservedTimes'][number];
+type ReservationInfo = CourtType['reservationsInfo']['reservedTimes'][number];
 
 export interface ReservationInfoFormProps {
   opened: boolean;
@@ -52,7 +51,7 @@ const ReservationInfoForm = ({
       notes: info?.notes || '',
       days: info?.days || ['MONDAY'],
       datesNotApplied: info?.datesNotApplied || [],
-    } as CourtDataType['reservationsInfo']['reservedTimes'][number] satisfies CourtDataType['reservationsInfo']['reservedTimes'][number],
+    } as CourtType['reservationsInfo']['reservedTimes'][number] satisfies CourtType['reservationsInfo']['reservedTimes'][number],
     validate: {},
   });
 

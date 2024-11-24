@@ -14,7 +14,7 @@ import React, { useMemo, useState } from 'react';
 
 import { endpoints } from '@/lib/api/utils';
 import { formatDate } from '@/lib/common';
-import { CourtDataType } from '@/models/Court';
+import { CourtType } from '@/models/Court';
 
 import ReservationVisual from './ReservationVisual';
 
@@ -69,8 +69,7 @@ const AdminReservations = () => {
   });
 
   const courtData = useMemo(
-    () =>
-      courts.data?.success ? (courts.data?.data as Array<CourtDataType>) : [],
+    () => (courts.data?.success ? (courts.data?.data as Array<CourtType>) : []),
     [courts]
   );
 

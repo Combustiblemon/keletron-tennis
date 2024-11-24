@@ -1,21 +1,21 @@
 import { z } from 'zod';
 
 import {
-  AnnouncementDataType,
+  AnnouncementType,
   AnnouncementValidator,
   AnnouncementValidatorPartial,
 } from '@/models/Announcement';
 import {
-  CourtDataType,
+  CourtType,
   CourtValidator,
   CourtValidatorPartial,
 } from '@/models/Court';
 import {
-  ReservationDataType,
+  ReservationType,
   ReservationValidator,
   ReservationValidatorPartial,
 } from '@/models/Reservation';
-import { UserDataType } from '@/models/User';
+import { UserType } from '@/models/User';
 
 import { Errors, onError, onSuccess } from './common';
 import { APIResponse } from './responseTypes';
@@ -62,18 +62,15 @@ const commonHeaders = {
   'Content-Type': 'application/json',
 };
 
-export type AdminReservationDataType = ReservationDataType & {
-  owner: UserDataType;
-  court: CourtDataType;
+export type AdminReservationType = ReservationType & {
+  owner: UserType;
+  court: CourtType;
 };
 
-/**
- * Only for FE use, it uses react hooks under the hood
- */
 export const endpoints = {
   announcements: {
     GET: async () =>
-      handleResponse<Array<AnnouncementDataType>, `announcements`>(
+      handleResponse<Array<AnnouncementType>, `announcements`>(
         await fetch(`/api/announcements`, {
           method: 'GET',
           headers: commonHeaders,
@@ -83,7 +80,7 @@ export const endpoints = {
   courts: <IDString extends string | undefined>(id?: IDString) => ({
     GET: async () =>
       handleResponse<
-        IDString extends undefined ? Array<CourtDataType> : CourtDataType,
+        IDString extends undefined ? Array<CourtType> : CourtType,
         `courts${IDString extends undefined ? '' : '/id'}`
       >(
         await fetch(`/api/courts${id ? `/${id}` : ''}`, {
@@ -112,7 +109,7 @@ export const endpoints = {
         query += `offset=${offset >= 0 ? offset : 0}&`;
       }
 
-      return handleResponse<Array<ReservationDataType>, `reservations`>(
+      return handleResponse<Array<ReservationType>, `reservations`>(
         await fetch(
           `/api/reservations${ids ? `/${ids?.join(',')}` : ''}${query ? `?${query}` : ''}`,
           {
@@ -130,7 +127,7 @@ export const endpoints = {
         owner?: string;
       }
     ) =>
-      handleResponse<ReservationDataType, `reservations`>(
+      handleResponse<ReservationType, `reservations`>(
         await fetch('/api/reservations', {
           method: 'POST',
           headers: commonHeaders,
@@ -141,7 +138,7 @@ export const endpoints = {
       id: string,
       body: z.infer<typeof ReservationValidatorPartial>
     ) =>
-      handleResponse<ReservationDataType, `reservations`>(
+      handleResponse<ReservationType, `reservations`>(
         await fetch(`/api/reservations/${id}`, {
           method: 'PUT',
           headers: commonHeaders,
@@ -153,7 +150,7 @@ export const endpoints = {
         return null;
       }
 
-      return handleResponse<Array<ReservationDataType>, `reservations`>(
+      return handleResponse<Array<ReservationType>, `reservations`>(
         await fetch(`/api/reservations`, {
           method: 'DELETE',
           headers: commonHeaders,
@@ -166,7 +163,7 @@ export const endpoints = {
   },
   notifications: {
     PUT: async (token: string, userId?: string) =>
-      handleResponse<ReservationDataType, `notifications`>(
+      handleResponse<ReservationType, `notifications`>(
         await fetch(`/api/notifications/`, {
           method: 'PUT',
           headers: commonHeaders,
@@ -180,14 +177,14 @@ export const endpoints = {
   admin: {
     announcements: {
       GET: async () =>
-        handleResponse<Array<AnnouncementDataType>, `admin/announcements`>(
+        handleResponse<Array<AnnouncementType>, `admin/announcements`>(
           await fetch(`/api/admin/announcements`, {
             method: 'GET',
             headers: commonHeaders,
           })
         ),
       POST: async (body: z.infer<typeof AnnouncementValidator>) =>
-        handleResponse<AnnouncementDataType, `admin/announcements`>(
+        handleResponse<AnnouncementType, `admin/announcements`>(
           await fetch('/api/admin/announcements', {
             method: 'POST',
             headers: commonHeaders,
@@ -198,7 +195,7 @@ export const endpoints = {
         _id: string,
         body: z.infer<typeof AnnouncementValidatorPartial>
       ) =>
-        handleResponse<AnnouncementDataType, `admin/announcements/id`>(
+        handleResponse<AnnouncementType, `admin/announcements/id`>(
           await fetch(`/api/admin/announcements/${_id}`, {
             method: 'PUT',
             headers: commonHeaders,
@@ -210,7 +207,7 @@ export const endpoints = {
           return null;
         }
 
-        return handleResponse<AnnouncementDataType, `admin/announcements/id`>(
+        return handleResponse<AnnouncementType, `admin/announcements/id`>(
           await fetch(`/api/admin/announcements/${_id}`, {
             method: 'DELETE',
             headers: commonHeaders,
@@ -221,7 +218,7 @@ export const endpoints = {
     courts: <IDString extends string | undefined>(id?: IDString) => ({
       GET: async () =>
         handleResponse<
-          IDString extends undefined ? Array<CourtDataType> : CourtDataType,
+          IDString extends undefined ? Array<CourtType> : CourtType,
           `courts${IDString extends undefined ? '' : '/id'}`
         >(
           await fetch(`/api/admin/courts${id ? `/${id}` : ''}`, {
@@ -231,7 +228,7 @@ export const endpoints = {
         ),
       POST: async (body: z.infer<typeof CourtValidator>) =>
         handleResponse<
-          CourtDataType,
+          CourtType,
           `courts${IDString extends undefined ? '' : '/id'}`
         >(
           await fetch('/api/admin/courts', {
@@ -242,7 +239,7 @@ export const endpoints = {
         ),
       PUT: async (body: z.infer<typeof CourtValidatorPartial>) =>
         handleResponse<
-          CourtDataType,
+          CourtType,
           `courts${IDString extends undefined ? '' : '/id'}`
         >(
           await fetch(`/api/admin/courts/${id ? `/${id}` : ''}`, {
@@ -256,7 +253,7 @@ export const endpoints = {
           return null;
         }
 
-        return handleResponse<CourtDataType, `courts/id`>(
+        return handleResponse<CourtType, `courts/id`>(
           await fetch(`/api/admin/courts/${idToDelete}`, {
             method: 'DELETE',
             headers: commonHeaders,
@@ -284,7 +281,7 @@ export const endpoints = {
           query += `offset=${offset >= 0 ? offset : 0}&`;
         }
 
-        return handleResponse<Array<AdminReservationDataType>, `reservations`>(
+        return handleResponse<Array<AdminReservationType>, `reservations`>(
           await fetch(`/api/admin/reservations${query ? `?${query}` : ''}`, {
             method: 'GET',
             headers: commonHeaders,
@@ -297,7 +294,7 @@ export const endpoints = {
           'court' | 'type' | 'datetime' | 'people' | 'owner' | 'duration'
         >
       ) =>
-        handleResponse<ReservationDataType, `reservations`>(
+        handleResponse<ReservationType, `reservations`>(
           await fetch('/api/admin/reservations', {
             method: 'POST',
             headers: commonHeaders,
@@ -308,7 +305,7 @@ export const endpoints = {
       //   id: string,
       //   body: z.infer<typeof ReservationValidatorPartial>
       // ) =>
-      //   handleResponse<ReservationDataType, `reservations`>(
+      //   handleResponse<ReservationType, `reservations`>(
       //     await fetch(`/api/admin/reservations/${id}`, {
       //       method: 'PUT',
       //       headers: commonHeaders,
@@ -320,7 +317,7 @@ export const endpoints = {
           return null;
         }
 
-        return handleResponse<Array<ReservationDataType>, `reservations`>(
+        return handleResponse<Array<ReservationType>, `reservations`>(
           await fetch(`/api/admin/reservations`, {
             method: 'DELETE',
             headers: commonHeaders,
@@ -333,9 +330,17 @@ export const endpoints = {
     },
   },
   user: {
-    PUT: async (_id: string, body: { name: string }) => {
-      return handleResponse<Array<ReservationDataType>, `reservations`>(
-        await fetch(`/api/user/${_id}`, {
+    GET: async () => {
+      return handleResponse<UserType, `reservations`>(
+        await fetch(`/api/user/`, {
+          method: 'GET',
+          headers: commonHeaders,
+        })
+      );
+    },
+    PUT: async (body: { name: string }) => {
+      return handleResponse<UserType, `reservations`>(
+        await fetch(`/api/user`, {
           method: 'PUT',
           headers: commonHeaders,
           body: JSON.stringify(body),

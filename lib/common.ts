@@ -1,15 +1,15 @@
 import { rem } from '@mantine/core';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
-import { signOut } from 'next-auth/react';
 
-import { CourtDataType } from '@/models/Court';
-import { ReservationDataType } from '@/models/Reservation';
+import { CourtType } from '@/models/Court';
+import { ReservationType } from '@/models/Reservation';
 
+import { APIResponse } from './api/responseTypes';
 import { useTranslation } from './i18n/i18n';
 import { firebaseCloudMessaging } from './webPush';
 
 /**
- * Logs the user out of the application (next-auth) and redirects to the homepage
+ * Logs the user out of the application and redirects to the homepage
  * @param router  the router instance
  * @param callback
  */
@@ -17,7 +17,7 @@ export const logout = async (
   router: AppRouterInstance,
   callback?: () => void | Promise<void>
 ) => {
-  await signOut();
+  // TODO: logout api call
   await firebaseCloudMessaging.deleteToken();
 
   if (callback) {
@@ -27,14 +27,28 @@ export const logout = async (
   router.push('/');
 };
 
-export const addMinutesToTime = (time: string, minutes: number) =>
-  new Date(
-    new Date(`1970/01/01 ${time}`).getTime() + minutes * 60000
-  ).toLocaleTimeString('el-GR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
+/**
+ * Logs the user in to the application and redirects to the homepage
+ * @param router  the router instance
+ * @param callback
+ */
+export const login = async (
+  router: AppRouterInstance,
+  type: 'login' | 'register' | 'google',
+  data?: Record<string, unknown>,
+  callback?: () => void | Promise<void>
+): Promise<APIResponse<{ ok: boolean }, 'login'>> => {
+  // TODO: login API CALL
+  await firebaseCloudMessaging.saveToken();
+
+  if (callback) {
+    await callback();
+  }
+
+  router.push('/');
+
+  return { endpoint: 'login', success: true, data: { ok: true } };
+};
 
 export const formatDate = (date: Date) =>
   `${date
@@ -58,6 +72,15 @@ export const weekDayMap = {
   '0': 'SUNDAY',
 } as const;
 
+export const addMinutesToTime = (time: string, minutes: number) =>
+  new Date(
+    new Date(`1970/01/01 ${time}`).getTime() + minutes * 60000
+  ).toLocaleTimeString('el-GR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
 const isTimeOverlapping = (
   reservation: { startTime: string; endTime: string; duration: number },
   against: { startTime: string; endTime: string; duration: number }
@@ -76,8 +99,8 @@ const isTimeOverlapping = (
 };
 
 export const isReservationTimeFree = (
-  courtReservations: Array<ReservationDataType>,
-  courtReservedTimes: CourtDataType['reservationsInfo']['reservedTimes'],
+  courtReservations: Array<ReservationType>,
+  courtReservedTimes: CourtType['reservationsInfo']['reservedTimes'],
   datetime: string,
   duration: number,
   reservationId?: string
@@ -92,7 +115,7 @@ export const isReservationTimeFree = (
       const dateCheck = r.datetime.split('T')[0] === datetime.split('T')[0];
 
       if (reservationId) {
-        return r._id.toString() !== reservationId.toString() && dateCheck;
+        return r._id?.toString() !== reservationId.toString() && dateCheck;
       }
 
       return dateCheck;

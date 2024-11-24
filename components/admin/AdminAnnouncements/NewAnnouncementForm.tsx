@@ -15,14 +15,14 @@ import { IconDeviceFloppy } from '@tabler/icons-react';
 import React from 'react';
 
 import { formatDate } from '@/lib/common';
-import { AnnouncementDataType } from '@/models/Announcement';
+import { AnnouncementType } from '@/models/Announcement';
 
 const formId = 'new-announcement';
 
 export interface NewAnnouncementFormProps {
   opened: boolean;
   onClose: () => void;
-  onSubmit: (values: Omit<AnnouncementDataType, '_id'>) => void;
+  onSubmit: (values: Omit<AnnouncementType, '_id'>) => void;
 }
 
 const NewAnnouncementForm = ({
@@ -38,9 +38,9 @@ const NewAnnouncementForm = ({
       visible: true,
       body: '',
       notification: false,
-    } satisfies Omit<AnnouncementDataType, '_id'> & {
+    } satisfies Omit<AnnouncementType, '_id'> & {
       notification: boolean;
-    } as Omit<AnnouncementDataType, '_id'> & { notification: boolean },
+    } as Omit<AnnouncementType, '_id'> & { notification: boolean },
     validate: {
       title: (value) => {
         return value.trim().length === 0 && 'Υποχρεωτικό πεδίο';
