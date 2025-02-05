@@ -10,7 +10,7 @@ import {
   Stack,
   Switch,
   Text,
-  useMantineColorScheme,
+  // useMantineColorScheme,
   useMantineTheme,
 } from '@mantine/core';
 import { useDisclosure, useMounted } from '@mantine/hooks';
@@ -44,7 +44,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, userRoles } = useUser();
   const { t } = useTranslation();
   const [lang, setLang] = useLanguage();
-  const { setColorScheme, colorScheme } = useMantineColorScheme();
+  // const { setColorScheme, colorScheme } = useMantineColorScheme();
   const theme = useMantineTheme();
   const mounted = useMounted();
 
@@ -107,7 +107,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
       isAuthenticated
         ? {
             title: t('auth.logout'),
-            onClick: async () => {
+            onClick: () => {
               logout();
             },
           }
@@ -219,7 +219,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
         <AppShell.Navbar py="md" px={4}>
           <Stack justify="space-between" h="100%">
             <Stack gap="xs">{getNavItems(navItems)}</Stack>
-            <Group w="100%" justify="center" gap="lg">
+            {/* <Group w="100%" justify="center" gap="lg">
               <Select
                 value={lang}
                 styles={{
@@ -253,7 +253,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
                   setColorScheme(colorScheme === 'light' ? 'dark' : 'light')
                 }
               />
-            </Group>
+            </Group> */}
           </Stack>
         </AppShell.Navbar>
 

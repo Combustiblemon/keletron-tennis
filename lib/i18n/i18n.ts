@@ -44,8 +44,7 @@ export const useTranslation = (overrideLang?: Language) => {
   const [language] = useLanguage();
 
   return {
-    t: (key: LocaleKeys) => i18n(key, overrideLang || language),
-    tError: (error: Errors) =>
-      getErrorTranslation(error, overrideLang || language),
+    t: (key: LocaleKeys) => i18n(key, 'el'),
+    tError: (error: Errors) => getErrorTranslation(error, 'el'),
   };
 };

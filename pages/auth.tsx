@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Button,
   Divider,
@@ -23,7 +24,10 @@ import { firebaseCloudMessaging } from '@/lib/webPush';
 const AuthenticationForm = (props: PaperProps) => {
   const router = useRouter();
   const { t, tError } = useTranslation();
-  const { isAuthenticated, invalidateUser } = useUser();
+  const {
+    // isAuthenticated
+    invalidateUser,
+  } = useUser();
 
   const [isLoading, { close: setIsLoaded, open: setIsLoading }] =
     useDisclosure(false);
@@ -91,6 +95,13 @@ const AuthenticationForm = (props: PaperProps) => {
 
             await invalidateUser();
 
+            // console.log('res', res);
+
+            if ((res?.data as any).name === '') {
+              router.push('/settings');
+              return;
+            }
+
             router.push('/');
           }
         }
@@ -125,10 +136,10 @@ const AuthenticationForm = (props: PaperProps) => {
     setIsLoaded();
   });
 
-  if (isAuthenticated) {
-    router.push('/');
-    return null;
-  }
+  // if (isAuthenticated) {
+  //   router.push('/');
+  //   return null;
+  // }
 
   return (
     <Paper radius="md" p="xl" pos="relative" {...props}>

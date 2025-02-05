@@ -9,11 +9,18 @@ import { useTranslation } from './i18n/i18n';
 import { firebaseCloudMessaging } from './webPush';
 
 export const logout = async (callback?: () => void | Promise<void>) => {
-  // await signOut();
-  await firebaseCloudMessaging.deleteToken();
+  try {
+    await endpoints.auth.logout();
 
-  if (callback) {
-    await callback();
+    await firebaseCloudMessaging.deleteToken();
+
+    if (callback) {
+      await callback();
+    }
+
+    window.location.reload();
+  } catch (error) {
+    console.log('error', error);
   }
 };
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   ActionIcon,
   Drawer,
@@ -222,15 +223,18 @@ const NewReservationForm = ({
               values.duration ||
               selectedCourt?.reservationsInfo?.duration ||
               90,
-          })
+            notes: values.notes,
+          } as any)
         : await endpoints.reservations.POST({
             court: values.court,
             datetime,
             people: values.people,
             type: values.people.length > 2 ? 'DOUBLE' : 'SINGLE',
-          });
+            notes: values.notes,
+          } as any);
 
       setIsSubmitting(false);
+      newReservation.reset();
 
       if (!res?.success) {
         // eslint-disable-next-line no-console
@@ -457,6 +461,7 @@ const NewReservationForm = ({
                 <IconUserPlus style={iconStyles} />
               </ActionIcon>
             </Group>
+
             <Stack gap="sm" w="100%">
               {newReservation.getValues().people.map((person, index) => {
                 let error: string | undefined;
@@ -502,6 +507,7 @@ const NewReservationForm = ({
                 );
               })}
             </Stack>
+
             {newReservation.errors.people && (
               <Input.Error>
                 {Array.isArray(newReservation.errors.people)
@@ -515,6 +521,7 @@ const NewReservationForm = ({
             {!!existingReservationData.length && (
               <Text>Μη διαθέσημες ώρες</Text>
             )}
+
             <SimpleGrid cols={1} verticalSpacing="xs">
               {existingReservationData
                 .sort((a, b) => {

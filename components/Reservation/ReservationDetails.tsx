@@ -22,6 +22,7 @@ import {
   IconTrash,
   IconUserPlus,
 } from '@tabler/icons-react';
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useRef, useState } from 'react';
 
 import { endpoints } from '@/lib/api/utils';
@@ -63,6 +64,7 @@ const ReservationDetails = ({
 }: ReservationDetailsProps) => {
   const [editState, setEditState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
 
   const updatedReservation = useForm({
@@ -110,6 +112,9 @@ const ReservationDetails = ({
     setIsLoading(true);
     await endpoints.reservations.DELETE([updatedReservation.getValues()._id]);
     setIsLoading(false);
+
+    queryClient.invalidateQueries({ queryKey: ['reservations'] });
+    close();
   };
 
   const updateReservation = async () => {
@@ -131,6 +136,9 @@ const ReservationDetails = ({
           color: 'red',
         });
       }
+
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      close();
     } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
@@ -230,10 +238,7 @@ const ReservationDetails = ({
               if (value) {
                 updatedReservation.setFieldValue(
                   'datetime',
-                  updateDatetime(
-                    updatedReservation.getValues().datetime,
-                    value.toUTCString().substring(0, 10)
-                  )
+                  value.toISOString()
                 );
               }
             }}
@@ -250,7 +255,8 @@ const ReservationDetails = ({
               error={updatedReservation.errors.datetime}
               ref={timePickerRef}
               label="Ώρα"
-              defaultValue="09:00"
+              value={updatedReservation.getValues().datetime.split('T')[1]}
+              // defaultValue="09:00"
               rightSection={timePickerControl}
               onChange={(e) => {
                 if (e.target.value.trim()) {

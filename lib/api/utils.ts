@@ -107,7 +107,15 @@ export const endpoints = {
           credentials: 'include',
         })
       ),
-    logout: () => {},
+    logout: async () => {
+      handleResponse<unknown, 'logout'>(
+        await fetch(`${API_URL}/auth/logout`, {
+          method: 'GET',
+          headers,
+          credentials: 'include',
+        })
+      );
+    },
     verifyLogin: async (data?: unknown) =>
       handleResponse<unknown, 'login'>(
         await fetch(`${API_URL}/auth/verifyLogin`, {

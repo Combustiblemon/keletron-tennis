@@ -9,6 +9,7 @@ import {
 import { useForm } from '@mantine/form';
 import { showNotification } from '@mantine/notifications';
 import { IconDeviceFloppy } from '@tabler/icons-react';
+import { useRouter } from 'next/router';
 import { useState } from 'react';
 
 import { useUser } from '@/components/UserProvider/UserProvider';
@@ -20,6 +21,7 @@ import { UserDataType } from '@/models/User';
 const Settings = () => {
   const { user, invalidateUser } = useUser();
   const { t } = useTranslation();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const userForm = useForm({
@@ -50,6 +52,8 @@ const Settings = () => {
         });
 
         await invalidateUser();
+
+        router.push('/');
       }
 
       if (!res?.success) {
