@@ -4,6 +4,8 @@ import bcrypt from 'bcryptjs';
 import mongoose, { Model } from 'mongoose';
 import z from 'zod';
 
+import { Language } from '@/context/LanguageContext';
+
 export const UserValidator = z.object({
   name: z.string().max(60),
   role: z.enum(['ADMIN', 'USER']).default('USER'),
@@ -18,11 +20,12 @@ type SanitizedUserFields =
   | 'role'
   | '_id'
   | 'FCMTokens'
-  | 'session';
+  | 'session'
+  | 'language';
 
 export type UserDataType = z.infer<typeof UserValidator>;
 
-export type Users = mongoose.Document &
+export type User = mongoose.Document &
   z.infer<typeof UserValidator> & {
     resetKey?: {
       value: string;
@@ -30,13 +33,17 @@ export type Users = mongoose.Document &
     };
     FCMTokens?: Array<string>;
     session?: string;
+    language: Language;
     comparePasswords: (candidatePassword?: string) => boolean;
     compareResetKey: (resetKey?: string) => boolean;
     compareSessions: (session?: string) => boolean;
-    sanitize: () => Pick<Users, SanitizedUserFields>;
+    sanitize: () => Pick<User, SanitizedUserFields>;
+    _id: string;
   };
 
-export const UserSchema = new mongoose.Schema<Users>({
+export type UserType = Pick<User, SanitizedUserFields>;
+
+export const UserSchema = new mongoose.Schema<User>({
   name: {
     type: String,
     maxlength: [60, 'User name cannot be more than 60 characters'],
@@ -84,7 +91,7 @@ export const UserSchema = new mongoose.Schema<Users>({
 });
 
 UserSchema.methods.comparePasswords = function (candidatePassword?: string) {
-  const user = this as Users;
+  const user = this as User;
 
   if (!candidatePassword || !user.password) {
     return false;
@@ -98,7 +105,7 @@ UserSchema.methods.compareResetKey = function (resetKey?: string) {
     return false;
   }
 
-  const user = this as Users;
+  const user = this as User;
   return (
     resetKey === user.resetKey?.value && new Date() < user.resetKey?.expiresAt
   );
@@ -109,13 +116,13 @@ UserSchema.methods.compareSessions = function (session?: string) {
     return false;
   }
 
-  return bcrypt.compareSync(session, (this as Users).session || '');
+  return bcrypt.compareSync(session, (this as User).session || '');
 };
 
-export type UserSanitized = Pick<Users, SanitizedUserFields>;
+export type UserSanitized = Pick<User, SanitizedUserFields>;
 
 UserSchema.methods.sanitize = function (): UserSanitized {
-  return (this as Users).toObject({
+  return (this as User).toObject({
     transform: (doc, ret) =>
       ({
         name: ret.name,
@@ -124,11 +131,12 @@ UserSchema.methods.sanitize = function (): UserSanitized {
         _id: ret._id,
         FCMTokens: ret.FCMToken,
         session: ret.session,
+        language: ret.language || 'el',
       }) satisfies UserSanitized,
   });
 };
 
-UserSchema.pre<Users>('save', function (next) {
+UserSchema.pre<User>('save', function (next) {
   if (this.isModified('password') && this.password) {
     this.password = bcrypt.hashSync(this.password, 10);
   }
@@ -140,5 +148,5 @@ UserSchema.pre<Users>('save', function (next) {
   next();
 });
 
-export default (mongoose.models.User as Model<Users>) ||
-  mongoose.model<Users>('User', UserSchema);
+export default (mongoose.models.User as Model<User>) ||
+  mongoose.model<User>('User', UserSchema);

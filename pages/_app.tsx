@@ -17,33 +17,33 @@ import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { AppProps } from 'next/app';
-import { SessionProvider } from 'next-auth/react';
 
 import DateProvider from '@/components/DateProvider/DateProvider';
 import FCM from '@/components/FCM/FCM';
 import HeadInfo from '@/components/HeadInfo/HeadInfo';
 import { Navbar } from '@/components/MobileNavbar/Navbar';
+import { UserProvider } from '@/components/UserProvider/UserProvider';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { theme } from '@/styles/theme';
 
 // Create a client
 const queryClient = new QueryClient();
 
-const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
+const App = ({ Component, pageProps }: AppProps) => {
   return (
     <QueryClientProvider client={queryClient}>
       <MantineProvider theme={theme}>
         <ModalsProvider>
           <LanguageProvider defaultLanguage="el">
             <DateProvider>
-              <SessionProvider session={session}>
+              <UserProvider>
                 <FCM />
                 <Notifications position="bottom-center" zIndex={1000} />
                 <HeadInfo title="Keletron Tennis Academy" />
                 <Navbar>
                   <Component {...pageProps} />
                 </Navbar>
-              </SessionProvider>
+              </UserProvider>
             </DateProvider>
           </LanguageProvider>
         </ModalsProvider>

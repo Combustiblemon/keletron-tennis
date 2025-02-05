@@ -156,7 +156,7 @@ const ReservationDetails = ({
         cancel: t('generic.components.ReservationDetails.deleteModal.cancel'),
       },
       confirmProps: { color: 'red' },
-      onConfirm: () => deleteReservation,
+      onConfirm: deleteReservation,
     });
   };
 

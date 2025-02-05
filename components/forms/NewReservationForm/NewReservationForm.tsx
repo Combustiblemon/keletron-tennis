@@ -22,9 +22,9 @@ import {
   IconUserPlus,
 } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Session } from 'next-auth';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
+import { User } from '@/components/UserProvider/UserProvider';
 import { APIResponse } from '@/lib/api/responseTypes';
 import { endpoints } from '@/lib/api/utils';
 import {
@@ -59,7 +59,7 @@ const getCourtTimes = (
 const formId = 'new-reservation';
 
 export interface NewReservationFormProps {
-  sessionData: Session | null;
+  userData: User | null;
   courtData?: APIResponse<CourtDataType[], 'courts'>;
   opened: boolean;
   onClose: () => void;
@@ -69,7 +69,7 @@ export interface NewReservationFormProps {
 
 const NewReservationForm = ({
   opened,
-  sessionData,
+  userData,
   onClose,
   courtData,
   courtsSelectionData,
@@ -156,13 +156,10 @@ const NewReservationForm = ({
   );
 
   useEffect(() => {
-    if (
-      newReservation.getValues().people.length === 0 &&
-      sessionData?.user?.name
-    ) {
-      newReservation.setFieldValue('people', [sessionData?.user.name, ' ']);
+    if (newReservation.getValues().people.length === 0 && userData?.name) {
+      newReservation.setFieldValue('people', [userData?.name, ' ']);
     }
-  }, [newReservation, sessionData?.user?.name]);
+  }, [newReservation, userData?.name]);
 
   const timePickerRef = useRef<HTMLInputElement>(null);
 
@@ -198,7 +195,7 @@ const NewReservationForm = ({
       reservationData.filter(
         (r) => r.datetime.includes(date) && r.court === values.court
       ),
-      selectedCourt?.reservationsInfo.reservedTimes || [],
+      selectedCourt?.reservationsInfo?.reservedTimes || [],
       datetime,
       DEFAULT_RESERVATION_DURATION
     );
@@ -222,7 +219,9 @@ const NewReservationForm = ({
             people: values.people,
             type: values.people.length > 2 ? 'DOUBLE' : 'SINGLE',
             duration:
-              values.duration || selectedCourt?.reservationsInfo.duration || 90,
+              values.duration ||
+              selectedCourt?.reservationsInfo?.duration ||
+              90,
           })
         : await endpoints.reservations.POST({
             court: values.court,
@@ -277,16 +276,16 @@ const NewReservationForm = ({
 
   useEffect(() => {
     if (courtsSelectionData[0] && !newReservation.getValues().court) {
-      newReservation.setFieldValue('court', courtsSelectionData[0].value);
+      newReservation.setFieldValue('court', courtsSelectionData[0]?.value);
       newReservation.setFieldValue(
         'duration',
-        selectedCourt?.reservationsInfo.duration || 90
+        selectedCourt?.reservationsInfo?.duration || 90
       );
     }
   }, [
     courtsSelectionData,
     newReservation,
-    selectedCourt?.reservationsInfo.duration,
+    selectedCourt?.reservationsInfo?.duration,
   ]);
 
   const existingReservationData = useMemo(
@@ -294,7 +293,7 @@ const NewReservationForm = ({
       ...(reservationData?.filter(
         (r) => r.court === newReservation.getValues().court
       ) || []),
-      ...(selectedCourt?.reservationsInfo.reservedTimes.filter(
+      ...(selectedCourt?.reservationsInfo?.reservedTimes.filter(
         (r) =>
           r.days?.includes(
             weekDayMap[
@@ -309,7 +308,7 @@ const NewReservationForm = ({
     [
       newReservation,
       reservationData,
-      selectedCourt?.reservationsInfo.reservedTimes,
+      selectedCourt?.reservationsInfo?.reservedTimes,
       selectedDayFormated,
     ]
   );
@@ -319,10 +318,7 @@ const NewReservationForm = ({
       opened={opened}
       onClose={() => {
         newReservation.reset();
-        newReservation.setFieldValue('people', [
-          sessionData?.user?.name || '',
-          ' ',
-        ]);
+        newReservation.setFieldValue('people', [userData?.name || '', ' ']);
         onClose?.();
       }}
       title={
@@ -402,7 +398,7 @@ const NewReservationForm = ({
           {isAdmin && (
             <NumberInput
               label="Διάρκεια κράτησης"
-              defaultValue={selectedCourt?.reservationsInfo.duration}
+              defaultValue={selectedCourt?.reservationsInfo?.duration}
               onChange={(v) => {
                 newReservation.setFieldValue('duration', Number(v));
               }}
@@ -417,14 +413,14 @@ const NewReservationForm = ({
             allowDeselect={false}
             error={newReservation.errors.court}
             data={courtsSelectionData}
-            defaultValue={courtsSelectionData[0].value}
+            defaultValue={courtsSelectionData[0]?.value}
             value={newReservation.getValues().court}
             onChange={(value) => {
               newReservation.setValues({
                 court: value || '',
                 duration: courtData?.success
                   ? courtData?.data?.find((c) => c._id === value)
-                      ?.reservationsInfo.duration
+                      ?.reservationsInfo?.duration
                   : 90,
               });
             }}

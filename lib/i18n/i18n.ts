@@ -11,13 +11,14 @@ const locales = {
 
 export type Language = keyof typeof locales;
 
-type DeepKeys<T> = T extends object
-  ? {
-      [K in keyof T]: `${K & string}${string extends T[K] ? '' : '.'}${DeepKeys<T[K]>}`;
-    }[keyof T]
-  : '';
+// type DeepKeys<T> = T extends object
+//   ? {
+//       [K in keyof T]: `${K & string}${string extends T[K] ? '' : '.'}${DeepKeys<T[K]>}`;
+//     }[keyof T]
+//   : '';
 
-export type LocaleKeys = DeepKeys<typeof localeEl>;
+// export type LocaleKeys = DeepKeys<typeof localeEl>;
+export type LocaleKeys = string;
 
 const access = (
   path: LocaleKeys,

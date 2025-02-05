@@ -16,12 +16,13 @@ import {
 import { useDisclosure, useMounted } from '@mantine/hooks';
 import { IconMoonStars, IconSun } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { useMemo } from 'react';
 
 import { Language, useLanguage } from '@/context/LanguageContext';
 import { logout } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
+
+import { useUser } from '../UserProvider/UserProvider';
 
 export type NavItem =
   | {
@@ -40,7 +41,7 @@ export type NavItem =
 export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const [opened, { toggle }] = useDisclosure();
   const router = useRouter();
-  const { status, data } = useSession();
+  const { isAuthenticated, userRoles } = useUser();
   const { t } = useTranslation();
   const [lang, setLang] = useLanguage();
   const { setColorScheme, colorScheme } = useMantineColorScheme();
@@ -83,7 +84,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const navItems: NavItem[] = useMemo(
     () => [
       { title: t('Navbar.home'), href: '/' },
-      ...(status === 'authenticated'
+      ...(isAuthenticated
         ? [
             {
               title: t('Navbar.reservations'),
@@ -93,7 +94,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
           ]
         : []),
       ...[
-        data?.user?.role === 'ADMIN'
+        userRoles.isAdmin
           ? {
               title: 'Admin',
               href: '/admin',
@@ -103,16 +104,17 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
       'divider',
       // { title: 'About', href: '/about' },
       // { title: 'Contact', href: '/contact' },
-      status === 'authenticated'
+      isAuthenticated
         ? {
             title: t('auth.logout'),
             onClick: async () => {
-              logout(router);
+              logout();
             },
           }
         : { title: t('auth.login'), href: '/auth?type=login' },
     ],
-    [data?.user?.role, router, status, t]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isAuthenticated, t, userRoles.isAdmin]
   );
 
   const sunIcon = (

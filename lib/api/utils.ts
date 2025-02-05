@@ -1,24 +1,28 @@
 import { z } from 'zod';
 
 import {
-  AnnouncementDataType,
+  AnnouncementType,
   AnnouncementValidator,
   AnnouncementValidatorPartial,
 } from '@/models/Announcement';
 import {
   CourtDataType,
+  CourtType,
   CourtValidator,
   CourtValidatorPartial,
 } from '@/models/Court';
 import {
   ReservationDataType,
+  ReservationType,
   ReservationValidator,
   ReservationValidatorPartial,
 } from '@/models/Reservation';
-import { UserDataType } from '@/models/User';
+import { UserType } from '@/models/User';
 
 import { Errors, onError, onSuccess } from './common';
 import { APIResponse } from './responseTypes';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const publicPages = ['/auth', '/'];
 
@@ -39,7 +43,26 @@ const handleResponse = async <ReturnDataType, Endpoint extends string>(
         };
       }
 
-      const body = (await res.json()) as ReturnType<typeof onError>;
+      if (res.status === 404) {
+        return {
+          success: false,
+          errors: [{ message: Errors.NOT_FOUND }],
+          endpoint: '' as Endpoint,
+        };
+      }
+
+      let body: ReturnType<typeof onError> = {
+        endpoint: '',
+        errors: [],
+        success: false,
+      };
+
+      try {
+        body = (await res.json()) as ReturnType<typeof onError>;
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(`Error on server response: `, err);
+      }
 
       return {
         ...body,
@@ -47,9 +70,12 @@ const handleResponse = async <ReturnDataType, Endpoint extends string>(
       };
     }
 
-    return (await res.json()) as ReturnType<
-      typeof onSuccess<ReturnDataType, Endpoint>
-    > satisfies APIResponse<ReturnDataType, Endpoint>;
+    return {
+      ...((await res.json()) as ReturnType<
+        typeof onSuccess<ReturnDataType, Endpoint>
+      >),
+      success: true,
+    } as APIResponse<ReturnDataType, Endpoint>;
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error(err);
@@ -58,25 +84,47 @@ const handleResponse = async <ReturnDataType, Endpoint extends string>(
   return undefined;
 };
 
-const commonHeaders = {
-  'Content-Type': 'application/json',
+export type AdminReservationType = ReservationType & {
+  owner: UserType;
+  court: CourtType;
 };
 
-export type AdminReservationDataType = ReservationDataType & {
-  owner: UserDataType;
-  court: CourtDataType;
+const headers = {
+  'Content-Type': 'application/json',
 };
 
 /**
  * Only for FE use, it uses react hooks under the hood
  */
 export const endpoints = {
+  auth: {
+    login: async (data?: unknown) =>
+      handleResponse<unknown, 'login'>(
+        await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers,
+          credentials: 'include',
+        })
+      ),
+    logout: () => {},
+    verifyLogin: async (data?: unknown) =>
+      handleResponse<unknown, 'login'>(
+        await fetch(`${API_URL}/auth/verifyLogin`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers,
+          credentials: 'include',
+        })
+      ),
+  },
   announcements: {
     GET: async () =>
-      handleResponse<Array<AnnouncementDataType>, `announcements`>(
-        await fetch(`/api/announcements`, {
+      handleResponse<Array<AnnouncementType>, `announcements`>(
+        await fetch(`${API_URL}/announcements`, {
           method: 'GET',
-          headers: commonHeaders,
+          headers,
+          credentials: 'include',
         })
       ),
   },
@@ -86,9 +134,10 @@ export const endpoints = {
         IDString extends undefined ? Array<CourtDataType> : CourtDataType,
         `courts${IDString extends undefined ? '' : '/id'}`
       >(
-        await fetch(`/api/courts${id ? `/${id}` : ''}`, {
+        await fetch(`${API_URL}/courts${id ? `/${id}` : ''}`, {
           method: 'GET',
-          headers: commonHeaders,
+          headers,
+          credentials: 'include',
         })
       ),
   }),
@@ -114,10 +163,11 @@ export const endpoints = {
 
       return handleResponse<Array<ReservationDataType>, `reservations`>(
         await fetch(
-          `/api/reservations${ids ? `/${ids?.join(',')}` : ''}${query ? `?${query}` : ''}`,
+          `${API_URL}/reservations${ids ? `/${ids?.join(',')}` : ''}${query ? `?${query}` : ''}`,
           {
+            headers,
+            credentials: 'include',
             method: 'GET',
-            headers: commonHeaders,
           }
         )
       );
@@ -130,10 +180,12 @@ export const endpoints = {
         owner?: string;
       }
     ) =>
-      handleResponse<ReservationDataType, `reservations`>(
-        await fetch('/api/reservations', {
+      handleResponse<ReservationType, `reservations`>(
+        await fetch(`${API_URL}/reservations`, {
           method: 'POST',
-          headers: commonHeaders,
+          headers,
+          credentials: 'include',
+
           body: JSON.stringify(body),
         })
       ),
@@ -141,10 +193,12 @@ export const endpoints = {
       id: string,
       body: z.infer<typeof ReservationValidatorPartial>
     ) =>
-      handleResponse<ReservationDataType, `reservations`>(
-        await fetch(`/api/reservations/${id}`, {
+      handleResponse<ReservationType, `reservations`>(
+        await fetch(`${API_URL}/reservations/${id}`, {
           method: 'PUT',
-          headers: commonHeaders,
+          headers,
+          credentials: 'include',
+
           body: JSON.stringify(body),
         })
       ),
@@ -153,10 +207,12 @@ export const endpoints = {
         return null;
       }
 
-      return handleResponse<Array<ReservationDataType>, `reservations`>(
-        await fetch(`/api/reservations`, {
+      return handleResponse<Array<ReservationType>, `reservations`>(
+        await fetch(`${API_URL}/reservations`, {
           method: 'DELETE',
-          headers: commonHeaders,
+          headers,
+          credentials: 'include',
+
           body: JSON.stringify({
             ids: idsToDelete,
           }),
@@ -166,10 +222,12 @@ export const endpoints = {
   },
   notifications: {
     PUT: async (token: string, userId?: string) =>
-      handleResponse<ReservationDataType, `notifications`>(
-        await fetch(`/api/notifications/`, {
+      handleResponse<ReservationType, `notifications`>(
+        await fetch(`${API_URL}/notifications/`, {
           method: 'PUT',
-          headers: commonHeaders,
+          headers,
+          credentials: 'include',
+
           body: JSON.stringify({
             token,
             userId,
@@ -180,17 +238,20 @@ export const endpoints = {
   admin: {
     announcements: {
       GET: async () =>
-        handleResponse<Array<AnnouncementDataType>, `admin/announcements`>(
-          await fetch(`/api/admin/announcements`, {
+        handleResponse<Array<AnnouncementType>, `admin/announcements`>(
+          await fetch(`${API_URL}/admin/announcements`, {
             method: 'GET',
-            headers: commonHeaders,
+            headers,
+            credentials: 'include',
           })
         ),
       POST: async (body: z.infer<typeof AnnouncementValidator>) =>
-        handleResponse<AnnouncementDataType, `admin/announcements`>(
-          await fetch('/api/admin/announcements', {
+        handleResponse<AnnouncementType, `admin/announcements`>(
+          await fetch(`${API_URL}/admin/announcements`, {
             method: 'POST',
-            headers: commonHeaders,
+            headers,
+            credentials: 'include',
+
             body: JSON.stringify(body),
           })
         ),
@@ -198,10 +259,12 @@ export const endpoints = {
         _id: string,
         body: z.infer<typeof AnnouncementValidatorPartial>
       ) =>
-        handleResponse<AnnouncementDataType, `admin/announcements/id`>(
-          await fetch(`/api/admin/announcements/${_id}`, {
+        handleResponse<AnnouncementType, `admin/announcements/id`>(
+          await fetch(`${API_URL}/admin/announcements/${_id}`, {
             method: 'PUT',
-            headers: commonHeaders,
+            headers,
+            credentials: 'include',
+
             body: JSON.stringify(body),
           })
         ),
@@ -210,10 +273,11 @@ export const endpoints = {
           return null;
         }
 
-        return handleResponse<AnnouncementDataType, `admin/announcements/id`>(
-          await fetch(`/api/admin/announcements/${_id}`, {
+        return handleResponse<AnnouncementType, `admin/announcements/id`>(
+          await fetch(`${API_URL}/admin/announcements/${_id}`, {
             method: 'DELETE',
-            headers: commonHeaders,
+            headers,
+            credentials: 'include',
           })
         );
       },
@@ -224,9 +288,10 @@ export const endpoints = {
           IDString extends undefined ? Array<CourtDataType> : CourtDataType,
           `courts${IDString extends undefined ? '' : '/id'}`
         >(
-          await fetch(`/api/admin/courts${id ? `/${id}` : ''}`, {
+          await fetch(`${API_URL}/admin/courts${id ? `/${id}` : ''}`, {
             method: 'GET',
-            headers: commonHeaders,
+            headers,
+            credentials: 'include',
           })
         ),
       POST: async (body: z.infer<typeof CourtValidator>) =>
@@ -234,9 +299,11 @@ export const endpoints = {
           CourtDataType,
           `courts${IDString extends undefined ? '' : '/id'}`
         >(
-          await fetch('/api/admin/courts', {
+          await fetch(`${API_URL}/admin/courts`, {
             method: 'POST',
-            headers: commonHeaders,
+            headers,
+            credentials: 'include',
+
             body: JSON.stringify(body),
           })
         ),
@@ -245,9 +312,11 @@ export const endpoints = {
           CourtDataType,
           `courts${IDString extends undefined ? '' : '/id'}`
         >(
-          await fetch(`/api/admin/courts/${id ? `/${id}` : ''}`, {
+          await fetch(`${API_URL}/admin/courts/${id ? `${id}` : ''}`, {
             method: 'PUT',
-            headers: commonHeaders,
+            headers,
+            credentials: 'include',
+
             body: JSON.stringify(body),
           })
         ),
@@ -256,10 +325,11 @@ export const endpoints = {
           return null;
         }
 
-        return handleResponse<CourtDataType, `courts/id`>(
-          await fetch(`/api/admin/courts/${idToDelete}`, {
+        return handleResponse<CourtType, `courts/id`>(
+          await fetch(`${API_URL}/admin/courts/${idToDelete}`, {
             method: 'DELETE',
-            headers: commonHeaders,
+            headers,
+            credentials: 'include',
           })
         );
       },
@@ -284,11 +354,15 @@ export const endpoints = {
           query += `offset=${offset >= 0 ? offset : 0}&`;
         }
 
-        return handleResponse<Array<AdminReservationDataType>, `reservations`>(
-          await fetch(`/api/admin/reservations${query ? `?${query}` : ''}`, {
-            method: 'GET',
-            headers: commonHeaders,
-          })
+        return handleResponse<Array<AdminReservationType>, `reservations`>(
+          await fetch(
+            `${API_URL}/admin/reservations${query ? `?${query}` : ''}`,
+            {
+              headers,
+              credentials: 'include',
+              method: 'GET',
+            }
+          )
         );
       },
       POST: async (
@@ -297,33 +371,27 @@ export const endpoints = {
           'court' | 'type' | 'datetime' | 'people' | 'owner' | 'duration'
         >
       ) =>
-        handleResponse<ReservationDataType, `reservations`>(
-          await fetch('/api/admin/reservations', {
+        handleResponse<ReservationType, `reservations`>(
+          await fetch(`${API_URL}/admin/reservations`, {
             method: 'POST',
-            headers: commonHeaders,
+            headers,
+            credentials: 'include',
+
             body: JSON.stringify(body),
           })
         ),
-      // PUT: async (
-      //   id: string,
-      //   body: z.infer<typeof ReservationValidatorPartial>
-      // ) =>
-      //   handleResponse<ReservationDataType, `reservations`>(
-      //     await fetch(`/api/admin/reservations/${id}`, {
-      //       method: 'PUT',
-      //       headers: commonHeaders,
-      //       body: JSON.stringify(body),
-      //     })
-      //   ),
+
       DELETE: async (idsToDelete: Array<string>) => {
         if (!idsToDelete || !idsToDelete.length) {
           return null;
         }
 
-        return handleResponse<Array<ReservationDataType>, `reservations`>(
-          await fetch(`/api/admin/reservations`, {
+        return handleResponse<Array<ReservationType>, `reservations`>(
+          await fetch(`${API_URL}/admin/reservations`, {
             method: 'DELETE',
-            headers: commonHeaders,
+            headers,
+            credentials: 'include',
+
             body: JSON.stringify({
               ids: idsToDelete,
             }),
@@ -333,11 +401,21 @@ export const endpoints = {
     },
   },
   user: {
-    PUT: async (_id: string, body: { name: string }) => {
-      return handleResponse<Array<ReservationDataType>, `reservations`>(
-        await fetch(`/api/user/${_id}`, {
+    GET: async () => {
+      return handleResponse<UserType, `reservations`>(
+        await fetch(`${API_URL}/user`, {
+          method: 'GET',
+          headers,
+          credentials: 'include',
+        })
+      );
+    },
+    PUT: async (body: { name: string; FCMToken?: string }) => {
+      return handleResponse<UserType, `reservations`>(
+        await fetch(`${API_URL}/user`, {
           method: 'PUT',
-          headers: commonHeaders,
+          headers,
+          credentials: 'include',
           body: JSON.stringify(body),
         })
       );

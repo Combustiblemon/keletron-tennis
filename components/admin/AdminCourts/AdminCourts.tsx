@@ -29,10 +29,10 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSession } from 'next-auth/react';
 import React, { useMemo, useRef, useState } from 'react';
 
 import NewReservationForm from '@/components/forms/NewReservationForm/NewReservationForm';
+import { useUser } from '@/components/UserProvider/UserProvider';
 import { endpoints } from '@/lib/api/utils';
 import { iconStyles } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
@@ -51,7 +51,7 @@ const AdminCourts = () => {
   const endTimeRef = useRef(null);
   const { t } = useTranslation('el');
   const { ref: wrapperRef, height: wrapperHeight } = useElementSize();
-  const session = useSession();
+  const { user } = useUser();
   const queryClient = useQueryClient();
 
   const courtForm = useForm({
@@ -117,7 +117,7 @@ const AdminCourts = () => {
       }))
       .sort((a, b) => (a.label > b.label ? 1 : -1));
 
-    if (!courtForm.getValues()._id && courtSelection[0].value) {
+    if (!courtForm.getValues()._id && courtSelection[0]?.value) {
       courtForm.setValues(
         courtData.find((c) => c._id === courtSelection[0].value)!
       );
@@ -222,7 +222,7 @@ const AdminCourts = () => {
             ...courtForm.getValues().reservationsInfo,
             reservedTimes: courtForm
               .getValues()
-              .reservationsInfo.reservedTimes.map((v, i) => {
+              .reservationsInfo?.reservedTimes.map((v, i) => {
                 if (i === index) {
                   return values;
                 }
@@ -231,7 +231,7 @@ const AdminCourts = () => {
           });
         }}
         key={infoIndex}
-        info={courtForm.getValues().reservationsInfo.reservedTimes[infoIndex]}
+        info={courtForm.getValues().reservationsInfo?.reservedTimes[infoIndex]}
         index={infoIndex}
       />
       <LoadingOverlay
@@ -242,7 +242,7 @@ const AdminCourts = () => {
       <NewReservationForm
         onClose={closeNewReservationForm}
         opened={newReservationFormOpened}
-        sessionData={session.data}
+        userData={user}
         courtData={courts.data}
         courtsSelectionData={courtsSelectionData}
         isAdmin
@@ -256,7 +256,7 @@ const AdminCourts = () => {
           <Stack pt="sm">
             <Select
               label="Γήπεδο"
-              defaultValue={courtSelectionData[0].value}
+              defaultValue={courtSelectionData[0]?.value}
               data={courtSelectionData}
               onChange={(v) => {
                 courtForm.reset();
@@ -332,7 +332,7 @@ const AdminCourts = () => {
                     />
                     <NumberInput
                       label="Διάρκεια κράτησης"
-                      defaultValue={selectedCourt.reservationsInfo.duration}
+                      defaultValue={selectedCourt.reservationsInfo?.duration}
                       onChange={(v) => {
                         courtForm.setFieldValue('reservationsInfo', {
                           ...courtForm.getValues().reservationsInfo,
@@ -350,7 +350,7 @@ const AdminCourts = () => {
                         inputMode="none"
                         ref={startTimeRef}
                         label="Ώρα αρχής"
-                        defaultValue={selectedCourt.reservationsInfo.startTime}
+                        defaultValue={selectedCourt.reservationsInfo?.startTime}
                         rightSection={startTimePicker}
                         onChange={(e) => {
                           courtForm.setFieldValue('reservationsInfo', {
@@ -363,7 +363,7 @@ const AdminCourts = () => {
                         inputMode="none"
                         ref={endTimeRef}
                         label="Ώρα τέλους"
-                        defaultValue={selectedCourt.reservationsInfo.endTime}
+                        defaultValue={selectedCourt.reservationsInfo?.endTime}
                         rightSection={endTimePicker}
                         onChange={(e) => {
                           courtForm.setFieldValue('reservationsInfo', {
@@ -454,7 +454,7 @@ const AdminCourts = () => {
                     <Divider />
                     {courtForm
                       .getValues()
-                      .reservationsInfo.reservedTimes.filter((r) => {
+                      .reservationsInfo?.reservedTimes.filter((r) => {
                         if (
                           reservationFilters.days?.length &&
                           !reservationFilters.days.some((day) =>
@@ -495,7 +495,7 @@ const AdminCourts = () => {
                                     ...courtForm.getValues().reservationsInfo,
                                     reservedTimes: courtForm
                                       .getValues()
-                                      .reservationsInfo.reservedTimes.filter(
+                                      .reservationsInfo?.reservedTimes.filter(
                                         (v, index) => {
                                           if (i === index) {
                                             return false;
