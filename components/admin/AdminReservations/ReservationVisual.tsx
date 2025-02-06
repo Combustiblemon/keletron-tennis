@@ -4,11 +4,11 @@ import { IconNotes, IconUser } from '@tabler/icons-react';
 import React from 'react';
 
 import ReservationDetails from '@/components/Reservation/ReservationDetails';
-import { AdminReservationDataType } from '@/lib/api/utils';
+import { AdminReservationType } from '@/lib/api/utils';
 import { iconStyles } from '@/lib/common';
 
 export interface ReservationVisualProps {
-  reservation: AdminReservationDataType;
+  reservation: AdminReservationType;
   width: number | string;
 }
 

@@ -9,41 +9,39 @@ import {
 import { useForm } from '@mantine/form';
 import { showNotification } from '@mantine/notifications';
 import { IconDeviceFloppy } from '@tabler/icons-react';
-import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { useState } from 'react';
 
+import { useUser } from '@/components/UserProvider/UserProvider';
 import { endpoints } from '@/lib/api/utils';
 import { iconStyles } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { UserDataType } from '@/models/User';
 
 const Settings = () => {
-  const session = useSession();
+  const { user, invalidateUser } = useUser();
   const { t } = useTranslation();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const userForm = useForm({
     initialValues: {
-      name: '',
+      name: user.name,
     } satisfies Pick<UserDataType, 'name'>,
     validate: {
       name: (value) => {
-        return !!value.trim().length || t('generic.form.errors.required');
+        return !value.trim().length
+          ? t('generic.form.errors.required')
+          : undefined;
       },
     },
   });
 
-  useEffect(() => {
-    if (session.data?.user?.name && !userForm.getValues().name) {
-      userForm.setFieldValue('name', session.data?.user?.name);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.data?.user?.name]);
-
   const saveUser = async () => {
-    if (userForm.validate().hasErrors && session.data?.user?._id) {
-      setIsLoading(true);
-      const res = await endpoints.user.PUT(session.data?.user?._id, {
+    setIsLoading(true);
+
+    if (!userForm.validate().hasErrors && user?._id) {
+      const res = await endpoints.user.PUT({
         name: userForm.getValues().name,
       });
 
@@ -52,6 +50,10 @@ const Settings = () => {
           color: 'green',
           message: t('settings.toast.success'),
         });
+
+        await invalidateUser();
+
+        router.push('/');
       }
 
       if (!res?.success) {
@@ -61,6 +63,7 @@ const Settings = () => {
         });
       }
     }
+
     setIsLoading(false);
   };
 
@@ -82,14 +85,14 @@ const Settings = () => {
           }}
           variant="filled"
           color="green"
-          disabled={userForm.validate().hasErrors}
+          disabled={Boolean(userForm.errors.name?.toString())}
         >
           <IconDeviceFloppy style={iconStyles} />
         </ActionIcon>
       </Group>
       <TextInput
         label={t('settings.nameInput.label')}
-        defaultValue={session.data?.user?.name}
+        defaultValue={user?.name}
         onChange={(e) => {
           if (e.target.value.trim()) {
             userForm.setFieldValue('name', e.target.value.trim());

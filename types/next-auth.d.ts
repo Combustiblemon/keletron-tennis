@@ -1,10 +1,10 @@
 import NextAuth from 'next-auth';
 
-import { Users } from '@/models/User';
+import { User } from '@/models/User';
 
 declare module 'next-auth' {
   interface User {
-    role?: Users['role'];
+    role?: User['role'];
     _id?: string;
     email?: string;
     name?: string;
@@ -17,7 +17,7 @@ declare module 'next-auth' {
     user?: {
       name: string;
       email: string;
-      role: Users['role'];
+      role: User['role'];
       _id: string;
       FCMToken?: string;
       session?: string;
@@ -29,7 +29,7 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     user?: {
-      role: Users['role'];
+      role: User['role'];
       _id: string;
       email: string;
       name: string;
