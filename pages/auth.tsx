@@ -1,12 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Anchor,
   Button,
   Divider,
   Group,
   LoadingOverlay,
   Paper,
   PaperProps,
-  PasswordInput,
   Stack,
   Text,
   TextInput,
@@ -15,31 +14,28 @@ import { useForm } from '@mantine/form';
 import { upperFirst, useDisclosure, useToggle } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { useRouter } from 'next/router';
-import { signIn, useSession } from 'next-auth/react';
-import { useEffect } from 'react';
 
-import { GoogleButton } from '@/components/GoogleButton/GoogleButton';
+import { useUser } from '@/components/UserProvider/UserProvider';
 import { Errors } from '@/lib/api/common';
+import { login, verifyLogin } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { firebaseCloudMessaging } from '@/lib/webPush';
 
 const AuthenticationForm = (props: PaperProps) => {
   const router = useRouter();
-  const { status } = useSession();
   const { t, tError } = useTranslation();
+  const {
+    // isAuthenticated
+    invalidateUser,
+  } = useUser();
 
   const [isLoading, { close: setIsLoaded, open: setIsLoading }] =
     useDisclosure(false);
-  const [type, toggleType] = useToggle<'login' | 'register'>([
-    'login',
-    'register',
-  ]);
+  const [type, toggleType] = useToggle<'login' | 'verify'>(['login', 'verify']);
   const form = useForm({
     initialValues: {
       email: '',
-      name: '',
-      password: '',
-      repeatPassword: '',
+      loginCode: '',
     },
 
     validate: {
@@ -54,37 +50,17 @@ const AuthenticationForm = (props: PaperProps) => {
 
         return error;
       },
-      password: (val) => {
+      loginCode: (val) => {
         let error = null;
 
-        if (!val) {
-          error = t('generic.form.errors.required');
-        } else if (val.length < 6) {
-          error = t('auth.form.passwordInput.minLength');
+        if (type === 'login') {
+          return null;
         }
 
-        return error;
-      },
-      repeatPassword: (val) => {
-        if (type === 'login') return null;
-
-        let error = null;
-
         if (!val) {
           error = t('generic.form.errors.required');
-        } else if (val.length < 6) {
-          error = t('auth.form.passwordInput.minLength');
-        }
-
-        return error;
-      },
-      name: (val) => {
-        if (type === 'login') return null;
-
-        let error = null;
-
-        if (!val) {
-          error = t('generic.form.errors.required');
+        } else if (/^[0-9]{6}$/.test(val) === false) {
+          error = t('auth.form.loginCode.invalid');
         }
 
         return error;
@@ -92,77 +68,78 @@ const AuthenticationForm = (props: PaperProps) => {
     },
   });
 
-  useEffect(() => {
-    const authType = new URLSearchParams(window.location.search).get('type');
-
-    if (authType === 'register') {
-      toggleType('register');
-    } else if (authType === 'login') {
-      toggleType('login');
-    }
-  }, [toggleType]);
-
   const handleSubmit = form.onSubmit(async (values) => {
     setIsLoading();
 
-    if (type === 'register' && values.password !== values.repeatPassword) {
-      form.setFieldError('password', tError(Errors.PASSWORDS_DO_NOT_MATCH));
-      form.setFieldError(
-        'repeatPassword',
-        tError(Errors.PASSWORDS_DO_NOT_MATCH)
-      );
-      return;
-    }
-
-    let res;
-
     switch (type) {
+      case 'verify':
+        {
+          const res = await verifyLogin({
+            loginCode: values.loginCode,
+            email: values.email,
+            FCMToken: await firebaseCloudMessaging.getToken(),
+          });
+
+          if (res?.errors?.length) {
+            notifications.show({
+              message: tError(res.errors[0].message as Errors),
+              color: 'red',
+            });
+          }
+
+          if (res?.success) {
+            notifications.show({
+              message: t(`auth.loginSuccess`),
+              color: 'green',
+            });
+
+            await invalidateUser();
+
+            // console.log('res', res);
+
+            if ((res?.data as any).name === '') {
+              router.push('/settings');
+              return;
+            }
+
+            router.push('/');
+          }
+        }
+        break;
       case 'login':
-        res = await signIn('login', {
-          redirect: false,
-          email: values.email,
-          password: values.password,
-          FCMToken: await firebaseCloudMessaging.getToken(),
-        });
-        break;
-
-      case 'register':
-        res = await signIn('register', {
-          redirect: false,
-          email: values.email,
-          password: values.password,
-          name: values.name,
-          FCMToken: await firebaseCloudMessaging.getToken(),
-        });
-        break;
-
       default:
+        {
+          const res = await login({
+            email: values.email,
+            FCMToken: await firebaseCloudMessaging.getToken(),
+          });
+
+          if (res?.errors?.length) {
+            notifications.show({
+              message: tError(res.errors[0].message as Errors),
+              color: 'red',
+            });
+          }
+
+          if (res?.success) {
+            notifications.show({
+              message: t(`auth.loginStartSuccess`),
+              color: 'green',
+            });
+
+            toggleType('verify');
+          }
+        }
         break;
-    }
-
-    if (res?.error) {
-      notifications.show({
-        message: tError(res.error as Errors),
-        color: 'red',
-      });
-    }
-
-    if (res?.ok) {
-      notifications.show({
-        message: t(`auth.${type}Success`),
-        color: 'green',
-      });
-
-      router.push('/');
     }
 
     setIsLoaded();
   });
 
-  if (status === 'authenticated') {
-    router.push('/');
-    return null;
-  }
+  // if (isAuthenticated) {
+  //   router.push('/');
+  //   return null;
+  // }
 
   return (
     <Paper radius="md" p="xl" pos="relative" {...props}>
@@ -176,87 +153,57 @@ const AuthenticationForm = (props: PaperProps) => {
         <Text size="lg" fw={500}>
           {t(`auth.${type}`)}
         </Text>
-        {type === 'login' && (
-          <GoogleButton
-            onClick={() => {
-              signIn('google');
-            }}
-          >
-            {t('auth.googleLogin.login')}
-          </GoogleButton>
-        )}
       </Stack>
 
       <Divider my="lg" />
 
       <form onSubmit={handleSubmit}>
         <Stack>
-          {type === 'register' && (
-            <TextInput
-              required
-              label={t('auth.form.nameInput.label')}
-              placeholder={t('auth.form.nameInput.placeholder')}
-              onChange={(event) =>
-                form.setFieldValue('name', event.currentTarget.value.trim())
-              }
-              error={form.errors.name}
-              radius="md"
-            />
-          )}
-
-          <TextInput
-            required
-            label={t('auth.form.emailInput.label')}
-            placeholder="hello@example.com"
-            value={form.values.email}
-            type="text"
-            onChange={(event) =>
-              form.setFieldValue('email', event.currentTarget.value.trim())
+          {(() => {
+            if (type === 'login') {
+              return (
+                <TextInput
+                  required
+                  label={t('auth.form.emailInput.label')}
+                  placeholder="hello@example.com"
+                  value={form.values.email}
+                  type="text"
+                  onChange={(event) =>
+                    form.setFieldValue(
+                      'email',
+                      event.currentTarget.value.trim()
+                    )
+                  }
+                  error={form.errors.email}
+                  radius="md"
+                />
+              );
             }
-            error={form.errors.email}
-            radius="md"
-          />
 
-          <PasswordInput
-            required
-            label={t('auth.form.passwordInput.label')}
-            placeholder={t('auth.form.passwordInput.placeholder')}
-            value={form.values.password}
-            onChange={(event) =>
-              form.setFieldValue('password', event.currentTarget.value.trim())
+            if (type === 'verify') {
+              return (
+                <TextInput
+                  required
+                  label={t('auth.form.loginCode.label')}
+                  value={form.values.loginCode}
+                  type="text"
+                  onChange={(event) =>
+                    form.setFieldValue(
+                      'loginCode',
+                      event.currentTarget.value.trim()
+                    )
+                  }
+                  error={form.errors.email}
+                  radius="md"
+                />
+              );
             }
-            error={form.errors.password}
-            radius="md"
-          />
 
-          {type === 'register' && (
-            <PasswordInput
-              required
-              label={t('auth.form.repeatPasswordInput.label')}
-              placeholder={t('auth.form.repeatPasswordInput.placeholder')}
-              value={form.values.repeatPassword}
-              onChange={(event) =>
-                form.setFieldValue(
-                  'repeatPassword',
-                  event.currentTarget.value.trim()
-                )
-              }
-              error={form.errors.password}
-              radius="md"
-            />
-          )}
+            return null;
+          })()}
         </Stack>
 
         <Group justify="space-between" mt="xl">
-          <Anchor
-            component="button"
-            type="button"
-            c="dimmed"
-            onClick={() => toggleType()}
-            size="xs"
-          >
-            {t(`auth.${type}Prompt`)}
-          </Anchor>
           <Button type="submit" radius="xl" loading={isLoading}>
             {upperFirst(type)}
           </Button>

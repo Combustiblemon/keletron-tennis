@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useLanguage } from '@/context/LanguageContext';
 
 import { Errors } from '../api/common';
@@ -11,13 +12,14 @@ const locales = {
 
 export type Language = keyof typeof locales;
 
-type DeepKeys<T> = T extends object
-  ? {
-      [K in keyof T]: `${K & string}${string extends T[K] ? '' : '.'}${DeepKeys<T[K]>}`;
-    }[keyof T]
-  : '';
+// type DeepKeys<T> = T extends object
+//   ? {
+//       [K in keyof T]: `${K & string}${string extends T[K] ? '' : '.'}${DeepKeys<T[K]>}`;
+//     }[keyof T]
+//   : '';
 
-export type LocaleKeys = DeepKeys<typeof localeEl>;
+// export type LocaleKeys = DeepKeys<typeof localeEl>;
+export type LocaleKeys = string;
 
 const access = (
   path: LocaleKeys,
@@ -43,8 +45,7 @@ export const useTranslation = (overrideLang?: Language) => {
   const [language] = useLanguage();
 
   return {
-    t: (key: LocaleKeys) => i18n(key, overrideLang || language),
-    tError: (error: Errors) =>
-      getErrorTranslation(error, overrideLang || language),
+    t: (key: LocaleKeys) => i18n(key, 'el'),
+    tError: (error: Errors) => getErrorTranslation(error, 'el'),
   };
 };

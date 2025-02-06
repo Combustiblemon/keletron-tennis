@@ -1,40 +1,58 @@
 import { rem } from '@mantine/core';
-import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
-import { signOut } from 'next-auth/react';
 
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
 
+import { APIResponse } from './api/responseTypes';
+import { endpoints } from './api/utils';
 import { useTranslation } from './i18n/i18n';
 import { firebaseCloudMessaging } from './webPush';
 
-/**
- * Logs the user out of the application (next-auth) and redirects to the homepage
- * @param router  the router instance
- * @param callback
- */
-export const logout = async (
-  router: AppRouterInstance,
+export const logout = async (callback?: () => void | Promise<void>) => {
+  try {
+    await endpoints.auth.logout();
+
+    await firebaseCloudMessaging.deleteToken();
+
+    if (callback) {
+      await callback();
+    }
+
+    window.location.reload();
+  } catch (error) {
+    console.log('error', error);
+  }
+};
+
+export const login = async (
+  data?: Record<string, string | undefined>,
   callback?: () => void | Promise<void>
-) => {
-  await signOut();
-  await firebaseCloudMessaging.deleteToken();
+): Promise<APIResponse<unknown, 'login'> | undefined> => {
+  const res = await endpoints.auth.login(data);
+
+  await firebaseCloudMessaging.saveToken();
 
   if (callback) {
     await callback();
   }
 
-  router.push('/');
+  return res;
 };
 
-export const addMinutesToTime = (time: string, minutes: number) =>
-  new Date(
-    new Date(`1970/01/01 ${time}`).getTime() + minutes * 60000
-  ).toLocaleTimeString('el-GR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
+export const verifyLogin = async (
+  data?: Record<string, string | undefined>,
+  callback?: () => void | Promise<void>
+): Promise<APIResponse<unknown, 'login'> | undefined> => {
+  const res = await endpoints.auth.verifyLogin(data);
+
+  await firebaseCloudMessaging.saveToken();
+
+  if (callback) {
+    await callback();
+  }
+
+  return res;
+};
 
 export const formatDate = (date: Date) =>
   `${date
@@ -57,6 +75,15 @@ export const weekDayMap = {
   '6': 'SATURDAY',
   '0': 'SUNDAY',
 } as const;
+
+export const addMinutesToTime = (time: string, minutes: number) =>
+  new Date(
+    new Date(`1970/01/01 ${time}`).getTime() + minutes * 60000
+  ).toLocaleTimeString('el-GR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
 
 const isTimeOverlapping = (
   reservation: { startTime: string; endTime: string; duration: number },

@@ -3,7 +3,7 @@
 import React, {
   createContext,
   useContext,
-  useEffect,
+  // useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -21,18 +21,18 @@ const LanguageContext = createContext<LanguageModeContext | undefined>(
 
 export const LanguageProvider = ({
   children,
-  changeLanguageCallback,
+  // changeLanguageCallback,
   defaultLanguage,
 }: {
   defaultLanguage: Language;
   children: React.ReactNode;
-  changeLanguageCallback?: (mode: Language) => void;
+  // changeLanguageCallback?: (mode: Language) => void;
 }) => {
   const [language, setLanguage] = useState<Language>(defaultLanguage);
 
-  useEffect(() => {
-    changeLanguageCallback?.(language);
-  }, [language, changeLanguageCallback]);
+  // useEffect(() => {
+  //   changeLanguageCallback?.(language);
+  // }, [language, changeLanguageCallback]);
 
   return (
     <LanguageContext.Provider

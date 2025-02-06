@@ -1,11 +1,11 @@
 import { Button, Group, LoadingOverlay, Stack, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useQuery } from '@tanstack/react-query';
-import { useSession } from 'next-auth/react';
 import { useMemo, useState } from 'react';
 
 import NewReservationForm from '@/components/forms/NewReservationForm/NewReservationForm';
 import Reservation from '@/components/Reservation/Reservation';
+import { useUser } from '@/components/UserProvider/UserProvider';
 import { endpoints } from '@/lib/api/utils';
 import { useTranslation } from '@/lib/i18n/i18n';
 
@@ -14,7 +14,7 @@ const fetchCourts = async () => {
 };
 
 const Reservations = () => {
-  const session = useSession();
+  const { user } = useUser();
   const { t } = useTranslation();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -62,6 +62,10 @@ const Reservations = () => {
     [courts]
   );
 
+  console.log('courtsSelectionData', courtsSelectionData);
+  console.log('user', user);
+  console.log('courtData', courts.data);
+
   return (
     <Stack gap="lg" w="100%">
       <LoadingOverlay
@@ -74,7 +78,7 @@ const Reservations = () => {
         <NewReservationForm
           onClose={close}
           opened={opened}
-          sessionData={session.data}
+          userData={user}
           courtData={courts.data}
           courtsSelectionData={courtsSelectionData}
         />

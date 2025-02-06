@@ -12,6 +12,7 @@
       "login": "Login",
       "register": "Register"
     },
+    "verify": "Verify",
     "form": {
       "emailInput": {
         "invalid": "The email is invalid.",
@@ -31,6 +32,9 @@
         "label": "Repeat Password",
         "noMatch": "The passwords do not match.",
         "placeholder": "Repeat Password"
+      },
+      "loginCode": {
+        "label": "Add your verification code"
       }
     },
     "google": "Login with Google",

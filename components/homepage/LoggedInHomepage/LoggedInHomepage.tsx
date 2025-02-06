@@ -1,25 +1,23 @@
 import { Paper, Stack, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
-import { useSession } from 'next-auth/react';
 import { useMemo } from 'react';
 
-import Announcements from '@/components/Announcements/Announcements';
+// import Announcements from '@/components/Announcements/Announcements';
+import { useUser } from '@/components/UserProvider/UserProvider';
 import { endpoints } from '@/lib/api/utils';
 import { useTimeUntil } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 
-export type LoggedInHomepageProps = {
-  session: ReturnType<typeof useSession>;
-};
-
-const LoggedInHomepage = ({ session }: LoggedInHomepageProps) => {
+const LoggedInHomepage = () => {
   const { t } = useTranslation();
   const router = useRouter();
+  const { user } = useUser();
 
   const userReservations = useQuery({
-    queryKey: ['reservations', 'user'],
+    queryKey: ['reservations'],
     queryFn: async () => endpoints.reservations.GET(undefined, undefined, 0),
+    retry: 3,
   });
 
   const userReservationData = useMemo(
@@ -34,9 +32,8 @@ const LoggedInHomepage = ({ session }: LoggedInHomepageProps) => {
   return (
     <Stack w="100%" justify="flex-start" align="center" h="100%">
       <Text size="lg" ta="center">
-        {`${t('loggedInHomepage.welcome')}, ${session.data?.user?.name}`}
+        {`${t('loggedInHomepage.welcome')}, ${user?.name}`}
       </Text>
-      <Announcements />
       {!!userReservationData?.[0] && (
         <Paper
           p="sm"

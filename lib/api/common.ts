@@ -62,4 +62,5 @@ export enum Errors {
   INVALID_PASSWORD = 'invalid_password',
   UNAUTHORIZED = 'unauthorized',
   RESOURCE_NOT_FOUND = 'resource_not_found',
+  NOT_FOUND = 'not_found',
 }
