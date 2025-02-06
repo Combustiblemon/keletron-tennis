@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useLanguage } from '@/context/LanguageContext';
 
 import { Errors } from '../api/common';
