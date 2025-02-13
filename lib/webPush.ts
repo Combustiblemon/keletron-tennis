@@ -55,7 +55,7 @@ const firebaseCloudMessagingBuilder = () => {
           const FCMToken = await getToken(messaging, { vapidKey: VAPID_KEY });
 
           if (FCMToken) {
-            onMessage(messaging, (payload) => {
+            stopListening = onMessage(messaging, (payload) => {
               // eslint-disable-next-line no-console
               console.log('firebase message received.', payload);
 

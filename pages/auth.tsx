@@ -60,7 +60,7 @@ const AuthenticationForm = (props: PaperProps) => {
         if (!val) {
           error = t('generic.form.errors.required');
         } else if (/^[0-9]{6}$/.test(val) === false) {
-          error = t('auth.form.loginCode.invalid');
+          error = t('Ο κωδικός δεν είναι έγκυρος');
         }
 
         return error;
@@ -89,7 +89,7 @@ const AuthenticationForm = (props: PaperProps) => {
 
           if (res?.success) {
             notifications.show({
-              message: t(`auth.loginSuccess`),
+              message: `Επιτυχής σύνδεση`,
               color: 'green',
             });
 
@@ -97,7 +97,10 @@ const AuthenticationForm = (props: PaperProps) => {
 
             // console.log('res', res);
 
-            if ((res?.data as any).name === '') {
+            if (
+              (res?.data as any).firstname === '' ||
+              (res?.data as any).lastname === ''
+            ) {
               router.push('/settings');
               return;
             }
@@ -123,7 +126,7 @@ const AuthenticationForm = (props: PaperProps) => {
 
           if (res?.success) {
             notifications.show({
-              message: t(`auth.loginStartSuccess`),
+              message: `Επιτυχής αποστολή email`,
               color: 'green',
             });
 
@@ -182,20 +185,27 @@ const AuthenticationForm = (props: PaperProps) => {
 
             if (type === 'verify') {
               return (
-                <TextInput
-                  required
-                  label={t('auth.form.loginCode.label')}
-                  value={form.values.loginCode}
-                  type="text"
-                  onChange={(event) =>
-                    form.setFieldValue(
-                      'loginCode',
-                      event.currentTarget.value.trim()
-                    )
-                  }
-                  error={form.errors.email}
-                  radius="md"
-                />
+                <>
+                  <Text size="md">
+                    Σας έχει αποσταλθεί ο κωδικός σύνδεσης στο email&nbsp;
+                    {form.values.email}. Παρακαλώ ελέξτε τα ανεπιθύμητα μηνύματα
+                    εαν δεν βρήσκετε το email.
+                  </Text>
+                  <TextInput
+                    required
+                    label="Κωδικός σύνδεσης"
+                    value={form.values.loginCode}
+                    type="text"
+                    onChange={(event) =>
+                      form.setFieldValue(
+                        'loginCode',
+                        event.currentTarget.value.trim()
+                      )
+                    }
+                    error={form.errors.email}
+                    radius="md"
+                  />
+                </>
               );
             }
 
