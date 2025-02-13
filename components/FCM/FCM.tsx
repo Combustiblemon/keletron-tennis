@@ -1,25 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { firebaseCloudMessaging } from '@/lib/webPush';
 
-import { useUser } from '../UserProvider/UserProvider';
-
 const FCM = () => {
-  const { isAuthenticated } = useUser();
-  const [savedToken, setToken] = useState<string>();
-
   useEffect(() => {
     (async () => {
-      if (isAuthenticated && !savedToken) {
-        const token = await firebaseCloudMessaging.init();
+      const token = await firebaseCloudMessaging.init();
 
-        if (token) {
-          setToken(token);
-          await firebaseCloudMessaging.saveToken();
-        }
+      if (token) {
+        await firebaseCloudMessaging.saveToken();
+        console.log('initialized FCM');
       }
     })();
-  }, [isAuthenticated, savedToken]);
+  }, []);
 
   return null;
 };

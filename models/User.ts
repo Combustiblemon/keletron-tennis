@@ -7,7 +7,8 @@ import z from 'zod';
 import { Language } from '@/context/LanguageContext';
 
 export const UserValidator = z.object({
-  name: z.string().max(60),
+  firstname: z.string().max(60),
+  lastname: z.string().max(60),
   role: z.enum(['ADMIN', 'USER']).default('USER'),
   email: z.string().email(),
   password: z.string().min(6).optional(),
@@ -15,7 +16,8 @@ export const UserValidator = z.object({
 });
 
 type SanitizedUserFields =
-  | 'name'
+  | 'firstname'
+  | 'lastname'
   | 'email'
   | 'role'
   | '_id'
@@ -44,11 +46,6 @@ export type User = mongoose.Document &
 export type UserType = Pick<User, SanitizedUserFields>;
 
 export const UserSchema = new mongoose.Schema<User>({
-  name: {
-    type: String,
-    maxlength: [60, 'User name cannot be more than 60 characters'],
-    required: [true, 'Please add a User name'],
-  },
   role: {
     type: String,
     enum: ['ADMIN', 'USER'],
@@ -125,14 +122,13 @@ UserSchema.methods.sanitize = function (): UserSanitized {
   return (this as User).toObject({
     transform: (doc, ret) =>
       ({
-        name: ret.name,
         email: ret.email,
         role: ret.role,
         _id: ret._id,
         FCMTokens: ret.FCMToken,
         session: ret.session,
         language: ret.language || 'el',
-      }) satisfies UserSanitized,
+      }) as UserSanitized,
   });
 };
 
