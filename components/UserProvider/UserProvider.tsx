@@ -9,6 +9,7 @@ import {
 
 import { Language, useLanguage } from '@/context/LanguageContext';
 import { endpoints } from '@/lib/api/utils';
+import { firebaseCloudMessaging } from '@/lib/webPush';
 import { UserType } from '@/models/User';
 
 export type User = Omit<UserType, '_id'> & { language: Language; _id: string };
@@ -27,7 +28,8 @@ export type UserContextDataType = {
 const DEFAULT_USER: User = {
   _id: '',
   email: '',
-  name: '',
+  firstname: '',
+  lastname: '',
   role: 'USER',
   language: 'en',
 };
@@ -50,7 +52,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [lang, setLang] = useLanguage();
 
   const { data, isFetching, isLoading } = useQuery({
-    queryFn: endpoints.user.GET,
+    queryFn: async () => {
+      const token = await firebaseCloudMessaging.getToken();
+
+      if (token) {
+        await endpoints.notifications.PUT(token);
+      }
+
+      return endpoints.user.GET();
+    },
     queryKey: ['user'],
     // staleTime: 1000 * 60 * 60 * 24,
   });

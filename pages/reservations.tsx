@@ -62,10 +62,6 @@ const Reservations = () => {
     [courts]
   );
 
-  console.log('courtsSelectionData', courtsSelectionData);
-  console.log('user', user);
-  console.log('courtData', courts.data);
-
   return (
     <Stack gap="lg" w="100%">
       <LoadingOverlay

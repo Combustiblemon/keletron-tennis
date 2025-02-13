@@ -8,6 +8,7 @@ import { useUser } from '@/components/UserProvider/UserProvider';
 import { endpoints } from '@/lib/api/utils';
 import { useTimeUntil } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
+// import { firebaseCloudMessaging } from '@/lib/webPush';
 
 const LoggedInHomepage = () => {
   const { t } = useTranslation();
@@ -32,7 +33,7 @@ const LoggedInHomepage = () => {
   return (
     <Stack w="100%" justify="flex-start" align="center" h="100%">
       <Text size="lg" ta="center">
-        {`${t('loggedInHomepage.welcome')}, ${user?.name}`}
+        {`${t('loggedInHomepage.welcome')}${user.firstname || user.lastname ? `, ${user.firstname || ''} ${user.lastname || ''}` : ''}`}
       </Text>
       {!!userReservationData?.[0] && (
         <Paper
@@ -51,6 +52,20 @@ const LoggedInHomepage = () => {
           </Stack>
         </Paper>
       )}
+      {/* <Button
+        onClick={async () => {
+          await endpoints.notifications.PUT(
+            (await firebaseCloudMessaging.getToken()) || ''
+          );
+
+          await fetch(`http://localhost:2000/test`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+        }}
+      >
+        notification
+      </Button> */}
     </Stack>
   );
 };

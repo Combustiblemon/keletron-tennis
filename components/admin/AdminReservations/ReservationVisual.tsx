@@ -54,7 +54,7 @@ const ReservationVisual = ({
           }}
           c="white"
         >
-          {r.owner.name}
+          {r.owner.firstname} {r.owner.lastname}
         </Text>
         <Group justify="space-between">
           <Group p={0} gap={0} align="center">

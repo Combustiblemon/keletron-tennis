@@ -26,10 +26,16 @@ const Settings = () => {
 
   const userForm = useForm({
     initialValues: {
-      name: user.name,
-    } satisfies Pick<UserDataType, 'name'>,
+      firstname: user.firstname,
+      lastname: user.lastname,
+    } satisfies Pick<UserDataType, 'firstname' | 'lastname'>,
     validate: {
-      name: (value) => {
+      firstname: (value) => {
+        return !value.trim().length
+          ? t('generic.form.errors.required')
+          : undefined;
+      },
+      lastname: (value) => {
         return !value.trim().length
           ? t('generic.form.errors.required')
           : undefined;
@@ -42,7 +48,8 @@ const Settings = () => {
 
     if (!userForm.validate().hasErrors && user?._id) {
       const res = await endpoints.user.PUT({
-        name: userForm.getValues().name,
+        firstname: userForm.getValues().firstname,
+        lastname: userForm.getValues().lastname,
       });
 
       if (res?.success) {
@@ -90,16 +97,28 @@ const Settings = () => {
           <IconDeviceFloppy style={iconStyles} />
         </ActionIcon>
       </Group>
-      <TextInput
-        label={t('settings.nameInput.label')}
-        defaultValue={user?.name}
-        onChange={(e) => {
-          if (e.target.value.trim()) {
-            userForm.setFieldValue('name', e.target.value.trim());
-          }
-        }}
-        error={userForm.errors.name}
-      />
+      <Group gap="md">
+        <TextInput
+          label="Όνομα"
+          defaultValue={user?.firstname}
+          onChange={(e) => {
+            if (e.target.value.trim()) {
+              userForm.setFieldValue('firstname', e.target.value.trim());
+            }
+          }}
+          error={userForm.errors.firstname}
+        />
+        <TextInput
+          label="Επίθετο"
+          defaultValue={user?.lastname}
+          onChange={(e) => {
+            if (e.target.value.trim()) {
+              userForm.setFieldValue('lastname', e.target.value.trim());
+            }
+          }}
+          error={userForm.errors.lastname}
+        />
+      </Group>
     </Stack>
   );
 };

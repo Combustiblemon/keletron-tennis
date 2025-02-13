@@ -157,10 +157,13 @@ const NewReservationForm = ({
   );
 
   useEffect(() => {
-    if (newReservation.getValues().people.length === 0 && userData?.name) {
-      newReservation.setFieldValue('people', [userData?.name, ' ']);
+    if (newReservation.getValues().people.length === 0 && userData?.firstname) {
+      newReservation.setFieldValue('people', [
+        `${userData?.firstname} ${userData?.lastname}`,
+        ' ',
+      ]);
     }
-  }, [newReservation, userData?.name]);
+  }, [newReservation, userData?.firstname, userData?.lastname]);
 
   const timePickerRef = useRef<HTMLInputElement>(null);
 
@@ -322,7 +325,10 @@ const NewReservationForm = ({
       opened={opened}
       onClose={() => {
         newReservation.reset();
-        newReservation.setFieldValue('people', [userData?.name || '', ' ']);
+        newReservation.setFieldValue('people', [
+          `${userData?.firstname || ''} ${userData?.lastname || ''}`,
+          ' ',
+        ]);
         onClose?.();
       }}
       title={

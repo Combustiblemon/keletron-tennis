@@ -418,7 +418,11 @@ export const endpoints = {
         })
       );
     },
-    PUT: async (body: { name: string; FCMToken?: string }) => {
+    PUT: async (body: {
+      firstname: string;
+      lastname: string;
+      FCMToken?: string;
+    }) => {
       return handleResponse<UserType, `reservations`>(
         await fetch(`${API_URL}/user`, {
           method: 'PUT',
