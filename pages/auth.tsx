@@ -97,10 +97,7 @@ const AuthenticationForm = (props: PaperProps) => {
 
             // console.log('res', res);
 
-            if (
-              (res?.data as any).firstname === '' ||
-              (res?.data as any).lastname === ''
-            ) {
+            if (!(res?.data as any).firstname || !(res?.data as any).lastname) {
               router.push('/settings');
               return;
             }
