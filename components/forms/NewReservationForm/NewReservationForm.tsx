@@ -13,31 +13,29 @@ import {
   Text,
   Textarea,
 } from '@mantine/core';
-import { DateInput, TimeInput } from '@mantine/dates';
+import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import {
   IconCancel,
-  IconClock,
   IconDeviceFloppy,
   IconUserPlus,
 } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { User } from '@/components/UserProvider/UserProvider';
 import { APIResponse } from '@/lib/api/responseTypes';
 import { endpoints } from '@/lib/api/utils';
 import {
   formatDate,
+  getAvailableTimeInSteps,
   iconStyles,
   isReservationTimeFree,
   weekDayMap,
 } from '@/lib/common';
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
-
-const DEFAULT_RESERVATION_DURATION = 90;
 
 const fetchReservations = async (date?: string) => {
   return endpoints.reservations.GET(undefined, date);
@@ -77,6 +75,7 @@ const NewReservationForm = ({
   isAdmin,
 }: NewReservationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [availableTimes, setAvailableTimes] = useState<Array<string>>([]);
   const queryClient = useQueryClient();
 
   const newReservation = useForm({
@@ -165,24 +164,26 @@ const NewReservationForm = ({
     }
   }, [newReservation, userData?.firstname, userData?.lastname]);
 
-  const timePickerRef = useRef<HTMLInputElement>(null);
+  // const timePickerRef = useRef<HTMLInputElement>(null);
 
-  const timePickerControl = (
-    <ActionIcon
-      variant="subtle"
-      color="gray"
-      onClick={() => {
-        timePickerRef.current?.showPicker();
-      }}
-    >
-      <IconClock style={iconStyles} stroke={1.5} />
-    </ActionIcon>
-  );
+  // const timePickerControl = (
+  //   <ActionIcon
+  //     variant="subtle"
+  //     color="gray"
+  //     onClick={() => {
+  //       timePickerRef.current?.showPicker();
+  //     }}
+  //   >
+  //     <IconClock style={iconStyles} stroke={1.5} />
+  //   </ActionIcon>
+  // );
 
   const selectedCourtId = newReservation.getValues().court;
   const selectedCourt = courtData?.success
     ? courtData?.data?.find((c) => c._id === selectedCourtId)
     : undefined;
+
+  const selectedDate = newReservation.getValues().date;
 
   const [minCourtTime, maxCourtTime] = useMemo(
     () => getCourtTimes(courtData, selectedCourtId),
@@ -199,9 +200,9 @@ const NewReservationForm = ({
       reservationData.filter(
         (r) => r.datetime.includes(date) && r.court === values.court
       ),
-      selectedCourt?.reservationsInfo?.reservedTimes || [],
-      datetime,
-      DEFAULT_RESERVATION_DURATION
+      selectedCourt?.reservationsInfo ||
+        ({} as CourtDataType['reservationsInfo']),
+      datetime
     );
 
     if (!isReservationValid) {
@@ -320,6 +321,18 @@ const NewReservationForm = ({
     ]
   );
 
+  useEffect(() => {
+    const value = selectedCourt?.reservationsInfo;
+
+    if (!value) {
+      return;
+    }
+
+    const times = getAvailableTimeInSteps(value, reservationData, selectedDate);
+
+    setAvailableTimes(times);
+  }, [selectedDate, reservationData, selectedCourt?.reservationsInfo]);
+
   return (
     <Drawer
       opened={opened}
@@ -391,7 +404,26 @@ const NewReservationForm = ({
                 error={newReservation.errors.date}
               />
 
-              <TimeInput
+              <Select
+                id={newReservation.values.date.toISOString()}
+                allowDeselect={false}
+                label="Ώρα"
+                data={availableTimes}
+                defaultValue={availableTimes[0]}
+                error={newReservation.errors.time}
+                value={newReservation.getValues().time}
+                multiple={false}
+                required
+                onChange={(value) => {
+                  if (!value) {
+                    return;
+                  }
+
+                  newReservation.setFieldValue('time', value.trim());
+                }}
+              />
+
+              {/* <TimeInput
                 required
                 inputMode="none"
                 error={newReservation.errors.time}
@@ -402,7 +434,7 @@ const NewReservationForm = ({
                 onChange={(e) => {
                   newReservation.setFieldValue('time', e.target.value.trim());
                 }}
-              />
+              /> */}
             </Group>
           </Stack>
           {isAdmin && (
