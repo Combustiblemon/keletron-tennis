@@ -85,6 +85,15 @@ export const addMinutesToTime = (time: string, minutes: number) =>
     hour12: false,
   });
 
+export const getMinutes = (time1: string, time2: string) => {
+  return (
+    (new Date(`1970/01/01 ${time1}`).getTime() -
+      new Date(`1970/01/01 ${time2}`).getTime()) /
+    1000 /
+    60
+  );
+};
+
 const isTimeOverlapping = (
   reservation: { startTime: string; endTime: string; duration: number },
   against: { startTime: string; endTime: string; duration: number }
@@ -104,15 +113,24 @@ const isTimeOverlapping = (
 
 export const isReservationTimeFree = (
   courtReservations: Array<ReservationDataType>,
-  courtReservedTimes: CourtDataType['reservationsInfo']['reservedTimes'],
+  courtReservationInfo: CourtDataType['reservationsInfo'],
   datetime: string,
-  duration: number,
   reservationId?: string
 ): boolean => {
   let reservationCheck = true;
+  const {
+    duration,
+    reservedTimes: courtReservedTimes,
+    startTime: courtStartTime,
+    endTime: courtEndTime,
+  } = courtReservationInfo;
 
   const startTime = datetime.split('T')[1];
   const endTime = addMinutesToTime(startTime, duration);
+
+  if (startTime < courtStartTime || endTime > courtEndTime) {
+    return false;
+  }
 
   if (courtReservations.length) {
     const reservationsToCheck = courtReservations.filter((r) => {
@@ -145,11 +163,7 @@ export const isReservationTimeFree = (
         });
   }
 
-  if (!reservationCheck) {
-    return false;
-  }
-
-  if (!courtReservedTimes.length) {
+  if (!reservationCheck || !courtReservedTimes.length) {
     return reservationCheck;
   }
 
@@ -207,4 +221,35 @@ export const useTimeUntil = (date1: Date, date2?: Date): string => {
 
   // eslint-disable-next-line no-nested-ternary
   return `${days ? `${days}${t('generic.date.d')} ` : ''}${days ? `${hours % 24}${t('generic.date.h')} ` : hours ? `${hours}${t('generic.date.h')} ` : ''}${minutes}${t('generic.date.m')}`;
+};
+
+export const getAvailableTimeInSteps = (
+  reservationsInfo: CourtDataType['reservationsInfo'],
+  reservations: Array<ReservationDataType>,
+  date: Date,
+  step: number = 30
+): Array<string> => {
+  const { endTime, startTime } = reservationsInfo;
+
+  let time = startTime;
+  const times: Array<string> = [];
+  let count = 0;
+
+  while (count < 500 && time <= endTime) {
+    count += 1;
+
+    if (
+      isReservationTimeFree(
+        reservations,
+        reservationsInfo,
+        `${date.toISOString().substring(0, 10)}T${time}`
+      )
+    ) {
+      times.push(time);
+    }
+
+    time = addMinutesToTime(time, step);
+  }
+
+  return times;
 };

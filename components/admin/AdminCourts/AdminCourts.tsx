@@ -34,7 +34,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import NewReservationForm from '@/components/forms/NewReservationForm/NewReservationForm';
 import { useUser } from '@/components/UserProvider/UserProvider';
 import { endpoints } from '@/lib/api/utils';
-import { iconStyles } from '@/lib/common';
+import { addMinutesToTime, iconStyles } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { CourtDataType } from '@/models/Court';
 
@@ -522,7 +522,15 @@ const AdminCourts = () => {
                               <Text size="sm">Επανάληψη: {res.repeat}</Text>
                               <Group gap="sm">
                                 <Text size="sm">Αρχή: {res.startTime}</Text>
-                                <Text size="sm">Διάρκεια: {res.duration}</Text>
+                                <Text size="sm">
+                                  Εως:{' '}
+                                  {(() => {
+                                    return addMinutesToTime(
+                                      res.startTime,
+                                      res.duration
+                                    );
+                                  })()}
+                                </Text>
                               </Group>
                               {!!res.datesNotApplied?.length && (
                                 <Stack>

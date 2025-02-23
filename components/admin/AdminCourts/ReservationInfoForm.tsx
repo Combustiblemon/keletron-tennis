@@ -17,7 +17,7 @@ import { useForm } from '@mantine/form';
 import { IconClock, IconDeviceFloppy } from '@tabler/icons-react';
 import React, { useRef } from 'react';
 
-import { formatDate } from '@/lib/common';
+import { addMinutesToTime, formatDate, getMinutes } from '@/lib/common';
 import { CourtDataType } from '@/models/Court';
 
 import { dayData, typeData } from '../common';
@@ -52,7 +52,10 @@ const ReservationInfoForm = ({
       notes: info?.notes || '',
       days: info?.days || ['MONDAY'],
       datesNotApplied: info?.datesNotApplied || [],
-    } as CourtDataType['reservationsInfo']['reservedTimes'][number] satisfies CourtDataType['reservationsInfo']['reservedTimes'][number],
+      endTime: '',
+    } as CourtDataType['reservationsInfo']['reservedTimes'][number] & {
+      endTime: string;
+    } satisfies CourtDataType['reservationsInfo']['reservedTimes'][number],
     validate: {},
   });
 
@@ -73,6 +76,13 @@ const ReservationInfoForm = ({
     onSubmit(values, index);
     onClose();
   });
+
+  if (!res.getValues().endTime) {
+    res.setFieldValue(
+      'endTime',
+      addMinutesToTime(res.getValues().startTime, res.getValues().duration)
+    );
+  }
 
   return (
     <Drawer
@@ -114,18 +124,56 @@ const ReservationInfoForm = ({
           }}
         />
         <Stack>
-          <NumberInput
-            defaultValue={res.getValues().duration}
-            label="Διάρκεια"
-            allowDecimal={false}
-            trimLeadingZeroesOnBlur
-            allowNegative={false}
-            hideControls
-            suffix="λ"
+          <TimeInput
+            inputMode="none"
+            ref={timePickerRef}
+            label="Ώρα έναρξης"
+            value={res.getValues().startTime}
+            rightSection={timePickerControl}
             onChange={(v) => {
-              res.setFieldValue('duration', Number(v));
+              res.setFieldValue('startTime', v.target.value);
             }}
           />
+          <Group>
+            <NumberInput
+              value={res.getValues().duration}
+              label="Διάρκεια"
+              allowDecimal={false}
+              trimLeadingZeroesOnBlur
+              allowNegative={false}
+              hideControls
+              suffix="λ"
+              onChange={(v) => {
+                res.setFieldValue('duration', Number(v));
+                res.setFieldValue(
+                  'endTime',
+                  addMinutesToTime(res.getValues().startTime, Number(v))
+                );
+              }}
+            />
+            <TimeInput
+              error={res.errors.endTime}
+              inputMode="none"
+              ref={timePickerRef}
+              label="Ώρα Λήξης"
+              value={res.getValues().endTime}
+              rightSection={timePickerControl}
+              onChange={(v) => {
+                if (v.target.value <= res.getValues().startTime) {
+                  res.setFieldError('endTime', 'Πάνω στην ώρα έναρξης');
+                  return;
+                }
+
+                res.clearFieldError('endTime');
+
+                res.setFieldValue('endTime', v.target.value);
+                res.setFieldValue(
+                  'duration',
+                  getMinutes(v.target.value, res.getValues().startTime)
+                );
+              }}
+            />
+          </Group>
           <Select
             label="Λόγος"
             data={typeData}
@@ -133,16 +181,6 @@ const ReservationInfoForm = ({
             defaultValue={res.getValues().type}
             onChange={(v) => {
               res.setFieldValue('type', v as ReservationInfo['type']);
-            }}
-          />
-          <TimeInput
-            inputMode="none"
-            ref={timePickerRef}
-            label="Ώρα έναρξης"
-            defaultValue={res.getValues().startTime}
-            rightSection={timePickerControl}
-            onChange={(v) => {
-              res.setFieldValue('startTime', v.target.value);
             }}
           />
           <Textarea
