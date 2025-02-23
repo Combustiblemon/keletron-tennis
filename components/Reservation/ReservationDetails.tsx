@@ -6,46 +6,51 @@ import {
   Modal,
   Paper,
   rem,
+  Select,
   Stack,
   Text,
   Textarea,
 } from '@mantine/core';
-import { DateInput, TimeInput } from '@mantine/dates';
+import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import {
   IconCancel,
   IconCheck,
-  IconClock,
+  // IconClock,
   IconPencil,
   IconTrash,
   IconUserPlus,
 } from '@tabler/icons-react';
-import { useQueryClient } from '@tanstack/react-query';
-import React, { useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { endpoints } from '@/lib/api/utils';
-import { addMinutesToTime, formatDate } from '@/lib/common';
+import {
+  addMinutesToTime,
+  formatDate,
+  getAvailableTimeInSteps,
+} from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
 
 const iconStyle = { width: rem(16), height: rem(16) };
 
-const updateDatetime = (datetime: string, date?: string, time?: string) => {
-  let res = datetime;
+// const updateDatetime = (datetime: string, date?: string, time?: string) => {
+//   let res = datetime;
 
-  if (time) {
-    res = `${res.split('T')[0]}T${time}`;
-  }
+//   if (time) {
+//     res = `${res.split('T')[0]}T${time}`;
+//   }
 
-  if (date) {
-    res = `${date}T${datetime.split('T')[1]}`;
-  }
+//   if (date) {
+//     res = `${date}T${datetime.split('T')[1]}`;
+//   }
 
-  return res;
-};
+//   return res;
+// };
 
 export type ReservationDetailsProps = {
   reservation: ReservationDataType;
@@ -64,12 +69,15 @@ const ReservationDetails = ({
 }: ReservationDetailsProps) => {
   const [editState, setEditState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
   const updatedReservation = useForm({
     mode: 'uncontrolled',
     initialValues: {
+      time: '',
+      date: new Date(),
       ...reservation,
     },
     validate: {
@@ -105,8 +113,10 @@ const ReservationDetails = ({
     },
   });
 
-  const date = new Date(updatedReservation.getValues().datetime);
-  const formatedTime = formatDate(date).split('T')[1];
+  const formatedTime = useMemo(
+    () => updatedReservation.getValues().time,
+    [updatedReservation]
+  );
 
   const deleteReservation = async () => {
     setIsLoading(true);
@@ -122,7 +132,10 @@ const ReservationDetails = ({
     try {
       const res = await endpoints.reservations.PUT(
         updatedReservation.getValues()._id,
-        updatedReservation.getValues()
+        {
+          ...updatedReservation.getValues(),
+          datetime: `${updatedReservation.getValues().date.toISOString().substring(0, 10)}:${updatedReservation.getValues().time}`,
+        }
       );
 
       if (res?.success) {
@@ -168,19 +181,72 @@ const ReservationDetails = ({
     });
   };
 
-  const timePickerRef = useRef<HTMLInputElement>(null);
+  // const timePickerRef = useRef<HTMLInputElement>(null);
 
-  const timePickerControl = (
-    <ActionIcon
-      variant="subtle"
-      color="gray"
-      onClick={() => {
-        timePickerRef.current?.showPicker();
-      }}
-    >
-      <IconClock style={{ width: rem(16), height: rem(16) }} stroke={1.5} />
-    </ActionIcon>
-  );
+  // const timePickerControl = (
+  //   <ActionIcon
+  //     variant="subtle"
+  //     color="gray"
+  //     onClick={() => {
+  //       timePickerRef.current?.showPicker();
+  //     }}
+  //   >
+  //     <IconClock style={{ width: rem(16), height: rem(16) }} stroke={1.5} />
+  //   </ActionIcon>
+  // );
+
+  if (
+    !updatedReservation.getValues().time &&
+    updatedReservation.getValues().datetime
+  ) {
+    updatedReservation.setFieldValue(
+      'time',
+      reservation.datetime.split('T')[1]
+    );
+    updatedReservation.setFieldValue('date', new Date(reservation.datetime));
+  }
+
+  const reservations = useQuery({
+    queryKey: [
+      'reservations',
+      updatedReservation.getValues().date.getUTCDate(),
+      updatedReservation.getValues().date.getUTCMonth(),
+      updatedReservation.getValues().date.getUTCFullYear(),
+    ],
+    queryFn: () =>
+      endpoints.reservations.GET(
+        undefined,
+        formatDate(updatedReservation.getValues().date)
+      ),
+  });
+
+  useEffect(() => {
+    const value = court?.reservationsInfo;
+
+    if (
+      !value ||
+      reservations.status !== 'success' ||
+      !reservations.data?.success
+    ) {
+      return;
+    }
+
+    const reserv = reservations.data?.data;
+
+    const times = getAvailableTimeInSteps(
+      value,
+      reserv,
+      updatedReservation.getValues().date
+    );
+
+    setAvailableTimes(times);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    court?.reservationsInfo,
+    reservations.data?.data,
+    reservations.data?.success,
+    reservations.status,
+  ]);
 
   return (
     <Modal
@@ -236,10 +302,7 @@ const ReservationDetails = ({
             value={new Date(updatedReservation.getValues().datetime)}
             onChange={(value): void => {
               if (value) {
-                updatedReservation.setFieldValue(
-                  'datetime',
-                  value.toISOString()
-                );
+                updatedReservation.setFieldValue('date', value);
               }
             }}
             minDate={new Date()}
@@ -248,7 +311,25 @@ const ReservationDetails = ({
             error={updatedReservation.errors.datetime}
           />
           <Group align="flex-end">
-            <TimeInput
+            <Select
+              id={availableTimes.join()}
+              allowDeselect={false}
+              label="Ώρα"
+              data={availableTimes}
+              defaultValue={updatedReservation.getValues().time}
+              error={updatedReservation.errors.time}
+              value={updatedReservation.getValues().time}
+              multiple={false}
+              required
+              onChange={(value) => {
+                if (!value) {
+                  return;
+                }
+
+                updatedReservation.setFieldValue('time', value.trim());
+              }}
+            />
+            {/* <TimeInput
               disabled={!editState}
               required
               inputMode="none"
@@ -270,7 +351,7 @@ const ReservationDetails = ({
                   );
                 }
               }}
-            />
+            /> */}
             <Text pb="6px">
               -&nbsp;&nbsp;&nbsp;
               {addMinutesToTime(
