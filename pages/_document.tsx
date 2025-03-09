@@ -57,6 +57,7 @@ const Document = () => {
           crossOrigin="use-credentials"
           href="/manifest.json"
         />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         {/* <meta name="twitter:card" content="summary" /> */}
         {/* <meta name="twitter:url" content="https://yourdomain.com" /> */}
         {/* <meta name="twitter:title" content="Keletron tennis app" /> */}

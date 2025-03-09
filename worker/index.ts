@@ -35,6 +35,36 @@ onBackgroundMessage(messaging, (payload) => {
     {
       body: payload.notification?.body || payload.data?.body,
       icon: '/icons/ball-tennis.svg',
+      tag: payload.notification?.body || payload.data?.body,
+      data: {
+        ...payload.data,
+      },
     }
   );
+});
+
+const websiteURL =
+  process.env.WEBSITE_URL || 'https://keletrontennisacademy.com';
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  // eslint-disable-next-line no-console
+  console.log('notification clicked', { data: event.notification.data });
+
+  switch (event.notification.data?.type) {
+    case 'new':
+    case 'update':
+      self.clients.openWindow(
+        `${websiteURL}/admin?reservationId=${event.notification.data?.reservationId}&datetime=${event.notification.data?.datetime}`
+      );
+      break;
+    case 'delete':
+      self.clients.openWindow(
+        `${websiteURL}/admin?datetime=${event.notification.data?.datetime}`
+      );
+      break;
+    default:
+      self.clients.openWindow(websiteURL);
+      break;
+  }
 });

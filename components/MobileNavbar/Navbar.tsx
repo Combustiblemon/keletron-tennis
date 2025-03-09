@@ -2,6 +2,7 @@ import {
   AppShell,
   Box,
   Burger,
+  Button,
   Divider,
   Group,
   Image,
@@ -19,7 +20,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 import { Language, useLanguage } from '@/context/LanguageContext';
-import { logout } from '@/lib/common';
+import { isInstalled, isMobile, logout } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 
 import { useUser } from '../UserProvider/UserProvider';
@@ -160,13 +161,17 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
               hiddenFrom="sm"
               size="sm"
             />
-            <Image
-              src="/android-chrome-192x192.png"
-              alt="logo"
-              visibleFrom="sm"
-              h="50px"
-              w="50px"
-            />
+            <Group visibleFrom="sm" gap="md">
+              {isMobile() && !isInstalled() ? (
+                <Button radius="xl">Εγκατάσταση</Button>
+              ) : null}
+              <Image
+                src="/android-chrome-192x192.png"
+                alt="logo"
+                h="50px"
+                w="50px"
+              />
+            </Group>
             <Box pos="absolute" right="16px">
               <Image
                 src="/android-chrome-192x192.png"

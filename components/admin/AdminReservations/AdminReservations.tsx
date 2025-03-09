@@ -8,10 +8,11 @@ import {
   Text,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
-import { useElementSize } from '@mantine/hooks';
+import { useDisclosure, useElementSize, useToggle } from '@mantine/hooks';
 import { useQuery } from '@tanstack/react-query';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
+import ReservationDetails from '@/components/Reservation/ReservationDetails';
 import { endpoints } from '@/lib/api/utils';
 import { formatDate } from '@/lib/common';
 import { CourtDataType } from '@/models/Court';
@@ -49,9 +50,34 @@ const TABLE_CELL_HEIGHT = 60;
 const TABLE_CELL_WIDTH = 90;
 
 const AdminReservations = () => {
-  const [SelectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const { ref: calendarWrapperRef, height: calendarWrapperHeight } =
     useElementSize();
+
+  const [reservationId, setReservationId] = useState<string>('');
+  const [opened, { close, open }] = useDisclosure();
+  const [isLoading, toggleIsLoading] = useToggle();
+
+  useEffect(() => {
+    toggleIsLoading(true);
+    const params = new URLSearchParams(window.location.search);
+
+    const datetime = params.get('datetime');
+    const resId = params.get('reservationId');
+
+    if (resId) {
+      setReservationId(resId);
+
+      if (datetime) {
+        setSelectedDate(new Date(datetime));
+      }
+
+      open();
+    }
+    toggleIsLoading(false);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const reservations = useQuery({
     queryKey: ['reservations'],
@@ -74,7 +100,7 @@ const AdminReservations = () => {
     [courts]
   );
 
-  const [formatedDate] = formatDate(SelectedDate).split('T');
+  const [formatedDate] = formatDate(selectedDate).split('T');
 
   const rows = useMemo(() => {
     return times.map((time) => (
@@ -117,17 +143,37 @@ const AdminReservations = () => {
     ));
   }, [courtData, formatedDate, reservationData]);
 
+  const res = useMemo(
+    () => reservationData.find((v) => v._id.toString() === reservationId),
+    [reservationData, reservationId]
+  );
+
+  const court = useMemo(
+    () => courtData.find((v) => v._id === res?.court._id.toString()),
+    [courtData, res]
+  );
+
   return (
     <Stack pt="sm" flex={1}>
       <LoadingOverlay
-        visible={reservations.isPending || courts.isPending}
+        visible={isLoading || reservations.isPending || courts.isPending}
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
       />
+      {res && court ? (
+        <ReservationDetails
+          id={res?._id.toString()}
+          close={close}
+          opened={opened}
+          court={court}
+          reservation={res}
+        />
+      ) : null}
+
       <Group>
         <DateInput
           label="Ημερομηνια"
-          defaultValue={new Date()}
+          value={selectedDate}
           renderDay={(date) => {
             const reservationCount = reservationData.filter(
               (r) => r.datetime.split('T')[0] === formatDate(date).split('T')[0]

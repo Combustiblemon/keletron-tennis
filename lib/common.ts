@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { rem } from '@mantine/core';
 
 import { CourtDataType } from '@/models/Court';
@@ -7,6 +8,30 @@ import { APIResponse } from './api/responseTypes';
 import { endpoints } from './api/utils';
 import { useTranslation } from './i18n/i18n';
 import { firebaseCloudMessaging } from './webPush';
+
+export const isIOS = () =>
+  /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+
+export const isAndroid = () =>
+  /android/.test(window.navigator.userAgent.toLowerCase());
+
+export const isMobile = isIOS || isAndroid;
+
+let installed: boolean | undefined;
+
+export const isInstalled = () => {
+  if (installed !== undefined) {
+    return installed;
+  }
+
+  const media = window.matchMedia('(display-mode: standalone)').matches;
+  const nav = (navigator as any)?.standalone;
+  const andref = document.referrer.includes('android-app://');
+
+  installed = media || nav || andref;
+
+  return installed;
+};
 
 export const logout = async (callback?: () => void | Promise<void>) => {
   try {
@@ -20,6 +45,7 @@ export const logout = async (callback?: () => void | Promise<void>) => {
 
     window.location.reload();
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log('error', error);
   }
 };
@@ -227,6 +253,7 @@ export const getAvailableTimeInSteps = (
   reservationsInfo: CourtDataType['reservationsInfo'],
   reservations: Array<ReservationDataType>,
   date: Date,
+  skipReservationCheck: string = '',
   step: number = 30
 ): Array<string> => {
   const { endTime, startTime } = reservationsInfo;
@@ -242,7 +269,8 @@ export const getAvailableTimeInSteps = (
       isReservationTimeFree(
         reservations,
         reservationsInfo,
-        `${date.toISOString().substring(0, 10)}T${time}`
+        `${date.toISOString().substring(0, 10)}T${time}`,
+        skipReservationCheck
       )
     ) {
       times.push(time);
