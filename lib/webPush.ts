@@ -70,6 +70,10 @@ const firebaseCloudMessagingBuilder = () => {
                   registrations[0].showNotification(title, {
                     body: payload.data?.body || payload.notification?.body,
                     icon: '/icons/ball-tennis.svg',
+                    tag: payload.notification?.body || payload.data?.body,
+                    data: {
+                      ...payload.data,
+                    },
                   });
                 });
             });

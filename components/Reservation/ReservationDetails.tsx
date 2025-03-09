@@ -58,9 +58,11 @@ export type ReservationDetailsProps = {
   close: () => void;
   court: CourtDataType;
   editable?: boolean;
+  id?: string;
 };
 
 const ReservationDetails = ({
+  id,
   reservation,
   opened,
   close,
@@ -76,13 +78,17 @@ const ReservationDetails = ({
   const updatedReservation = useForm({
     mode: 'uncontrolled',
     initialValues: {
-      time: '',
-      date: new Date(),
+      time: reservation.datetime.split('T')[1],
+      date: new Date(reservation.datetime),
       ...reservation,
     },
     validate: {
       people: (value) => {
         const errors: number[] = [];
+
+        if (!value) {
+          return t('generic.form.errors.noPeople');
+        }
 
         value.forEach((p, index) => {
           if (!p.trim()) {
@@ -91,20 +97,24 @@ const ReservationDetails = ({
         });
 
         return (
-          (value.length <= 0 && t('generic.form.errors.noPeople')) ||
+          ((value?.length || 0) <= 0 && t('generic.form.errors.noPeople')) ||
           (!!errors.length && errors)
         );
       },
       datetime: (value) => {
-        const courtMinTime = court.reservationsInfo.endTime;
-        const courtMaxTime = court.reservationsInfo.startTime;
+        const courtMinTime = court?.reservationsInfo.endTime;
+        const courtMaxTime = court?.reservationsInfo.startTime;
+
+        if (!value || !courtMaxTime || !courtMinTime) {
+          return t('generic.form.errors.time');
+        }
 
         const now = new Date();
 
         const isToday = formatDate(now).split('T')[0] === value.split('T')[0];
 
         const timeValid =
-          !isToday || formatDate(now).split('T')[1] <= value.split('T')[1];
+          !isToday || formatDate(now).split('T')[1] <= value?.split('T')[1];
 
         return !(courtMinTime <= value && value <= courtMaxTime) || !timeValid
           ? t('generic.form.errors.time')
@@ -120,7 +130,9 @@ const ReservationDetails = ({
 
   const deleteReservation = async () => {
     setIsLoading(true);
-    await endpoints.reservations.DELETE([updatedReservation.getValues()._id]);
+    await endpoints.reservations.DELETE([
+      updatedReservation.getValues()._id || '',
+    ]);
     setIsLoading(false);
 
     queryClient.invalidateQueries({ queryKey: ['reservations'] });
@@ -131,7 +143,7 @@ const ReservationDetails = ({
     setIsLoading(true);
     try {
       const res = await endpoints.reservations.PUT(
-        updatedReservation.getValues()._id,
+        updatedReservation.getValues()._id || '',
         {
           ...updatedReservation.getValues(),
           datetime: `${updatedReservation.getValues().date.toISOString().substring(0, 10)}:${updatedReservation.getValues().time}`,
@@ -201,9 +213,12 @@ const ReservationDetails = ({
   ) {
     updatedReservation.setFieldValue(
       'time',
-      reservation.datetime.split('T')[1]
+      reservation?.datetime.split('T')?.[1] || ''
     );
-    updatedReservation.setFieldValue('date', new Date(reservation.datetime));
+    updatedReservation.setFieldValue(
+      'date',
+      new Date(reservation?.datetime || Date.now())
+    );
   }
 
   const reservations = useQuery({
@@ -221,7 +236,7 @@ const ReservationDetails = ({
   });
 
   useEffect(() => {
-    const value = court?.reservationsInfo;
+    const value = court.reservationsInfo;
 
     if (
       !value ||
@@ -236,7 +251,8 @@ const ReservationDetails = ({
     const times = getAvailableTimeInSteps(
       value,
       reserv,
-      updatedReservation.getValues().date
+      updatedReservation.getValues().date,
+      reservation._id.toString()
     );
 
     setAvailableTimes(times);
@@ -250,6 +266,7 @@ const ReservationDetails = ({
 
   return (
     <Modal
+      id={id}
       opened={opened}
       onClose={close}
       closeButtonProps={{
@@ -299,7 +316,9 @@ const ReservationDetails = ({
           <DateInput
             disabled={!editState}
             inputMode="none"
-            value={new Date(updatedReservation.getValues().datetime)}
+            value={
+              new Date(updatedReservation.getValues().datetime || Date.now())
+            }
             onChange={(value): void => {
               if (value) {
                 updatedReservation.setFieldValue('date', value);
@@ -316,7 +335,6 @@ const ReservationDetails = ({
               allowDeselect={false}
               label="Ώρα"
               data={availableTimes}
-              defaultValue={updatedReservation.getValues().time}
               error={updatedReservation.errors.time}
               value={updatedReservation.getValues().time}
               multiple={false}
@@ -356,15 +374,15 @@ const ReservationDetails = ({
               -&nbsp;&nbsp;&nbsp;
               {addMinutesToTime(
                 formatedTime,
-                updatedReservation.getValues().duration
+                updatedReservation.getValues().duration || 90
               )}
             </Text>
           </Group>
-          <Input disabled defaultValue={court.name} placeholder="Γήπεδο" />
+          <Input disabled defaultValue={court?.name} placeholder="Γήπεδο" />
           <Textarea
             disabled={!editState}
             placeholder="Σημειώσεις"
-            defaultValue={reservation.notes}
+            defaultValue={reservation?.notes}
             onChange={(e) => {
               updatedReservation.setFieldValue('notes', e.target.value.trim());
             }}
@@ -375,7 +393,7 @@ const ReservationDetails = ({
               {editState && (
                 <ActionIcon
                   disabled={
-                    updatedReservation.getValues().people.length >= 4 ||
+                    (updatedReservation.getValues().people?.length || 0) >= 4 ||
                     !editState
                   }
                   variant="subtle"
@@ -383,11 +401,14 @@ const ReservationDetails = ({
                   onClick={() => {
                     const { people } = updatedReservation.getValues();
 
-                    if (people.length >= 4) {
+                    if ((people?.length || 0) >= 4) {
                       return;
                     }
 
-                    updatedReservation.setFieldValue('people', [...people, '']);
+                    updatedReservation.setFieldValue('people', [
+                      ...(people || []),
+                      '',
+                    ]);
                   }}
                 >
                   <IconUserPlus style={{ width: rem(16), height: rem(16) }} />
@@ -395,7 +416,7 @@ const ReservationDetails = ({
               )}
             </Group>
             <Stack gap="sm" w="100%">
-              {updatedReservation.getValues().people.map((person, index) => {
+              {updatedReservation.getValues().people?.map((person, index) => {
                 return (
                   <Group
                     w="100%"
@@ -409,7 +430,7 @@ const ReservationDetails = ({
                       onChange={(e) => {
                         updatedReservation.setFieldValue(
                           'people',
-                          updatedReservation.getValues().people.map((p, i) => {
+                          updatedReservation.getValues().people?.map((p, i) => {
                             if (i === index) {
                               return e.target.value.trim();
                             }
@@ -428,7 +449,8 @@ const ReservationDetails = ({
                     {editState && (
                       <ActionIcon
                         disabled={
-                          updatedReservation.getValues().people.length <= 2
+                          (updatedReservation.getValues().people?.length ||
+                            0) <= 2
                         }
                         variant="subtle"
                         color="red"
@@ -437,7 +459,7 @@ const ReservationDetails = ({
                             'people',
                             updatedReservation
                               .getValues()
-                              .people.filter((_, i) => i !== index)
+                              .people?.filter((_, i) => i !== index)
                           );
                         }}
                       >
