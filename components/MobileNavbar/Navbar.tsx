@@ -19,10 +19,11 @@ import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 import { Language, useLanguage } from '@/context/LanguageContext';
-import { logout } from '@/lib/common';
+import { isInstalled, isMobile, logout } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 
 import { useUser } from '../UserProvider/UserProvider';
+import InstallInstructionsButton from './InstallInstructionsButton';
 
 export type NavItem =
   | {
@@ -160,22 +161,26 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
               hiddenFrom="sm"
               size="sm"
             />
-            <Image
+            {/* <Image
               src="/android-chrome-192x192.png"
               alt="logo"
-              visibleFrom="sm"
               h="50px"
               w="50px"
-            />
-            <Box pos="absolute" right="16px">
-              <Image
-                src="/android-chrome-192x192.png"
-                alt="logo"
-                hiddenFrom="sm"
-                h="50px"
-                w="50px"
-              />
-            </Box>
+            /> */}
+            <Group gap="md" h="100%">
+              {isMobile() && !isInstalled() ? (
+                <InstallInstructionsButton />
+              ) : null}
+              <Box pos="absolute" right="16px">
+                <Image
+                  src="/android-chrome-192x192.png"
+                  alt="logo"
+                  hiddenFrom="sm"
+                  h="50px"
+                  w="50px"
+                />
+              </Box>
+            </Group>
             <Group justify="space-between" style={{ flex: 1 }} visibleFrom="sm">
               <Group ml="xl" gap={0} visibleFrom="sm">
                 {getNavItems(navItems)}
