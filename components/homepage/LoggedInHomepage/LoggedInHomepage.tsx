@@ -1,4 +1,4 @@
-import { Paper, Stack, Text } from '@mantine/core';
+import { Button, Paper, Stack, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 import { useMemo } from 'react';
@@ -35,7 +35,7 @@ const LoggedInHomepage = () => {
       <Text size="lg" ta="center">
         {`${t('loggedInHomepage.welcome')}${user.firstname || user.lastname ? `, ${user.firstname || ''} ${user.lastname || ''}` : ''}`}
       </Text>
-      {!!userReservationData?.[0] && (
+      {!!userReservationData?.[0] && timeUntil ? (
         <Paper
           p="sm"
           radius="lg"
@@ -51,21 +51,14 @@ const LoggedInHomepage = () => {
             </Text>
           </Stack>
         </Paper>
-      )}
-      {/* <Button
+      ) : null}
+      <Button
         onClick={async () => {
-          await endpoints.notifications.PUT(
-            (await firebaseCloudMessaging.getToken()) || ''
-          );
-
-          await fetch(`http://localhost:2000/test`, {
-            method: 'GET',
-            credentials: 'include',
-          });
+          router.push('/reservations');
         }}
       >
-        notification
-      </Button> */}
+        Κρατήσεις
+      </Button>
     </Stack>
   );
 };
