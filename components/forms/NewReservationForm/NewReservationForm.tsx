@@ -328,10 +328,19 @@ const NewReservationForm = ({
       return;
     }
 
-    const times = getAvailableTimeInSteps(value, reservationData, selectedDate);
+    const times = getAvailableTimeInSteps(
+      value,
+      reservationData.filter((res) => res.court === selectedCourtId),
+      selectedDate
+    );
 
     setAvailableTimes(times);
-  }, [selectedDate, reservationData, selectedCourt?.reservationsInfo]);
+  }, [
+    selectedDate,
+    reservationData,
+    selectedCourt?.reservationsInfo,
+    selectedCourtId,
+  ]);
 
   return (
     <Drawer
