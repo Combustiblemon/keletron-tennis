@@ -246,7 +246,9 @@ const ReservationDetails = ({
       return;
     }
 
-    const reserv = reservations.data?.data;
+    const reserv = reservations.data?.data.filter(
+      (res) => res.court.toString() === court._id.toString()
+    );
 
     const times = getAvailableTimeInSteps(
       value,

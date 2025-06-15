@@ -330,7 +330,7 @@ const NewReservationForm = ({
 
     const times = getAvailableTimeInSteps(
       value,
-      reservationData.filter((res) => res.court === selectedCourtId),
+      reservationData.filter((res) => res.court.toString() === selectedCourtId),
       selectedDate
     );
 
