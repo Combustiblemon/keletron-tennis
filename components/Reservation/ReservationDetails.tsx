@@ -257,7 +257,7 @@ const ReservationDetails = ({
       reservation._id.toString()
     );
 
-    setAvailableTimes(times);
+    setAvailableTimes(times.filter((v, i) => times.indexOf(v) === i));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     court?.reservationsInfo,
