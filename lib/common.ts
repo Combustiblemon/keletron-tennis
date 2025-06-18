@@ -189,7 +189,7 @@ export const isReservationTimeFree = (
         });
   }
 
-  if (!reservationCheck || !courtReservedTimes.length) {
+  if (!reservationCheck && !courtReservedTimes.length) {
     return reservationCheck;
   }
 
@@ -269,7 +269,7 @@ export const getAvailableTimeInSteps = (
       isReservationTimeFree(
         reservations,
         reservationsInfo,
-        `${date.toISOString().substring(0, 10)}T${time}`,
+        `${date.toLocaleDateString('en-CA', { year: 'numeric', month: 'numeric', day: 'numeric' })}T${time}`,
         skipReservationCheck
       )
     ) {
