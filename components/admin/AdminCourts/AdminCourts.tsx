@@ -123,7 +123,7 @@ const AdminCourts = () => {
       );
     }
 
-    return courtSelection;
+    return courtSelection.filter((v, i) => courtSelection.indexOf(v) === i);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courtData]);
 

@@ -17,6 +17,7 @@ import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { AppProps } from 'next/app';
+import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 
 import DateProvider from '@/components/DateProvider/DateProvider';
 import FCM from '@/components/FCM/FCM';
@@ -29,26 +30,39 @@ import { theme } from '@/styles/theme';
 // Create a client
 const queryClient = new QueryClient();
 
+function fallbackRender({ error }: FallbackProps) {
+  // Call resetErrorBoundary() to reset the error boundary and retry the render.
+
+  return (
+    <div role="alert">
+      <p>Something went wrong:</p>
+      <pre style={{ color: 'red' }}>{error.message}</pre>
+    </div>
+  );
+}
+
 const App = ({ Component, pageProps }: AppProps) => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <MantineProvider theme={theme}>
-        <ModalsProvider>
-          <LanguageProvider defaultLanguage="el">
-            <DateProvider>
-              <UserProvider>
-                <FCM />
-                <Notifications position="bottom-center" zIndex={1000} />
-                <HeadInfo title="Keletron Tennis Academy" />
-                <Navbar>
-                  <Component {...pageProps} />
-                </Navbar>
-              </UserProvider>
-            </DateProvider>
-          </LanguageProvider>
-        </ModalsProvider>
-      </MantineProvider>
-    </QueryClientProvider>
+    <ErrorBoundary fallbackRender={fallbackRender}>
+      <QueryClientProvider client={queryClient}>
+        <MantineProvider theme={theme}>
+          <ModalsProvider>
+            <LanguageProvider defaultLanguage="el">
+              <DateProvider>
+                <UserProvider>
+                  <FCM />
+                  <Notifications position="bottom-center" zIndex={1000} />
+                  <HeadInfo title="Keletron Tennis Academy" />
+                  <Navbar>
+                    <Component {...pageProps} />
+                  </Navbar>
+                </UserProvider>
+              </DateProvider>
+            </LanguageProvider>
+          </ModalsProvider>
+        </MantineProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

@@ -334,7 +334,7 @@ const NewReservationForm = ({
       selectedDate
     );
 
-    setAvailableTimes(times);
+    setAvailableTimes(times.filter((v, i) => times.indexOf(v) === i));
   }, [
     selectedDate,
     reservationData,

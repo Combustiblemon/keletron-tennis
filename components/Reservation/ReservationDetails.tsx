@@ -246,7 +246,9 @@ const ReservationDetails = ({
       return;
     }
 
-    const reserv = reservations.data?.data;
+    const reserv = reservations.data?.data.filter(
+      (res) => res.court.toString() === court._id.toString()
+    );
 
     const times = getAvailableTimeInSteps(
       value,
@@ -255,7 +257,7 @@ const ReservationDetails = ({
       reservation._id.toString()
     );
 
-    setAvailableTimes(times);
+    setAvailableTimes(times.filter((v, i) => times.indexOf(v) === i));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     court?.reservationsInfo,

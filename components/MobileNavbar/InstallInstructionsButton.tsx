@@ -1,6 +1,5 @@
 import {
   Button,
-  Group,
   Image,
   List,
   ListItem,
@@ -10,7 +9,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure, useFocusTrap } from '@mantine/hooks';
 
-import { isAndroid } from '@/lib/common';
+import { isIOS } from '@/lib/common';
 
 const InstallInstructionsButton = () => {
   const [opened, { close, open }] = useDisclosure();
@@ -24,85 +23,122 @@ const InstallInstructionsButton = () => {
         onClose={close}
         key="InstallInstructionsModal"
         centered
+        title={
+          <Text size="md" fw="bold" ta="center">
+            Εγκαταστήστε την εφαρμογή
+          </Text>
+        }
+        withCloseButton
       >
         <Stack ref={focusTrapRef}>
-          <Text size="md" fw="bold" ta="center">
-            Για να εγκαταστήσετε την εφαρμογή ακολουθήστε τα παρακάτω βήματα
-          </Text>
           <List type="ordered">
-            {isAndroid() ? (
+            {isIOS() ? (
               <>
                 <ListItem>
-                  <Group>
+                  <Stack>
+                    <Text size="md" fw="bold">
+                      Πατήστε το εικονίδιο κοινοποίησης
+                    </Text>
                     <Text size="sm">
-                      Πατήστε τις 3 τελείες για να ανοίξετε το μενού
+                      Το εικονίδιο κοινοποίησης βρίσκεται στο κάτω μέρος της
+                      οθόνης σας.
                     </Text>
                     <Image
                       alt="instructions"
-                      src="/images/install/android1.jpg"
-                      h="50px"
-                      w="50px"
+                      src="/images/install/iphone1.png"
+                      w="100%"
                     />
-                  </Group>
+                  </Stack>
                 </ListItem>
                 <ListItem>
-                  <Text size="sm">
-                    Πατήστε &quot;Προσθήκη στην αρχική σελίδα&quot;
-                  </Text>
-                  <Image
-                    alt="instructions"
-                    src="/images/install/android2.jpg"
-                    h="50px"
-                  />
+                  <Stack>
+                    <Text size="md" fw="bold">
+                      Επιλέξτε “Προσθήκη στην οθόνη Αφετηρίας”
+                    </Text>
+                    <Text size="sm">
+                      Κάντε κύλιση προς τα κάτω στη λίστα ενεργειών και πατήστε
+                      την επιλογή.
+                    </Text>
+                    <Image
+                      alt="instructions"
+                      src="/images/install/iphone2.png"
+                      w="100%"
+                    />
+                  </Stack>
                 </ListItem>
                 <ListItem>
-                  <Text size="sm">Πατήστε &quot;Εγκατάσταση&quot;</Text>
-                  <Image
-                    alt="instructions"
-                    src="/images/install/android3.jpg"
-                    h="50px"
-                  />
+                  <Stack>
+                    <Text size="md" fw="bold">
+                      Πατήστε το κουμπί “Προσθήκη”
+                    </Text>
+                    <Text size="sm">
+                      Επιβεβαιώστε το όνομα της εφαρμογής και πατήστε το κουμπί
+                      “Προσθήκη” επάνω δεξιά.
+                    </Text>
+                    <Image
+                      alt="instructions"
+                      src="/images/install/iphone3.png"
+                      w="100%"
+                    />
+                  </Stack>
                 </ListItem>
               </>
             ) : (
               <>
                 <ListItem>
-                  <Group>
+                  <Stack>
+                    <Text size="md" fw="bold">
+                      Πατήστε το εικονίδιο με τις τρεις τελείες (πάνω δεξιά).
+                    </Text>
                     <Text size="sm">
-                      Πατήστε το κουμπί &quot;Κοινοποίηση&quot; για να ανοίξετε
-                      το μενού
+                      Θα το βρείτε στη γραμμή εργαλείων, επάνω δεξιά, όπως
+                      φαίνεται παρακάτω.
                     </Text>
                     <Image
                       alt="instructions"
-                      src="/images/install/iphone1.jpeg"
-                      h="50px"
-                      w="50px"
+                      src="/images/install/android1.png"
+                      w="100%"
                     />
-                  </Group>
+                  </Stack>
                 </ListItem>
                 <ListItem>
-                  <Text size="sm">
-                    Πατήστε &quot;Προσθήκη στην αρχική σελίδα&quot;
-                  </Text>
-                  <Image
-                    alt="instructions"
-                    src="/images/install/iphone2.jpeg"
-                    h="40px"
-                  />
+                  <Stack>
+                    <Text size="md" fw="bold">
+                      Επιλέξτε “Προσθήκη στην Αρχική Οθόνη”.
+                    </Text>
+                    <Text size="sm">
+                      Θα τη βρείτε στη λίστα επιλογών που εμφανίζεται.
+                    </Text>
+                    <Image
+                      alt="instructions"
+                      src="/images/install/android2.png"
+                      w="100%"
+                    />
+                  </Stack>
                 </ListItem>
                 <ListItem>
-                  <Text size="sm">Πατήστε &quot;Προσθήκη&quot;</Text>
-                  <Image
-                    alt="instructions"
-                    src="/images/install/iphone3.jpeg"
-                    h="150px"
-                  />
+                  <Stack>
+                    <Text size="md" fw="bold">
+                      Θα εμφανιστεί ένα παράθυρο επιβεβαίωσης-πατήστε το κουμπί
+                      “Προσθήκη”.
+                    </Text>
+                    <Text size="sm">
+                      Στο παράθυρο επιβεβαίωσης που θα εμφανιστεί, πατήστε το
+                      κουμπί “Προσθήκη”.
+                    </Text>
+                    <Image
+                      alt="instructions"
+                      src="/images/install/android3.png"
+                      w="100%"
+                    />
+                  </Stack>
                 </ListItem>
               </>
             )}
           </List>
           <Text size="md" fw="bold" ta="center">
-            H εφαρμογή είναι πλέον εγκατεστημένη στο κινητό σας.
+            Αφού ολοκληρώσετε όλα τα βήματα, θα βρείτε το εικονίδιο της
+            εφαρμογής δίπλα στις υπόλοιπες εφαρμογές σας.
           </Text>
         </Stack>
       </Modal>
