@@ -34,9 +34,16 @@ function fallbackRender({ error }: FallbackProps) {
   // Call resetErrorBoundary() to reset the error boundary and retry the render.
 
   return (
-    <div role="alert">
+    <div
+      role="alert"
+      style={{
+        width: '100vw',
+        wordWrap: 'normal',
+        overflow: 'scroll',
+      }}
+    >
       <p>Something went wrong:</p>
-      <pre style={{ color: 'red' }}>{error.message}</pre>
+      <p style={{ color: 'red' }}>{error.message}</p>
     </div>
   );
 }
