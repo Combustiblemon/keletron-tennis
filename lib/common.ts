@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { rem } from '@mantine/core';
+import { QueryClient } from '@tanstack/react-query';
 
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
@@ -33,11 +34,16 @@ export const isInstalled = () => {
   return installed;
 };
 
-export const logout = async (callback?: () => void | Promise<void>) => {
+export const logout = async (
+  queryClient: QueryClient,
+  callback?: () => void | Promise<void>
+) => {
   try {
     await endpoints.auth.logout();
 
     await firebaseCloudMessaging.deleteToken();
+
+    queryClient.clear();
 
     if (callback) {
       await callback();
@@ -163,7 +169,7 @@ export const isReservationTimeFree = (
       const dateCheck = r.datetime.split('T')[0] === datetime.split('T')[0];
 
       if (reservationId) {
-        return r._id.toString() !== reservationId.toString() && dateCheck;
+        return r?._id?.toString() !== reservationId.toString() && dateCheck;
       }
 
       return dateCheck;

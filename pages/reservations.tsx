@@ -92,9 +92,9 @@ const Reservations = () => {
         {userReservationData
           .filter((r) => {
             return (
+              r.owner?.toString() === user._id.toString() &&
               new Date(r.datetime).getTime() >
-              //                     20 minutes ago
-              new Date().getTime() - 20 * 60 * 1000
+                new Date().getTime() - r.duration * 60 * 1000
             );
           })
           .sort(

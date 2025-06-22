@@ -15,6 +15,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure, useMounted } from '@mantine/hooks';
 import { IconMoonStars, IconSun } from '@tabler/icons-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
@@ -48,6 +49,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
   // const { setColorScheme, colorScheme } = useMantineColorScheme();
   const theme = useMantineTheme();
   const mounted = useMounted();
+  const queryClient = useQueryClient();
 
   function getNavItems(items: Array<NavItem>) {
     return items.map((item, index) => {
@@ -109,7 +111,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
         ? {
             title: t('auth.logout'),
             onClick: () => {
-              logout();
+              logout(queryClient);
             },
           }
         : { title: t('auth.login'), href: '/auth?type=login' },
