@@ -230,7 +230,7 @@ export const endpoints = {
   },
   notifications: {
     PUT: async (token: string, userId?: string) =>
-      handleResponse<ReservationType, `notifications`>(
+      handleResponse<never, `notifications`>(
         await fetch(`${API_URL}/notifications/`, {
           method: 'PUT',
           headers,

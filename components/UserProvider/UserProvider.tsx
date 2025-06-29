@@ -97,7 +97,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       isAuthenticated: !isLoading && !isFetching && !!user._id?.length,
       user: user || DEFAULT_USER,
       userRoles: {
-        isAdmin: user.role === 'ADMIN',
+        isAdmin: user.role === 'ADMIN' || user.role === 'DEVELOPER',
+        isDeveloper: user.role === 'DEVELOPER',
       },
       invalidateUser,
     }),

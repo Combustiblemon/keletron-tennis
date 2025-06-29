@@ -1,4 +1,5 @@
 /* eslint-disable no-new */
+import { notifications } from '@mantine/notifications';
 import { FirebaseApp, initializeApp } from 'firebase/app';
 import {
   deleteToken as deleteFCMToken,
@@ -22,10 +23,6 @@ const firebaseCloudMessagingBuilder = () => {
   let firebaseapp: FirebaseApp | null = null;
   let messaging: Messaging | null = null;
   let stopListening: Unsubscribe | undefined;
-
-  const saveToken = async (token: string) => {
-    await endpoints.notifications.PUT(token);
-  };
 
   return {
     // initializing firebase app
@@ -91,8 +88,6 @@ const firebaseCloudMessagingBuilder = () => {
     deleteToken(): Promise<boolean> {
       return messaging
         ? (async (): Promise<boolean> => {
-            // const FCMToken = await getToken(messaging, { vapidKey: VAPID_KEY });
-
             stopListening?.();
             deleteFCMToken(messaging);
 
@@ -112,7 +107,25 @@ const firebaseCloudMessagingBuilder = () => {
         return;
       }
 
-      await saveToken(await getToken(messaging, { vapidKey: VAPID_KEY }));
+      const res = await endpoints.notifications.PUT(
+        await getToken(messaging, { vapidKey: VAPID_KEY })
+      );
+
+      if (!res?.success) {
+        await this.deleteToken();
+        await this.init();
+
+        const res2 = await endpoints.notifications.PUT(
+          await getToken(messaging, { vapidKey: VAPID_KEY })
+        );
+
+        if (!res2?.success) {
+          notifications.show({
+            message: 'Failed to save notification token',
+            color: 'red',
+          });
+        }
+      }
     },
   };
 };
