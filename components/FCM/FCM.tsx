@@ -3,10 +3,14 @@ import { useEffect } from 'react';
 import { isIOS } from '@/lib/common';
 import { firebaseCloudMessaging } from '@/lib/webPush';
 
+import { useUser } from '../UserProvider/UserProvider';
+
 const FCM = () => {
+  const { isAuthenticated } = useUser();
+
   useEffect(() => {
     (async () => {
-      if (isIOS()) {
+      if (isIOS() || !isAuthenticated) {
         return;
       }
 
@@ -18,7 +22,7 @@ const FCM = () => {
         console.log('initialized FCM');
       }
     })();
-  }, []);
+  }, [isAuthenticated]);
 
   return null;
 };

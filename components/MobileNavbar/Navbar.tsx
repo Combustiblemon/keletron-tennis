@@ -20,8 +20,9 @@ import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 import { Language, useLanguage } from '@/context/LanguageContext';
-import { isInstalled, isMobile, logout } from '@/lib/common';
+import { isInstalled, isIOS, isMobile, logout } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
+import { firebaseCloudMessaging } from '@/lib/webPush';
 
 import { useUser } from '../UserProvider/UserProvider';
 import InstallInstructionsButton from './InstallInstructionsButton';
@@ -159,7 +160,20 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
           <Group h="100%" px="md" pos="relative">
             <Burger
               opened={opened}
-              onClick={toggle}
+              onClick={async () => {
+                toggle();
+
+                if (!isIOS() || firebaseCloudMessaging.isInitialized()) {
+                  return;
+                }
+
+                const token = await firebaseCloudMessaging.init();
+
+                if (token) {
+                  await firebaseCloudMessaging.saveToken();
+                  console.log('initialized FCM');
+                }
+              }}
               hiddenFrom="sm"
               size="sm"
             />

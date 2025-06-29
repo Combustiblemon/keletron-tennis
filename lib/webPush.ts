@@ -85,6 +85,9 @@ const firebaseCloudMessagingBuilder = () => {
 
       return null;
     },
+    isInitialized(): boolean {
+      return !!messaging;
+    },
     deleteToken(): Promise<boolean> {
       return messaging
         ? (async (): Promise<boolean> => {

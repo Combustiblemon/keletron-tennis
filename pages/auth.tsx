@@ -17,7 +17,7 @@ import { useRouter } from 'next/router';
 
 import { useUser } from '@/components/UserProvider/UserProvider';
 import { Errors } from '@/lib/api/common';
-import { isIOS, login, verifyLogin } from '@/lib/common';
+import { login, verifyLogin } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { firebaseCloudMessaging } from '@/lib/webPush';
 
@@ -211,23 +211,7 @@ const AuthenticationForm = (props: PaperProps) => {
         </Stack>
 
         <Group justify="space-between" mt="xl">
-          <Button
-            type="submit"
-            radius="xl"
-            loading={isLoading}
-            onClick={async () => {
-              if (!isIOS()) {
-                return;
-              }
-
-              const token = await firebaseCloudMessaging.init();
-
-              if (token) {
-                await firebaseCloudMessaging.saveToken();
-                console.log('initialized FCM');
-              }
-            }}
-          >
+          <Button type="submit" radius="xl" loading={isLoading}>
             {upperFirst(type)}
           </Button>
         </Group>
