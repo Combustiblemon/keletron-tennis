@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useMemo } from 'react';
 
 // import Announcements from '@/components/Announcements/Announcements';
+import RoleGuard from '@/components/RoleGuard/RoleGuard';
 import { useUser } from '@/components/UserProvider/UserProvider';
 import { useApiClient } from '@/lib/api/hooks';
 import { useTimeUntil } from '@/lib/common';
@@ -60,6 +61,19 @@ const LoggedInHomepage = () => {
       >
         Κρατήσεις
       </Button>
+
+      {/* Admin-only quick link */}
+      <RoleGuard requireAdmin>
+        <Button
+          variant="light"
+          color="red"
+          onClick={() => {
+            router.push('/admin');
+          }}
+        >
+          Admin Panel
+        </Button>
+      </RoleGuard>
     </Stack>
   );
 };

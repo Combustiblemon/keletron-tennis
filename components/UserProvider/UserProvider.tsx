@@ -22,6 +22,7 @@ export type UserContextDataType = {
   user: User;
   userRoles: {
     isAdmin: boolean;
+    isDeveloper: boolean;
   };
   invalidateUser: () => Promise<void>;
 };
@@ -42,6 +43,7 @@ const defaultContextData: UserContextDataType = {
   user: DEFAULT_USER,
   userRoles: {
     isAdmin: false,
+    isDeveloper: false,
   },
   invalidateUser: async () => {},
 };
