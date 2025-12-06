@@ -2,24 +2,26 @@ import { Tabs } from '@mantine/core';
 
 import AdminCourts from '@/components/admin/AdminCourts/AdminCourts';
 import AdminReservations from '@/components/admin/AdminReservations/AdminReservations';
+import ProtectedRoute from '@/components/ProtectedRoute/ProtectedRoute';
 
 const Admin = () => {
   return (
-    <Tabs
-      color="red"
-      variant="outline"
-      radius="xs"
-      defaultValue="reservations"
-      w="100%"
-      h="100%"
-      display="flex"
-      styles={{
-        root: {
-          flexDirection: 'column',
-        },
-      }}
-      keepMounted={false}
-    >
+    <ProtectedRoute requireAdmin>
+      <Tabs
+        color="red"
+        variant="outline"
+        radius="xs"
+        defaultValue="reservations"
+        w="100%"
+        h="100%"
+        display="flex"
+        styles={{
+          root: {
+            flexDirection: 'column',
+          },
+        }}
+        keepMounted={false}
+      >
       <Tabs.List>
         <Tabs.Tab value="reservations">Κρατήσεις</Tabs.Tab>
         <Tabs.Tab value="courts">Γήπεδα</Tabs.Tab>
@@ -64,7 +66,8 @@ const Admin = () => {
       >
         <AdminAnnouncements />
       </Tabs.Panel> */}
-    </Tabs>
+      </Tabs>
+    </ProtectedRoute>
   );
 };
 

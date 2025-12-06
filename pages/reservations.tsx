@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import NewReservationForm from '@/components/forms/NewReservationForm/NewReservationForm';
+import ProtectedRoute from '@/components/ProtectedRoute/ProtectedRoute';
 import Reservation from '@/components/Reservation/Reservation';
 import { useUser } from '@/components/UserProvider/UserProvider';
 import { useApiClient } from '@/lib/api/hooks';
@@ -60,59 +61,61 @@ const Reservations = () => {
   );
 
   return (
-    <Stack gap="lg" w="100%">
-      <LoadingOverlay
-        visible={courts.isPending || isLoading}
-        zIndex={1000}
-        overlayProps={{ radius: 'sm', blur: 2 }}
-      />
-
-      {!!courtsSelectionData.length && (
-        <NewReservationForm
-          onClose={close}
-          opened={opened}
-          userData={user}
-          courtData={courts.data}
-          courtsSelectionData={courtsSelectionData}
+    <ProtectedRoute>
+      <Stack gap="lg" w="100%">
+        <LoadingOverlay
+          visible={courts.isPending || isLoading}
+          zIndex={1000}
+          overlayProps={{ radius: 'sm', blur: 2 }}
         />
-      )}
 
-      <Group justify="space-between">
-        <Text>{t('reservations.title')}</Text>
-        <Button variant="default" onClick={open}>
-          {t('reservations.newReservation')}
-        </Button>
-      </Group>
+        {!!courtsSelectionData.length && (
+          <NewReservationForm
+            onClose={close}
+            opened={opened}
+            userData={user}
+            courtData={courts.data}
+            courtsSelectionData={courtsSelectionData}
+          />
+        )}
 
-      <Stack>
-        <Text>{t('reservations.upcomingReservations')}</Text>
-        {userReservationData
-          .filter((r) => {
-            return (
-              r.owner?.toString() === user._id.toString() &&
-              new Date(r.datetime).getTime() >
-                new Date().getTime() - r.duration * 60 * 1000
-            );
-          })
-          .sort(
-            (a, b) =>
-              new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
-          )
-          .map((r) => {
-            const court = courtData.find((c) => c._id === r.court);
-            return (
-              court && (
-                <Reservation
-                  editable
-                  key={`${r._id}`}
-                  reservation={r}
-                  court={court}
-                />
-              )
-            );
-          })}
+        <Group justify="space-between">
+          <Text>{t('reservations.title')}</Text>
+          <Button variant="default" onClick={open}>
+            {t('reservations.newReservation')}
+          </Button>
+        </Group>
+
+        <Stack>
+          <Text>{t('reservations.upcomingReservations')}</Text>
+          {userReservationData
+            .filter((r) => {
+              return (
+                r.owner?.toString() === user._id.toString() &&
+                new Date(r.datetime).getTime() >
+                  new Date().getTime() - r.duration * 60 * 1000
+              );
+            })
+            .sort(
+              (a, b) =>
+                new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
+            )
+            .map((r) => {
+              const court = courtData.find((c) => c._id === r.court);
+              return (
+                court && (
+                  <Reservation
+                    editable
+                    key={`${r._id}`}
+                    reservation={r}
+                    court={court}
+                  />
+                )
+              );
+            })}
+        </Stack>
       </Stack>
-    </Stack>
+    </ProtectedRoute>
   );
 };
 

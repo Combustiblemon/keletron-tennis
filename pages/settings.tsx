@@ -12,6 +12,7 @@ import { IconDeviceFloppy } from '@tabler/icons-react';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 
+import ProtectedRoute from '@/components/ProtectedRoute/ProtectedRoute';
 import { useUser } from '@/components/UserProvider/UserProvider';
 import { useApiClient } from '@/lib/api/hooks';
 import { iconStyles } from '@/lib/common';
@@ -124,4 +125,12 @@ const Settings = () => {
   );
 };
 
-export default Settings;
+const ProtectedSettings = () => {
+  return (
+    <ProtectedRoute>
+      <Settings />
+    </ProtectedRoute>
+  );
+};
+
+export default ProtectedSettings;
