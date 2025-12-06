@@ -25,8 +25,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { User } from '@/components/UserProvider/UserProvider';
+import { useApiClient } from '@/lib/api/hooks';
 import { APIResponse } from '@/lib/api/responseTypes';
-import { endpoints } from '@/lib/api/utils';
 import {
   formatDate,
   getAvailableTimeInSteps,
@@ -36,10 +36,6 @@ import {
 } from '@/lib/common';
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
-
-const fetchReservations = async (date?: string) => {
-  return endpoints.reservations.GET(undefined, date);
-};
 
 const getCourtTimes = (
   courts: APIResponse<CourtDataType[], 'courts'> | undefined,
@@ -77,6 +73,7 @@ const NewReservationForm = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [availableTimes, setAvailableTimes] = useState<Array<string>>([]);
   const queryClient = useQueryClient();
+  const api = useApiClient();
 
   const newReservation = useForm({
     mode: 'uncontrolled',
@@ -147,7 +144,7 @@ const NewReservationForm = ({
       newReservation.getValues().date.getUTCFullYear(),
     ],
     queryFn: () =>
-      fetchReservations(formatDate(newReservation.getValues().date)),
+      api.reservations.GET(undefined, formatDate(newReservation.getValues().date)),
   });
 
   const reservationData = useMemo(
@@ -218,7 +215,7 @@ const NewReservationForm = ({
 
     try {
       const res = isAdmin
-        ? await endpoints.admin.reservations.POST({
+        ? await api.admin.reservations.POST({
             court: values.court,
             datetime,
             people: values.people,
@@ -229,7 +226,7 @@ const NewReservationForm = ({
               90,
             notes: values.notes,
           } as any)
-        : await endpoints.reservations.POST({
+        : await api.reservations.POST({
             court: values.court,
             datetime,
             people: values.people,

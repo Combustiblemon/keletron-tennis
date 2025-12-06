@@ -5,8 +5,6 @@ import { QueryClient } from '@tanstack/react-query';
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
 
-import { APIResponse } from './api/responseTypes';
-import { endpoints } from './api/utils';
 import { useTranslation } from './i18n/i18n';
 import { firebaseCloudMessaging } from './webPush';
 
@@ -34,57 +32,43 @@ export const isInstalled = () => {
   return installed;
 };
 
+/**
+ * Logout function for Clerk authentication
+ * @param signOut - Clerk's signOut function from useClerk() hook
+ * @param queryClient - React Query client to clear cache
+ * @param callback - Optional callback after logout
+ */
 export const logout = async (
+  signOut: () => Promise<void>,
   queryClient: QueryClient,
   callback?: () => void | Promise<void>
 ) => {
   try {
-    await endpoints.auth.logout();
-
+    // Delete FCM token
     await firebaseCloudMessaging.deleteToken();
 
+    // Sign out with Clerk
+    await signOut();
+
+    // Clear React Query cache
     queryClient.clear();
 
     if (callback) {
       await callback();
     }
 
-    window.location.reload();
+    // Redirect to home page
+    window.location.href = '/';
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.log('error', error);
+    console.error('Logout error:', error);
   }
 };
 
-export const login = async (
-  data?: Record<string, string | undefined>,
-  callback?: () => void | Promise<void>
-): Promise<APIResponse<unknown, 'login'> | undefined> => {
-  const res = await endpoints.auth.login(data);
-
-  await firebaseCloudMessaging.saveToken();
-
-  if (callback) {
-    await callback();
-  }
-
-  return res;
-};
-
-export const verifyLogin = async (
-  data?: Record<string, string | undefined>,
-  callback?: () => void | Promise<void>
-): Promise<APIResponse<unknown, 'login'> | undefined> => {
-  const res = await endpoints.auth.verifyLogin(data);
-
-  await firebaseCloudMessaging.saveToken();
-
-  if (callback) {
-    await callback();
-  }
-
-  return res;
-};
+// Legacy auth functions removed - Clerk handles authentication
+// - login() -> Use Clerk's <SignIn /> component
+// - verifyLogin() -> Use Clerk's <SignIn /> component
+// - Clerk automatically handles token management
 
 export const formatDate = (date: Date) =>
   `${date

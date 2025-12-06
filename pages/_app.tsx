@@ -12,6 +12,7 @@ import '@mantine/carousel/styles.css';
 import '@mantine/spotlight/styles.css';
 import '@mantine/nprogress/styles.css';
 
+import { ClerkProvider } from '@clerk/nextjs';
 import { MantineProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
@@ -51,24 +52,26 @@ function fallbackRender({ error }: FallbackProps) {
 const App = ({ Component, pageProps }: AppProps) => {
   return (
     <ErrorBoundary fallbackRender={fallbackRender}>
-      <QueryClientProvider client={queryClient}>
-        <MantineProvider theme={theme}>
-          <ModalsProvider>
-            <LanguageProvider defaultLanguage="el">
-              <DateProvider>
-                <UserProvider>
-                  <FCM />
-                  <Notifications position="bottom-center" zIndex={1000} />
-                  <HeadInfo title="Keletron Tennis Academy" />
-                  <Navbar>
-                    <Component {...pageProps} />
-                  </Navbar>
-                </UserProvider>
-              </DateProvider>
-            </LanguageProvider>
-          </ModalsProvider>
-        </MantineProvider>
-      </QueryClientProvider>
+      <ClerkProvider>
+        <QueryClientProvider client={queryClient}>
+          <MantineProvider theme={theme}>
+            <ModalsProvider>
+              <LanguageProvider defaultLanguage="el">
+                <DateProvider>
+                  <UserProvider>
+                    <FCM />
+                    <Notifications position="bottom-center" zIndex={1000} />
+                    <HeadInfo title="Keletron Tennis Academy" />
+                    <Navbar>
+                      <Component {...pageProps} />
+                    </Navbar>
+                  </UserProvider>
+                </DateProvider>
+              </LanguageProvider>
+            </ModalsProvider>
+          </MantineProvider>
+        </QueryClientProvider>
+      </ClerkProvider>
     </ErrorBoundary>
   );
 };

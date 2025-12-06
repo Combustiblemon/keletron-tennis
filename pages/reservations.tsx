@@ -6,28 +6,25 @@ import { useMemo, useState } from 'react';
 import NewReservationForm from '@/components/forms/NewReservationForm/NewReservationForm';
 import Reservation from '@/components/Reservation/Reservation';
 import { useUser } from '@/components/UserProvider/UserProvider';
-import { endpoints } from '@/lib/api/utils';
+import { useApiClient } from '@/lib/api/hooks';
 import { useTranslation } from '@/lib/i18n/i18n';
-
-const fetchCourts = async () => {
-  return endpoints.courts(undefined).GET();
-};
 
 const Reservations = () => {
   const { user } = useUser();
   const { t } = useTranslation();
+  const api = useApiClient();
 
   const [isLoading, setIsLoading] = useState(true);
   const [opened, { open, close }] = useDisclosure(false);
 
   const courts = useQuery({
     queryKey: ['courts'],
-    queryFn: fetchCourts,
+    queryFn: async () => api.courts(undefined).GET(),
   });
 
   const userReservations = useQuery({
     queryKey: ['reservations', 'user'],
-    queryFn: async () => endpoints.reservations.GET(undefined, undefined, 0),
+    queryFn: async () => api.reservations.GET(undefined, undefined, 0),
   });
 
   if (

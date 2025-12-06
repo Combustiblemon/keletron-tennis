@@ -1,3 +1,4 @@
+import { useAuth, useUser as useClerkUser } from '@clerk/nextjs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createContext,
@@ -8,7 +9,7 @@ import {
 } from 'react';
 
 import { Language, useLanguage } from '@/context/LanguageContext';
-import { endpoints } from '@/lib/api/utils';
+import { useApiClient } from '@/lib/api/hooks';
 import { firebaseCloudMessaging } from '@/lib/webPush';
 import { UserType } from '@/models/User';
 
@@ -51,31 +52,55 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const queryClient = useQueryClient();
   const [lang, setLang] = useLanguage();
 
+  // Clerk authentication
+  const { isSignedIn, isLoaded: isClerkLoaded } = useAuth();
+  const { user: clerkUser } = useClerkUser();
+
+  // New hook-based API client with Clerk token
+  const api = useApiClient();
+
   const { data, isFetching, isLoading } = useQuery({
     queryFn: async () => {
-      const token = await firebaseCloudMessaging.getToken();
-
-      if (token) {
-        await endpoints.notifications.PUT(token);
+      // Only fetch user data if signed in with Clerk
+      if (!isSignedIn) {
+        return { success: false, errors: [{ message: 'NOT_AUTHENTICATED' }] };
       }
 
-      return endpoints.user.GET();
+      // Get FCM token and send to backend
+      const fcmToken = await firebaseCloudMessaging.getToken();
+      if (fcmToken) {
+        await api.notifications.PUT(fcmToken);
+      }
+
+      // Fetch user from backend with Clerk token (automatically included by api hook)
+      return api.user.GET();
     },
-    queryKey: ['user'],
+    queryKey: ['user', isSignedIn],
+    enabled: isClerkLoaded && isSignedIn, // Only run query if Clerk is loaded and user is signed in
     // staleTime: 1000 * 60 * 60 * 24,
   });
 
   let user: User;
+  let role: 'USER' | 'ADMIN' | 'DEVELOPER' = 'USER';
 
-  if (!data?.success) {
+  // Get role from Clerk metadata first (synced by backend), fallback to backend response
+  if (clerkUser?.publicMetadata?.role) {
+    role = clerkUser.publicMetadata.role as 'USER' | 'ADMIN' | 'DEVELOPER';
+  }
+
+  if (!isSignedIn || !data?.success) {
     user = DEFAULT_USER;
 
-    if (data?.errors) {
+    if (data?.errors && isSignedIn) {
+      // Only log errors if user is actually signed in
       // eslint-disable-next-line no-console
       console.error('error(s) fetching user: ', data?.errors);
     }
   } else {
-    user = data.data;
+    user = {
+      ...data.data,
+      role: data.data.role || role, // Prefer backend role, fallback to Clerk metadata
+    };
   }
 
   useEffect(() => {
@@ -92,9 +117,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   const contextValue = useMemo(
     () => ({
-      isUserLoading: isLoading,
+      isUserLoading: !isClerkLoaded || isLoading,
       isUserFetching: isFetching,
-      isAuthenticated: !isLoading && !isFetching && !!user._id?.length,
+      // User is authenticated if Clerk says they're signed in and we have user data
+      isAuthenticated: isClerkLoaded && isSignedIn && !isLoading && !!user._id?.length,
       user: user || DEFAULT_USER,
       userRoles: {
         isAdmin: user.role === 'ADMIN' || user.role === 'DEVELOPER',
@@ -102,7 +128,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       },
       invalidateUser,
     }),
-    [isLoading, isFetching, user, invalidateUser]
+    [isClerkLoaded, isSignedIn, isLoading, isFetching, user, invalidateUser]
   );
 
   return (

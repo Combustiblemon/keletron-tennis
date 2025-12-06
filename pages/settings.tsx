@@ -13,7 +13,7 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 
 import { useUser } from '@/components/UserProvider/UserProvider';
-import { endpoints } from '@/lib/api/utils';
+import { useApiClient } from '@/lib/api/hooks';
 import { iconStyles } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { UserDataType } from '@/models/User';
@@ -22,6 +22,7 @@ const Settings = () => {
   const { user, invalidateUser } = useUser();
   const { t } = useTranslation();
   const router = useRouter();
+  const api = useApiClient();
   const [isLoading, setIsLoading] = useState(false);
 
   const userForm = useForm({
@@ -47,7 +48,7 @@ const Settings = () => {
     setIsLoading(true);
 
     if (!userForm.validate().hasErrors && user?._id) {
-      const res = await endpoints.user.PUT({
+      const res = await api.user.PUT({
         firstname: userForm.getValues().firstname,
         lastname: userForm.getValues().lastname,
       });
