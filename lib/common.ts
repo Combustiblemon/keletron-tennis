@@ -34,9 +34,25 @@ export const isInstalled = () => {
 
 /**
  * Logout function for Clerk authentication
+ *
+ * Performs a complete logout with cleanup:
+ * 1. Deletes FCM (Firebase Cloud Messaging) token
+ * 2. Signs out from Clerk (clears session)
+ * 3. Clears React Query cache
+ * 4. Executes optional callback
+ * 5. Redirects to home page
+ *
  * @param signOut - Clerk's signOut function from useClerk() hook
  * @param queryClient - React Query client to clear cache
- * @param callback - Optional callback after logout
+ * @param callback - Optional callback to execute before redirect
+ *
+ * @example
+ * ```tsx
+ * const { signOut } = useClerk();
+ * const queryClient = useQueryClient();
+ *
+ * await logout(signOut, queryClient);
+ * ```
  */
 export const logout = async (
   signOut: () => Promise<void>,
@@ -44,24 +60,33 @@ export const logout = async (
   callback?: () => void | Promise<void>
 ) => {
   try {
-    // Delete FCM token
+    // Step 1: Delete FCM token from Firebase and backend
+    // This prevents push notifications from being sent to logged-out users
     await firebaseCloudMessaging.deleteToken();
 
-    // Sign out with Clerk
-    await signOut();
-
-    // Clear React Query cache
+    // Step 2: Clear React Query cache
+    // Remove all cached user data, reservations, etc.
     queryClient.clear();
 
+    // Step 3: Sign out with Clerk
+    // This clears the Clerk session and authentication state
+    await signOut();
+
+    // Step 4: Execute optional callback
     if (callback) {
       await callback();
     }
 
-    // Redirect to home page
+    // Step 5: Redirect to home page
+    // Force a full page reload to ensure clean state
     window.location.href = '/';
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Logout error:', error);
+
+    // Even if there's an error, try to redirect
+    // This ensures user sees logged-out state
+    window.location.href = '/';
   }
 };
 
