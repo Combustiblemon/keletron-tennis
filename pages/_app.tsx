@@ -24,6 +24,7 @@ import DateProvider from '@/components/DateProvider/DateProvider';
 import FCM from '@/components/FCM/FCM';
 import HeadInfo from '@/components/HeadInfo/HeadInfo';
 import { Navbar } from '@/components/MobileNavbar/Navbar';
+import ProfileCheck from '@/components/ProfileCheck/ProfileCheck';
 import { UserProvider } from '@/components/UserProvider/UserProvider';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { theme } from '@/styles/theme';
@@ -59,12 +60,14 @@ const App = ({ Component, pageProps }: AppProps) => {
               <LanguageProvider defaultLanguage="el">
                 <DateProvider>
                   <UserProvider>
-                    <FCM />
-                    <Notifications position="bottom-center" zIndex={1000} />
-                    <HeadInfo title="Keletron Tennis Academy" />
-                    <Navbar>
-                      <Component {...pageProps} />
-                    </Navbar>
+                    <ProfileCheck>
+                      <FCM />
+                      <Notifications position="bottom-center" zIndex={1000} />
+                      <HeadInfo title="Keletron Tennis Academy" />
+                      <Navbar>
+                        <Component {...pageProps} />
+                      </Navbar>
+                    </ProfileCheck>
                   </UserProvider>
                 </DateProvider>
               </LanguageProvider>
