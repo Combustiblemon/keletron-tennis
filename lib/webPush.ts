@@ -10,7 +10,12 @@ import {
   Unsubscribe,
 } from 'firebase/messaging';
 
-import { endpoints } from './api/utils';
+/**
+ * Firebase Cloud Messaging (FCM) configuration
+ *
+ * FCM is used for push notifications in the app.
+ * With Clerk authentication, tokens are automatically sent with authenticated requests.
+ */
 
 const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_KEY || '';
 
@@ -22,10 +27,6 @@ const firebaseCloudMessagingBuilder = () => {
   let firebaseapp: FirebaseApp | null = null;
   let messaging: Messaging | null = null;
   let stopListening: Unsubscribe | undefined;
-
-  const saveToken = async (token: string) => {
-    await endpoints.notifications.PUT(token);
-  };
 
   return {
     // initializing firebase app
@@ -88,11 +89,12 @@ const firebaseCloudMessagingBuilder = () => {
 
       return null;
     },
+    isInitialized(): boolean {
+      return !!messaging;
+    },
     deleteToken(): Promise<boolean> {
       return messaging
         ? (async (): Promise<boolean> => {
-            // const FCMToken = await getToken(messaging, { vapidKey: VAPID_KEY });
-
             stopListening?.();
             deleteFCMToken(messaging);
 
@@ -107,12 +109,28 @@ const firebaseCloudMessagingBuilder = () => {
 
       return getToken(messaging, { vapidKey: VAPID_KEY });
     },
+    /**
+     * Save FCM token to backend
+     *
+     * This function is called by UserProvider after user authentication.
+     * The UserProvider uses the hook-based API client which automatically
+     * includes Clerk authentication tokens.
+     *
+     * @deprecated Use the saveToken method from UserProvider instead
+     */
     async saveToken() {
-      if (!messaging) {
-        return;
-      }
+      // This method is deprecated and no longer used directly.
+      // Token saving is now handled in UserProvider using the authenticated
+      // API client (useApiClient hook) which includes Clerk JWT tokens.
+      //
+      // See: components/UserProvider/UserProvider.tsx
+      //   - Calls: api.notifications.PUT(fcmToken)
+      //   - Automatically authenticated via Clerk
 
-      await saveToken(await getToken(messaging, { vapidKey: VAPID_KEY }));
+      // eslint-disable-next-line no-console
+      console.warn(
+        'webPush.saveToken() is deprecated. Token saving is handled in UserProvider.'
+      );
     },
   };
 };

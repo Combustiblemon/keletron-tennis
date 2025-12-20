@@ -47,7 +47,7 @@ const Reservation = ({
     setIsModalOpen(true);
   };
 
-  return (
+  return !r ? null : (
     <Card
       onClick={() => {
         onClick?.();
@@ -80,7 +80,7 @@ const Reservation = ({
                 style={{ height: rem(16), width: rem(16) }}
               />
               <Text {...textOptions} lh="12px">
-                {r.people.length}
+                {r.people?.length}
               </Text>
             </Group>
             <Text {...textOptions}>

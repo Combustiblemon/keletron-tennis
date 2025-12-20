@@ -254,7 +254,7 @@ const ReservationDetails = ({
       value,
       reserv,
       updatedReservation.getValues().date,
-      reservation._id.toString()
+      reservation?._id?.toString()
     );
 
     setAvailableTimes(times.filter((v, i) => times.indexOf(v) === i));

@@ -1,3 +1,4 @@
+import { useClerk } from '@clerk/nextjs';
 import {
   AppShell,
   Box,
@@ -15,12 +16,14 @@ import {
 } from '@mantine/core';
 import { useDisclosure, useMounted } from '@mantine/hooks';
 import { IconMoonStars, IconSun } from '@tabler/icons-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 import { Language, useLanguage } from '@/context/LanguageContext';
-import { isInstalled, isMobile, logout } from '@/lib/common';
+import { isInstalled, isIOS, isMobile, logout } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
+import { firebaseCloudMessaging } from '@/lib/webPush';
 
 import { useUser } from '../UserProvider/UserProvider';
 import InstallInstructionsButton from './InstallInstructionsButton';
@@ -48,6 +51,8 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
   // const { setColorScheme, colorScheme } = useMantineColorScheme();
   const theme = useMantineTheme();
   const mounted = useMounted();
+  const queryClient = useQueryClient();
+  const { signOut } = useClerk();
 
   function getNavItems(items: Array<NavItem>) {
     return items.map((item, index) => {
@@ -109,10 +114,10 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
         ? {
             title: t('auth.logout'),
             onClick: () => {
-              logout();
+              logout(signOut, queryClient);
             },
           }
-        : { title: t('auth.login'), href: '/auth?type=login' },
+        : { title: t('auth.login'), href: '/sign-in' },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isAuthenticated, t, userRoles.isAdmin]
@@ -157,7 +162,21 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
           <Group h="100%" px="md" pos="relative">
             <Burger
               opened={opened}
-              onClick={toggle}
+              onClick={async () => {
+                toggle();
+
+                if (!isIOS() || firebaseCloudMessaging.isInitialized()) {
+                  return;
+                }
+
+                const token = await firebaseCloudMessaging.init();
+
+                if (token) {
+                  await firebaseCloudMessaging.saveToken();
+                  // eslint-disable-next-line no-console
+                  console.log('initialized FCM');
+                }
+              }}
               hiddenFrom="sm"
               size="sm"
             />

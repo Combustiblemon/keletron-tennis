@@ -9,7 +9,7 @@ import { Language } from '@/context/LanguageContext';
 export const UserValidator = z.object({
   firstname: z.string().max(60),
   lastname: z.string().max(60),
-  role: z.enum(['ADMIN', 'USER']).default('USER'),
+  role: z.enum(['ADMIN', 'USER', 'DEVELOPER']).default('USER'),
   email: z.string().email(),
   password: z.string().min(6).optional(),
   accountType: z.enum(['GOOGLE', 'PASSWORD']).optional(),
@@ -48,7 +48,7 @@ export type UserType = Pick<User, SanitizedUserFields>;
 export const UserSchema = new mongoose.Schema<User>({
   role: {
     type: String,
-    enum: ['ADMIN', 'USER'],
+    enum: ['ADMIN', 'USER', 'DEVELOPER'],
   },
   email: {
     type: String,

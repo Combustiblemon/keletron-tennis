@@ -24,7 +24,7 @@ import { APIResponse } from './responseTypes';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const publicPages = ['/auth', '/'];
+const publicPages = ['/auth', '/', '/sign-in', '/sign-up'];
 
 const handleResponse = async <ReturnDataType, Endpoint extends string>(
   res: Response
@@ -32,8 +32,9 @@ const handleResponse = async <ReturnDataType, Endpoint extends string>(
   try {
     if (!res.ok) {
       if (res.status === 401) {
+        // Redirect to Clerk sign-in page if unauthorized
         if (window && !publicPages.includes(window.location.pathname)) {
-          window.location.pathname = '/';
+          window.location.pathname = '/sign-in';
         }
 
         return {
@@ -94,38 +95,11 @@ const headers = {
 };
 
 /**
- * Only for FE use, it uses react hooks under the hood
+ * @deprecated Use useApiClient() hook instead for automatic Clerk token injection
+ * This object is kept for backward compatibility during migration
+ * Legacy auth endpoints have been removed - use Clerk for authentication
  */
 export const endpoints = {
-  auth: {
-    login: async (data?: unknown) =>
-      handleResponse<unknown, 'login'>(
-        await fetch(`${API_URL}/auth/login`, {
-          method: 'POST',
-          body: JSON.stringify(data),
-          headers,
-          credentials: 'include',
-        })
-      ),
-    logout: async () => {
-      handleResponse<unknown, 'logout'>(
-        await fetch(`${API_URL}/auth/logout`, {
-          method: 'GET',
-          headers,
-          credentials: 'include',
-        })
-      );
-    },
-    verifyLogin: async (data?: unknown) =>
-      handleResponse<unknown, 'login'>(
-        await fetch(`${API_URL}/auth/verifyLogin`, {
-          method: 'POST',
-          body: JSON.stringify(data),
-          headers,
-          credentials: 'include',
-        })
-      ),
-  },
   announcements: {
     GET: async () =>
       handleResponse<Array<AnnouncementType>, `announcements`>(
@@ -230,7 +204,7 @@ export const endpoints = {
   },
   notifications: {
     PUT: async (token: string, userId?: string) =>
-      handleResponse<ReservationType, `notifications`>(
+      handleResponse<never, `notifications`>(
         await fetch(`${API_URL}/notifications/`, {
           method: 'PUT',
           headers,
