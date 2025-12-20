@@ -223,7 +223,7 @@ export const useApiClient = () => {
         PUT: async (token: string, userId?: string) => {
           const headers = await getHeaders();
           return handleResponse<never, `notifications`>(
-            await fetch(`${API_URL}/notifications/`, {
+            await fetch(`${API_URL}/notifications`, {
               method: 'PUT',
               headers,
               credentials: 'include',
@@ -320,11 +320,15 @@ export const useApiClient = () => {
           },
           PUT: async (body: z.infer<typeof CourtValidatorPartial>) => {
             const headers = await getHeaders();
+
+            if (!id) {
+              throw new Error('Court ID is required for PUT operation');
+            }
             return handleResponse<
               CourtDataType,
               `courts${IDString extends undefined ? '' : '/id'}`
             >(
-              await fetch(`${API_URL}/admin/courts/${id ? `${id}` : ''}`, {
+              await fetch(`${API_URL}/admin/courts/${id}`, {
                 method: 'PUT',
                 headers,
                 credentials: 'include',
