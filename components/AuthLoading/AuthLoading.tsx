@@ -11,7 +11,7 @@ import { useUser } from '../UserProvider/UserProvider';
  * Usage: Wrap protected pages with this component
  */
 export const AuthLoading = ({ children }: { children: React.ReactNode }) => {
-  const { isUserLoading, isAuthenticated } = useUser();
+  const { isUserLoading } = useUser();
 
   // Show loading state while checking authentication
   if (isUserLoading) {

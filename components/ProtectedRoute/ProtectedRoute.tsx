@@ -1,9 +1,10 @@
-import { Center, Stack, Text, Button } from '@mantine/core';
+/* eslint-disable react/jsx-no-useless-fragment */
+import { Button, Center, Stack, Text } from '@mantine/core';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
+import { AuthLoading } from '../AuthLoading/AuthLoading';
 import { useUser } from '../UserProvider/UserProvider';
-import AuthLoading from '../AuthLoading/AuthLoading';
 
 export interface ProtectedRouteProps {
   children: React.ReactNode;

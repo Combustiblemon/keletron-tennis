@@ -144,7 +144,10 @@ const NewReservationForm = ({
       newReservation.getValues().date.getUTCFullYear(),
     ],
     queryFn: () =>
-      api.reservations.GET(undefined, formatDate(newReservation.getValues().date)),
+      api.reservations.GET(
+        undefined,
+        formatDate(newReservation.getValues().date)
+      ),
   });
 
   const reservationData = useMemo(

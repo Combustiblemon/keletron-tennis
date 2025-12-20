@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import NewReservationForm from '@/components/forms/NewReservationForm/NewReservationForm';
-import ProtectedRoute from '@/components/ProtectedRoute/ProtectedRoute';
+import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute';
 import Reservation from '@/components/Reservation/Reservation';
 import { useUser } from '@/components/UserProvider/UserProvider';
 import { useApiClient } from '@/lib/api/hooks';

@@ -12,7 +12,7 @@ import { Stack } from '@mantine/core';
  */
 const SignInPage = () => {
   return (
-    <Stack w="100%" h="100%" align="center" justify="center" p="xl">
+    <Stack w="100%" h="100%" align="center" justify="center" p="0">
       <SignIn
         appearance={{
           elements: {

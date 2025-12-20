@@ -35,14 +35,25 @@ const FCM = () => {
         return;
       }
 
+      // Check if FCM is already initialized (e.g., by UserProvider)
+      if (firebaseCloudMessaging.isInitialized()) {
+        // eslint-disable-next-line no-console
+        console.log('FCM already initialized');
+        return;
+      }
+
       // Initialize FCM and get token
+      // Note: Token registration to backend is handled by UserProvider
+      // This ensures it works for all roles (USER, ADMIN, DEVELOPER)
       const token = await firebaseCloudMessaging.init();
 
       if (token) {
-        // Token is automatically sent to backend by UserProvider
-        // via api.notifications.PUT(fcmToken) with Clerk authentication
+        // Token registration to backend is handled by UserProvider
+        // which will detect the token and send it via api.notifications.PUT()
         // eslint-disable-next-line no-console
-        console.log('FCM initialized successfully');
+        console.log(
+          'FCM initialized successfully, token will be registered by UserProvider'
+        );
       }
     })();
   }, [isAuthenticated]);

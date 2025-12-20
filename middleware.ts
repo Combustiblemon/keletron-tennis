@@ -1,4 +1,4 @@
-import { authMiddleware } from '@clerk/nextjs';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 /**
  * Clerk Authentication Middleware
@@ -9,25 +9,33 @@ import { authMiddleware } from '@clerk/nextjs';
  * Protected routes: /admin, /reservations, /settings
  * Public routes: /, /sign-in, /sign-up, /auth
  */
-export default authMiddleware({
-  // Routes that can be accessed while signed out
-  publicRoutes: [
-    '/', // Homepage (shows different content based on auth)
-    '/sign-in(.*)', // Sign-in page and subpaths
-    '/sign-up(.*)', // Sign-up page and subpaths
-    '/auth', // Legacy auth page (redirects to sign-in)
-    '/api/public(.*)', // Public API routes if any
-  ],
 
-  // Routes that are always accessible, even if not signed in
-  ignoredRoutes: [
-    '/api/webhooks(.*)', // Webhook routes
-    '/_next(.*)', // Next.js internal routes
-    '/favicon.ico',
-    '/public(.*)', // Public assets
-    '/(.*\\.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf|eot))', // Static files
-  ],
+// Define public routes that can be accessed while signed out
+const isPublicRoute = createRouteMatcher([
+  '/', // Homepage (shows different content based on auth)
+  '/sign-in(.*)', // Sign-in page and subpaths
+  '/sign-up(.*)', // Sign-up page and subpaths
+  '/auth', // Legacy auth page (redirects to sign-in)
+  '/api/public(.*)', // Public API routes if any
+  '/api/webhooks(.*)', // Webhook routes
+  '/_next(.*)', // Next.js internal routes
+  '/favicon.ico',
+  '/public(.*)', // Public assets
+  // Note: Static files (images, CSS, JS, fonts) are already excluded by the Next.js matcher config below
+]);
 
-  // Additional configuration
-  debug: false, // Set to true for debugging
+export default clerkMiddleware(async (auth, req) => {
+  // Protect all routes except public ones
+  if (!isPublicRoute(req)) {
+    await auth.protect();
+  }
 });
+
+export const config = {
+  matcher: [
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
+  ],
+};

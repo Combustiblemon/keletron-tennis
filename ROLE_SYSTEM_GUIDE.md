@@ -16,11 +16,11 @@ USER (Level 0) < ADMIN (Level 1) < DEVELOPER (Level 2)
 
 ### Role Definitions
 
-| Role | Level | Description | Access |
-|------|-------|-------------|--------|
-| `USER` | 0 | Regular user | Basic features (reservations, settings) |
-| `ADMIN` | 1 | Administrator | All USER features + admin panel |
-| `DEVELOPER` | 2 | Developer/Super Admin | All ADMIN features + dev tools |
+| Role        | Level | Description           | Access                                  |
+| ----------- | ----- | --------------------- | --------------------------------------- |
+| `USER`      | 0     | Regular user          | Basic features (reservations, settings) |
+| `ADMIN`     | 1     | Administrator         | All USER features + admin panel         |
+| `DEVELOPER` | 2     | Developer/Super Admin | All ADMIN features + dev tools          |
 
 **Note**: `ADMIN` and `DEVELOPER` roles are collectively referred to as "admins" in the codebase.
 
@@ -29,16 +29,18 @@ USER (Level 0) < ADMIN (Level 1) < DEVELOPER (Level 2)
 ## How Roles Are Stored
 
 ### Clerk (Authentication Provider)
+
 Roles are stored in Clerk's `publicMetadata`:
 
 ```typescript
 // In Clerk Dashboard or via API
 user.publicMetadata = {
-  role: 'ADMIN' // or 'USER' or 'DEVELOPER'
-}
+  role: 'ADMIN', // or 'USER' or 'DEVELOPER'
+};
 ```
 
 ### Backend Database
+
 Roles are also stored in your backend user model:
 
 ```typescript
@@ -53,6 +55,7 @@ interface User {
 ```
 
 ### Priority
+
 The `UserProvider` prioritizes Clerk metadata for roles, falling back to backend data:
 
 ```typescript
@@ -91,9 +94,9 @@ const MyComponent = () => {
 ```typescript
 {
   // Boolean checks
-  isAdmin: boolean;        // true if ADMIN or DEVELOPER
-  isDeveloper: boolean;    // true only if DEVELOPER
-  isUser: boolean;         // true only if USER
+  isAdmin: boolean; // true if ADMIN or DEVELOPER
+  isDeveloper: boolean; // true only if DEVELOPER
+  isUser: boolean; // true only if USER
 
   // Raw role value
   role: 'USER' | 'ADMIN' | 'DEVELOPER';
@@ -144,11 +147,11 @@ const MyComponent = () => {
   user: {
     role: 'USER' | 'ADMIN' | 'DEVELOPER';
     // ... other user data
-  };
+  }
   userRoles: {
-    isAdmin: boolean;      // true if ADMIN or DEVELOPER
-    isDeveloper: boolean;  // true only if DEVELOPER
-  };
+    isAdmin: boolean; // true if ADMIN or DEVELOPER
+    isDeveloper: boolean; // true only if DEVELOPER
+  }
   isAuthenticated: boolean;
   isUserLoading: boolean;
 }
@@ -198,11 +201,11 @@ interface RoleGuardProps {
   minRole?: 'USER' | 'ADMIN' | 'DEVELOPER';
 
   // Quick checks
-  requireAdmin?: boolean;      // ADMIN or DEVELOPER
-  requireDeveloper?: boolean;  // Only DEVELOPER
+  requireAdmin?: boolean; // ADMIN or DEVELOPER
+  requireDeveloper?: boolean; // Only DEVELOPER
 
   // Invert logic
-  invert?: boolean;            // Show if user does NOT have role
+  invert?: boolean; // Show if user does NOT have role
 
   // Custom fallback
   fallback?: ReactNode;
@@ -256,10 +259,7 @@ interface RoleGuardProps {
 #### 6. With Custom Fallback
 
 ```tsx
-<RoleGuard
-  requireAdmin
-  fallback={<Text>Upgrade to access this feature</Text>}
->
+<RoleGuard requireAdmin fallback={<Text>Upgrade to access this feature</Text>}>
   <PremiumFeature />
 </RoleGuard>
 ```
@@ -290,16 +290,16 @@ interface RoleGuardProps {
 const roles = useRoles();
 
 // Boolean checks
-roles.isAdmin;        // true if ADMIN or DEVELOPER
-roles.isDeveloper;    // true only if DEVELOPER
-roles.isUser;         // true only if USER
+roles.isAdmin; // true if ADMIN or DEVELOPER
+roles.isDeveloper; // true only if DEVELOPER
+roles.isUser; // true only if USER
 
 // Raw role
-roles.role;          // 'USER' | 'ADMIN' | 'DEVELOPER'
+roles.role; // 'USER' | 'ADMIN' | 'DEVELOPER'
 
 // Functions
-roles.hasRole(role);              // Check exact role
-roles.hasRoleOrHigher(minRole);   // Check minimum role level
+roles.hasRole(role); // Check exact role
+roles.hasRoleOrHigher(minRole); // Check minimum role level
 ```
 
 ### Examples
@@ -363,7 +363,7 @@ const AdminButton = ({ onClick, children }) => (
 );
 
 // Usage
-<AdminButton onClick={deleteUser}>Delete User</AdminButton>
+<AdminButton onClick={deleteUser}>Delete User</AdminButton>;
 ```
 
 ### Pattern 3: Page-Level Protection
@@ -426,19 +426,23 @@ const UserBadge = () => {
 ### Setting Roles in Clerk Dashboard
 
 1. **Navigate to Users**:
+
    - Go to [Clerk Dashboard](https://dashboard.clerk.com)
    - Select your application
    - Click "Users" in sidebar
 
 2. **Edit User**:
+
    - Click on a user
    - Scroll to "Public metadata"
    - Add or edit:
+
      ```json
      {
        "role": "ADMIN"
      }
      ```
+
    - Save changes
 
 3. **Available Roles**:
@@ -472,6 +476,7 @@ app.put('/api/user/role', async (req, res) => {
 New users default to `USER`. To change this:
 
 **Option 1: Backend on User Creation**
+
 ```typescript
 // After creating user in your DB
 await clerkClient.users.updateUserMetadata(userId, {
@@ -480,6 +485,7 @@ await clerkClient.users.updateUserMetadata(userId, {
 ```
 
 **Option 2: Clerk Webhooks**
+
 ```typescript
 // Listen to user.created webhook
 app.post('/api/webhooks/clerk', async (req, res) => {
@@ -528,6 +534,7 @@ const AdminPage = () => (
 ```
 
 **What Happens**:
+
 1. Middleware ensures user is authenticated
 2. `ProtectedRoute` checks if user has admin role
 3. If not admin → Shows "Access Denied"
@@ -539,18 +546,18 @@ const AdminPage = () => (
 
 ### Current Role Assignments
 
-| Feature/Page | USER | ADMIN | DEVELOPER | Notes |
-|-------------|------|-------|-----------|-------|
-| Sign In | ✅ | ✅ | ✅ | Public |
-| Sign Up | ✅ | ✅ | ✅ | Public |
-| Homepage | ✅ | ✅ | ✅ | Different content by role |
-| Reservations | ✅ | ✅ | ✅ | Authenticated only |
-| Settings | ✅ | ✅ | ✅ | Authenticated only |
-| Admin Panel | ❌ | ✅ | ✅ | Admin only |
-| Admin Link (Homepage) | ❌ | ✅ | ✅ | Shown via RoleGuard |
-| Admin Link (Navbar) | ❌ | ✅ | ✅ | Conditional rendering |
-| Delete Users | ❌ | ❌ | ✅ | Developer only (example) |
-| Debug Tools | ❌ | ❌ | ✅ | Developer only (example) |
+| Feature/Page          | USER | ADMIN | DEVELOPER | Notes                     |
+| --------------------- | ---- | ----- | --------- | ------------------------- |
+| Sign In               | ✅   | ✅    | ✅        | Public                    |
+| Sign Up               | ✅   | ✅    | ✅        | Public                    |
+| Homepage              | ✅   | ✅    | ✅        | Different content by role |
+| Reservations          | ✅   | ✅    | ✅        | Authenticated only        |
+| Settings              | ✅   | ✅    | ✅        | Authenticated only        |
+| Admin Panel           | ❌   | ✅    | ✅        | Admin only                |
+| Admin Link (Homepage) | ❌   | ✅    | ✅        | Shown via RoleGuard       |
+| Admin Link (Navbar)   | ❌   | ✅    | ✅        | Conditional rendering     |
+| Delete Users          | ❌   | ❌    | ✅        | Developer only (example)  |
+| Debug Tools           | ❌   | ❌    | ✅        | Developer only (example)  |
 
 ---
 
@@ -559,6 +566,7 @@ const AdminPage = () => (
 ### Manual Testing Checklist
 
 **As USER (Regular User)**:
+
 - [ ] Can access reservations
 - [ ] Can access settings
 - [ ] Cannot see "Admin" link in navbar
@@ -566,6 +574,7 @@ const AdminPage = () => (
 - [ ] Redirected from `/admin` with "Access Denied"
 
 **As ADMIN**:
+
 - [ ] Can access reservations
 - [ ] Can access settings
 - [ ] Can see "Admin" link in navbar
@@ -574,6 +583,7 @@ const AdminPage = () => (
 - [ ] Can manage courts and reservations
 
 **As DEVELOPER**:
+
 - [ ] Has all ADMIN permissions
 - [ ] (Add developer-specific features to test)
 
@@ -609,6 +619,7 @@ const RoleTest = () => {
 ### ✅ DO
 
 1. **Use `RoleGuard` for UI elements**:
+
    ```tsx
    <RoleGuard requireAdmin>
      <DeleteButton />
@@ -616,6 +627,7 @@ const RoleTest = () => {
    ```
 
 2. **Use `ProtectedRoute` for pages**:
+
    ```tsx
    <ProtectedRoute requireAdmin>
      <AdminPage />
@@ -623,6 +635,7 @@ const RoleTest = () => {
    ```
 
 3. **Check roles on the backend too**:
+
    ```typescript
    // Backend API
    if (user.role !== 'ADMIN') {
@@ -631,16 +644,15 @@ const RoleTest = () => {
    ```
 
 4. **Provide clear feedback**:
+
    ```tsx
-   <RoleGuard
-     requireAdmin
-     fallback={<Text>Contact admin for access</Text>}
-   >
+   <RoleGuard requireAdmin fallback={<Text>Contact admin for access</Text>}>
      <Feature />
    </RoleGuard>
    ```
 
 5. **Use semantic names**:
+
    ```tsx
    const { isAdmin } = useRoles(); // ✅ Clear
    ```
@@ -648,6 +660,7 @@ const RoleTest = () => {
 ### ❌ DON'T
 
 1. **Don't rely only on client-side checks**:
+
    ```tsx
    // ❌ Bad - can be bypassed
    if (isAdmin) {
@@ -656,16 +669,20 @@ const RoleTest = () => {
    ```
 
 2. **Don't hardcode role strings**:
+
    ```tsx
    // ❌ Bad
-   if (user.role === 'ADMIN') { }
+   if (user.role === 'ADMIN') {
+   }
 
    // ✅ Good
    const { isAdmin } = useRoles();
-   if (isAdmin) { }
+   if (isAdmin) {
+   }
    ```
 
 3. **Don't show confusing UI**:
+
    ```tsx
    // ❌ Bad - button visible but disabled
    <Button disabled={!isAdmin}>Delete</Button>
@@ -677,6 +694,7 @@ const RoleTest = () => {
    ```
 
 4. **Don't check roles before authentication**:
+
    ```tsx
    const { isAuthenticated, isUserLoading } = useUser();
    const { isAdmin } = useRoles();
@@ -695,6 +713,7 @@ const RoleTest = () => {
 **Symptoms**: Changed role in Clerk Dashboard but UI still shows old role
 
 **Solutions**:
+
 1. Sign out and sign back in
 2. Clear browser cache
 3. Check Clerk Dashboard shows correct role
@@ -706,6 +725,7 @@ const RoleTest = () => {
 **Symptoms**: Admin users not seeing admin features
 
 **Solutions**:
+
 1. Check role in Clerk: `publicMetadata.role === 'ADMIN'`
 2. Verify backend returns correct role
 3. Check `UserProvider` is prioritizing Clerk metadata
@@ -717,6 +737,7 @@ const RoleTest = () => {
 **Symptoms**: Content visible to all users regardless of role
 
 **Solutions**:
+
 1. Check `RoleGuard` is imported correctly
 2. Verify `useRoles` hook is working: `console.log(useRoles())`
 3. Check `UserProvider` wraps component
@@ -727,6 +748,7 @@ const RoleTest = () => {
 **Symptoms**: Admin users seeing "Access Denied" on admin pages
 
 **Solutions**:
+
 1. Verify `publicMetadata.role` is `'ADMIN'` or `'DEVELOPER'`
 2. Check `userRoles.isAdmin` returns `true`
 3. Ensure middleware allows authenticated users
@@ -746,7 +768,7 @@ function useRoles(): {
   role: 'USER' | 'ADMIN' | 'DEVELOPER';
   hasRole: (role: 'USER' | 'ADMIN' | 'DEVELOPER') => boolean;
   hasRoleOrHigher: (minRole: 'USER' | 'ADMIN' | 'DEVELOPER') => boolean;
-}
+};
 ```
 
 ### RoleGuard Component
@@ -760,7 +782,7 @@ function RoleGuard(props: {
   requireDeveloper?: boolean;
   fallback?: ReactNode;
   invert?: boolean;
-}): JSX.Element
+}): JSX.Element;
 ```
 
 ### UserProvider Context
@@ -792,12 +814,14 @@ interface UserContextDataType {
 ✅ **Easy to Use**: Simple props and hooks
 
 **Key Files**:
+
 - `hooks/useRoles.ts` - Role checking hook
 - `components/RoleGuard/RoleGuard.tsx` - UI guard component
 - `components/UserProvider/UserProvider.tsx` - Role context
 - `components/ProtectedRoute/ProtectedRoute.tsx` - Page protection
 
 **Next Steps**:
+
 1. Set roles in Clerk Dashboard for test users
 2. Test role-based UI visibility
 3. Add role checks to sensitive backend endpoints

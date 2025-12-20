@@ -56,52 +56,73 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Clerk authentication
   const { isSignedIn, isLoaded: isClerkLoaded } = useAuth();
-  const { user: clerkUser } = useClerkUser();
+  const { user: clerkUser, isLoaded: isClerkUserLoaded } = useClerkUser();
 
   // New hook-based API client with Clerk token
   const api = useApiClient();
 
-  const { data, isFetching, isLoading } = useQuery({
+  const { isFetching, isLoading } = useQuery({
     queryFn: async () => {
-      // Only fetch user data if signed in with Clerk
+      // Only fetch FCM token if signed in with Clerk
       if (!isSignedIn) {
-        return { success: false, errors: [{ message: 'NOT_AUTHENTICATED' }] };
+        return { success: false };
       }
 
-      // Get FCM token and send to backend
-      const fcmToken = await firebaseCloudMessaging.getToken();
+      // Get FCM token - initialize if not already initialized
+      // This ensures FCM works for all users including admin/developer roles
+      let fcmToken: string | null | undefined;
+
+      if (firebaseCloudMessaging.isInitialized()) {
+        // FCM already initialized, just get the token
+        fcmToken = await firebaseCloudMessaging.getToken();
+      } else {
+        // FCM not initialized yet, initialize it (this will also get the token)
+        fcmToken = await firebaseCloudMessaging.init();
+      }
+
+      // Send token to backend if we have one
       if (fcmToken) {
-        await api.notifications.PUT(fcmToken);
+        try {
+          await api.notifications.PUT(fcmToken);
+          // eslint-disable-next-line no-console
+          console.log('FCM token registered successfully');
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to register FCM token:', error);
+        }
       }
 
-      // Fetch user from backend with Clerk token (automatically included by api hook)
-      return api.user.GET();
+      return { success: true };
     },
-    queryKey: ['user', isSignedIn],
+    queryKey: ['fcm-token', isSignedIn],
     enabled: isClerkLoaded && isSignedIn, // Only run query if Clerk is loaded and user is signed in
-    // staleTime: 1000 * 60 * 60 * 24,
+    retry: 2, // Retry up to 2 times if FCM initialization fails
+    retryDelay: 1000, // Wait 1 second between retries
   });
 
+  // Build user object from Clerk's user data and publicMetadata
   let user: User;
   let role: 'USER' | 'ADMIN' | 'DEVELOPER' = 'USER';
 
-  // Get role from Clerk metadata first (synced by backend), fallback to backend response
+  // Get role from Clerk metadata
   if (clerkUser?.publicMetadata?.role) {
     role = clerkUser.publicMetadata.role as 'USER' | 'ADMIN' | 'DEVELOPER';
   }
 
-  if (!isSignedIn || !data?.success) {
+  if (!isSignedIn || !clerkUser) {
     user = DEFAULT_USER;
-
-    if (data?.errors && isSignedIn) {
-      // Only log errors if user is actually signed in
-      // eslint-disable-next-line no-console
-      console.error('error(s) fetching user: ', data?.errors);
-    }
   } else {
+    // Get user data from Clerk's publicMetadata
+    const publicMetadata = clerkUser.publicMetadata || {};
     user = {
-      ...data.data,
-      role: data.data.role || role, // Prefer backend role, fallback to Clerk metadata
+      _id: clerkUser.id || '',
+      email: clerkUser.emailAddresses[0]?.emailAddress || '',
+      firstname:
+        (publicMetadata.firstname as string) || clerkUser.firstName || '',
+      lastname: (publicMetadata.lastname as string) || clerkUser.lastName || '',
+      role,
+      language: (publicMetadata.language as Language) || lang || 'en',
+      FCMTokens: (publicMetadata.FCMTokens as string[]) || [],
     };
   }
 
@@ -112,17 +133,23 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user.language, lang, setLang]);
 
   const invalidateUser = useCallback(async () => {
+    // Reload Clerk user to get updated publicMetadata
+    if (clerkUser) {
+      await clerkUser.reload();
+    }
+    // Also invalidate FCM token query in case it needs to be refreshed
     await queryClient.invalidateQueries({
-      queryKey: ['user'],
+      queryKey: ['fcm-token'],
     });
-  }, [queryClient]);
+  }, [clerkUser, queryClient]);
 
   const contextValue = useMemo(
     () => ({
-      isUserLoading: !isClerkLoaded || isLoading,
+      isUserLoading: !isClerkLoaded || !isClerkUserLoaded || isLoading,
       isUserFetching: isFetching,
       // User is authenticated if Clerk says they're signed in and we have user data
-      isAuthenticated: isClerkLoaded && isSignedIn && !isLoading && !!user._id?.length,
+      isAuthenticated:
+        isClerkLoaded && isClerkUserLoaded && isSignedIn && !!user._id?.length,
       user: user || DEFAULT_USER,
       userRoles: {
         isAdmin: user.role === 'ADMIN' || user.role === 'DEVELOPER',
@@ -130,7 +157,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       },
       invalidateUser,
     }),
-    [isClerkLoaded, isSignedIn, isLoading, isFetching, user, invalidateUser]
+    [
+      isClerkLoaded,
+      isClerkUserLoaded,
+      isSignedIn,
+      isLoading,
+      isFetching,
+      user,
+      invalidateUser,
+    ]
   );
 
   return (

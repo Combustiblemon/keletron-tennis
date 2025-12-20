@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-useless-fragment */
 import { ReactNode } from 'react';
 
 import { useRoles } from '@/hooks/useRoles';

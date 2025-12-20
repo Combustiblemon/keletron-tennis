@@ -1,5 +1,4 @@
 /* eslint-disable no-new */
-import { notifications } from '@mantine/notifications';
 import { FirebaseApp, initializeApp } from 'firebase/app';
 import {
   deleteToken as deleteFCMToken,
@@ -19,7 +18,6 @@ import {
  */
 
 const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_KEY || '';
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const firebaseConfig = JSON.parse(
   process.env.NEXT_PUBLIC_FIREBASE_CONFIG || '{}'
@@ -129,6 +127,7 @@ const firebaseCloudMessagingBuilder = () => {
       //   - Calls: api.notifications.PUT(fcmToken)
       //   - Automatically authenticated via Clerk
 
+      // eslint-disable-next-line no-console
       console.warn(
         'webPush.saveToken() is deprecated. Token saving is handled in UserProvider.'
       );

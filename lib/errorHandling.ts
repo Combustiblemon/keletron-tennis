@@ -24,7 +24,8 @@ export const ErrorMessages: Record<Errors | string, string> = {
   [Errors.PASSWORDS_DO_NOT_MATCH]: 'Passwords do not match.',
   [Errors.INVALID_EMAIL]: 'Please enter a valid email address.',
   [Errors.INVALID_RESET_KEY]: 'Invalid reset link.',
-  [Errors.RESET_KEY_EXPIRED]: 'Reset link has expired. Please request a new one.',
+  [Errors.RESET_KEY_EXPIRED]:
+    'Reset link has expired. Please request a new one.',
   [Errors.RESET_KEY_NOT_FOUND]: 'Reset link not found.',
   [Errors.INVALID_RESET_REQUEST]: 'Invalid reset request.',
   [Errors.INVALID_PASSWORD]:
@@ -160,9 +161,7 @@ export const handleApiError = (
   fallbackMessage: string = 'Operation failed'
 ): string => {
   const errorMessage =
-    typeof error === 'string'
-      ? error
-      : error?.message || fallbackMessage;
+    typeof error === 'string' ? error : error?.message || fallbackMessage;
 
   const userMessage = getErrorMessage(errorMessage);
   showErrorNotification(userMessage);
@@ -176,20 +175,25 @@ export const handleApiError = (
  * @param error - Clerk error object
  * @returns Error message
  */
-export const handleClerkError = (error: any): string => {
+export const handleClerkError = (error: {
+  errors?: Array<{ message?: string; longMessage?: string }>;
+  message?: string;
+}): string => {
   // Clerk errors usually have a 'errors' array
   if (error?.errors && Array.isArray(error.errors) && error.errors[0]) {
     const clerkError = error.errors[0];
-    const message = clerkError.message || clerkError.longMessage;
+    const clerkErrorMessage = clerkError.message || clerkError.longMessage;
 
-    showErrorNotification(message, 'Authentication Error');
-    return message;
+    if (clerkErrorMessage) {
+      showErrorNotification(clerkErrorMessage, 'Authentication Error');
+      return clerkErrorMessage;
+    }
   }
 
   // Fallback for unknown Clerk errors
-  const message = error?.message || 'Authentication failed';
-  showErrorNotification(message, 'Authentication Error');
-  return message;
+  const errorMessage = error?.message || 'Authentication failed';
+  showErrorNotification(errorMessage, 'Authentication Error');
+  return errorMessage;
 };
 
 /**
@@ -198,7 +202,7 @@ export const handleClerkError = (error: any): string => {
  * @param error - Error object
  * @returns True if network error
  */
-export const isNetworkError = (error: any): boolean => {
+export const isNetworkError = (error: unknown): boolean => {
   return (
     error instanceof TypeError &&
     (error.message.includes('fetch') ||
@@ -229,10 +233,11 @@ export const retryOperation = async <T>(
   maxRetries: number = 3,
   delayMs: number = 1000
 ): Promise<T> => {
-  let lastError: any;
+  let lastError: unknown;
 
-  for (let i = 0; i < maxRetries; i++) {
+  for (let i = 0; i < maxRetries; i += 1) {
     try {
+      // eslint-disable-next-line no-await-in-loop
       return await operation();
     } catch (error) {
       lastError = error;
@@ -244,8 +249,13 @@ export const retryOperation = async <T>(
 
       // Wait before retrying (exponential backoff)
       if (i < maxRetries - 1) {
-        const delay = delayMs * Math.pow(2, i);
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        const delay = delayMs * 2 ** i;
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise<void>((resolve) => {
+          setTimeout(() => {
+            resolve();
+          }, delay);
+        });
       }
     }
   }
@@ -281,7 +291,10 @@ export const safeAsync = async <T>(
     return await operation();
   } catch (error) {
     if (errorMessage) {
-      showErrorNotification(error as any, errorMessage);
+      showErrorNotification(
+        error instanceof Error ? error : String(error),
+        errorMessage
+      );
     }
     // eslint-disable-next-line no-console
     console.error('Operation failed:', error);
@@ -296,7 +309,7 @@ export const safeAsync = async <T>(
  * @param error - Error to log
  * @param context - Additional context about the error
  */
-export const logError = (error: any, context?: string) => {
+export const logError = (error: unknown, context?: string) => {
   if (process.env.NODE_ENV === 'development') {
     // eslint-disable-next-line no-console
     console.error(context ? `[${context}]` : '[Error]', error);

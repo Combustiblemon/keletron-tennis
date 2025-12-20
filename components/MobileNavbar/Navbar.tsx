@@ -1,3 +1,4 @@
+import { useClerk } from '@clerk/nextjs';
 import {
   AppShell,
   Box,
@@ -13,7 +14,6 @@ import {
   // useMantineColorScheme,
   useMantineTheme,
 } from '@mantine/core';
-import { useClerk } from '@clerk/nextjs';
 import { useDisclosure, useMounted } from '@mantine/hooks';
 import { IconMoonStars, IconSun } from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -173,6 +173,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
 
                 if (token) {
                   await firebaseCloudMessaging.saveToken();
+                  // eslint-disable-next-line no-console
                   console.log('initialized FCM');
                 }
               }}

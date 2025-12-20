@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { useMemo } from 'react';
 
 // import Announcements from '@/components/Announcements/Announcements';
-import RoleGuard from '@/components/RoleGuard/RoleGuard';
+import { RoleGuard } from '@/components/RoleGuard/RoleGuard';
 import { useUser } from '@/components/UserProvider/UserProvider';
 import { useApiClient } from '@/lib/api/hooks';
 import { useTimeUntil } from '@/lib/common';

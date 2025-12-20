@@ -24,7 +24,7 @@ import DateProvider from '@/components/DateProvider/DateProvider';
 import FCM from '@/components/FCM/FCM';
 import HeadInfo from '@/components/HeadInfo/HeadInfo';
 import { Navbar } from '@/components/MobileNavbar/Navbar';
-import ProfileCheck from '@/components/ProfileCheck/ProfileCheck';
+import { ProfileCheck } from '@/components/ProfileCheck/ProfileCheck';
 import { UserProvider } from '@/components/UserProvider/UserProvider';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { theme } from '@/styles/theme';

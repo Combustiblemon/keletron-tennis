@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAuth } from '@clerk/nextjs';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
 import {
@@ -100,13 +100,13 @@ export const useApiClient = () => {
     return undefined;
   };
 
-  const getHeaders = async () => {
+  const getHeaders = useCallback(async () => {
     const token = await getToken();
     return {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
-  };
+  }, [getToken]);
 
   return useMemo(
     () => ({
@@ -414,34 +414,7 @@ export const useApiClient = () => {
           },
         },
       },
-      user: {
-        GET: async () => {
-          const headers = await getHeaders();
-          return handleResponse<UserType, `user`>(
-            await fetch(`${API_URL}/user`, {
-              method: 'GET',
-              headers,
-              credentials: 'include',
-            })
-          );
-        },
-        PUT: async (body: {
-          firstname: string;
-          lastname: string;
-          FCMToken?: string;
-        }) => {
-          const headers = await getHeaders();
-          return handleResponse<UserType, `user`>(
-            await fetch(`${API_URL}/user`, {
-              method: 'PUT',
-              headers,
-              credentials: 'include',
-              body: JSON.stringify(body),
-            })
-          );
-        },
-      },
     }),
-    [getToken]
+    [getHeaders]
   );
 };
