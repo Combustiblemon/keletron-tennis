@@ -13,7 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import ReservationDetails from '@/components/Reservation/ReservationDetails';
-import { endpoints } from '@/lib/api/utils';
+import { useApiClient } from '@/lib/api/hooks';
 import { formatDate } from '@/lib/common';
 import { CourtDataType } from '@/models/Court';
 
@@ -53,6 +53,7 @@ const AdminReservations = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const { ref: calendarWrapperRef, height: calendarWrapperHeight } =
     useElementSize();
+  const api = useApiClient();
 
   const [reservationId, setReservationId] = useState<string>('');
   const [opened, { close, open }] = useDisclosure();
@@ -81,7 +82,7 @@ const AdminReservations = () => {
 
   const reservations = useQuery({
     queryKey: ['reservations'],
-    queryFn: async () => endpoints.admin.reservations.GET(),
+    queryFn: async () => api.admin.reservations.GET(),
   });
 
   const reservationData = useMemo(
@@ -91,7 +92,7 @@ const AdminReservations = () => {
 
   const courts = useQuery({
     queryKey: ['courts'],
-    queryFn: async () => endpoints.admin.courts().GET(),
+    queryFn: async () => api.admin.courts().GET(),
   });
 
   const courtData = useMemo(

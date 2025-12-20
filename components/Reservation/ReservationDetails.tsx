@@ -26,7 +26,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { endpoints } from '@/lib/api/utils';
+import { useApiClient } from '@/lib/api/hooks';
 import {
   addMinutesToTime,
   formatDate,
@@ -74,6 +74,7 @@ const ReservationDetails = ({
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const api = useApiClient();
 
   const updatedReservation = useForm({
     mode: 'uncontrolled',
@@ -130,7 +131,7 @@ const ReservationDetails = ({
 
   const deleteReservation = async () => {
     setIsLoading(true);
-    await endpoints.reservations.DELETE([
+    await api.reservations.DELETE([
       updatedReservation.getValues()._id || '',
     ]);
     setIsLoading(false);
@@ -142,7 +143,7 @@ const ReservationDetails = ({
   const updateReservation = async () => {
     setIsLoading(true);
     try {
-      const res = await endpoints.reservations.PUT(
+      const res = await api.reservations.PUT(
         updatedReservation.getValues()._id || '',
         {
           ...updatedReservation.getValues(),
@@ -229,7 +230,7 @@ const ReservationDetails = ({
       updatedReservation.getValues().date.getUTCFullYear(),
     ],
     queryFn: () =>
-      endpoints.reservations.GET(
+      api.reservations.GET(
         undefined,
         formatDate(updatedReservation.getValues().date)
       ),
