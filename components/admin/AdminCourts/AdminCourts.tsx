@@ -176,9 +176,20 @@ const AdminCourts = () => {
 
   const saveCourt = async () => {
     setIsLoading(true);
-    const res = await endpoints.admin
-      .courts(courtForm.getValues()._id)
-      .PUT(courtForm.getValues());
+    const formValues = courtForm.getValues();
+    const isNewCourt = !formValues._id || formValues._id.trim() === '';
+
+    let res;
+    if (isNewCourt) {
+      // Create new court using POST
+      const { _id, ...courtData } = formValues; // Exclude _id for new courts
+      res = await endpoints.admin.courts().POST(courtData);
+    } else {
+      // Update existing court using PUT
+      res = await endpoints.admin
+        .courts(formValues._id)
+        .PUT(formValues);
+    }
 
     if (!res?.success) {
       notifications.show({
@@ -194,6 +205,11 @@ const AdminCourts = () => {
         message: 'Αποθήκευση επιτυχής',
         color: 'green',
       });
+
+      // If it was a new court, update the form with the returned _id
+      if (isNewCourt && res.data?._id) {
+        courtForm.setFieldValue('_id', res.data._id);
+      }
     }
 
     setIsLoading(false);
