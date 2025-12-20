@@ -1,5 +1,5 @@
 import { Button, Stack, Text } from '@mantine/core';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 
 // import { useUser } from '@/components/UserProvider/UserProvider';
 import { useTranslation } from '@/lib/i18n/i18n';
