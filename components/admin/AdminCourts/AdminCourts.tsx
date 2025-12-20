@@ -180,15 +180,15 @@ const AdminCourts = () => {
     const isNewCourt = !formValues._id || formValues._id.trim() === '';
 
     let res;
+
     if (isNewCourt) {
       // Create new court using POST
-      const { _id, ...courtData } = formValues; // Exclude _id for new courts
-      res = await endpoints.admin.courts().POST(courtData);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { _id: _, ...courtDataToPost } = formValues; // Exclude _id for new courts
+      res = await endpoints.admin.courts().POST(courtDataToPost);
     } else {
       // Update existing court using PUT
-      res = await endpoints.admin
-        .courts(formValues._id)
-        .PUT(formValues);
+      res = await endpoints.admin.courts(formValues._id).PUT(formValues);
     }
 
     if (!res?.success) {

@@ -320,6 +320,7 @@ export const useApiClient = () => {
           },
           PUT: async (body: z.infer<typeof CourtValidatorPartial>) => {
             const headers = await getHeaders();
+
             if (!id) {
               throw new Error('Court ID is required for PUT operation');
             }
