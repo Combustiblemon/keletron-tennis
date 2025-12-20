@@ -131,9 +131,7 @@ const ReservationDetails = ({
 
   const deleteReservation = async () => {
     setIsLoading(true);
-    await api.reservations.DELETE([
-      updatedReservation.getValues()._id || '',
-    ]);
+    await api.reservations.DELETE([updatedReservation.getValues()._id || '']);
     setIsLoading(false);
 
     queryClient.invalidateQueries({ queryKey: ['reservations'] });
