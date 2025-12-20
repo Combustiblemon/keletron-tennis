@@ -17,7 +17,7 @@ import {
 import { useDisclosure, useMounted } from '@mantine/hooks';
 import { IconMoonStars, IconSun } from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { useMemo } from 'react';
 
 import { Language, useLanguage } from '@/context/LanguageContext';
