@@ -4,8 +4,9 @@ import { useRouter } from 'next/router';
 import { useMemo } from 'react';
 
 // import Announcements from '@/components/Announcements/Announcements';
+import { RoleGuard } from '@/components/RoleGuard/RoleGuard';
 import { useUser } from '@/components/UserProvider/UserProvider';
-import { endpoints } from '@/lib/api/utils';
+import { useApiClient } from '@/lib/api/hooks';
 import { useTimeUntil } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 // import { firebaseCloudMessaging } from '@/lib/webPush';
@@ -14,10 +15,11 @@ const LoggedInHomepage = () => {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useUser();
+  const api = useApiClient();
 
   const userReservations = useQuery({
     queryKey: ['reservations'],
-    queryFn: async () => endpoints.reservations.GET(undefined, undefined, 0),
+    queryFn: async () => api.reservations.GET(undefined, undefined, 0),
     retry: 3,
   });
 
@@ -59,6 +61,19 @@ const LoggedInHomepage = () => {
       >
         Κρατήσεις
       </Button>
+
+      {/* Admin-only quick link */}
+      <RoleGuard requireAdmin>
+        <Button
+          variant="light"
+          color="red"
+          onClick={() => {
+            router.push('/admin');
+          }}
+        >
+          Admin Panel
+        </Button>
+      </RoleGuard>
     </Stack>
   );
 };
