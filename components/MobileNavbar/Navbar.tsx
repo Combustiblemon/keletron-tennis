@@ -1,4 +1,3 @@
-import { useClerk } from '@clerk/nextjs';
 import {
   AppShell,
   Box,
@@ -52,7 +51,6 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const theme = useMantineTheme();
   const mounted = useMounted();
   const queryClient = useQueryClient();
-  const { signOut } = useClerk();
 
   function getNavItems(items: Array<NavItem>) {
     return items.map((item, index) => {
@@ -114,10 +112,10 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
         ? {
             title: t('auth.logout'),
             onClick: () => {
-              logout(signOut, queryClient);
+              logout(queryClient);
             },
           }
-        : { title: t('auth.login'), href: '/sign-in' },
+        : { title: t('auth.login'), href: '/auth?type=login' },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isAuthenticated, t, userRoles.isAdmin]
@@ -173,7 +171,6 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
 
                 if (token) {
                   await firebaseCloudMessaging.saveToken();
-                  // eslint-disable-next-line no-console
                   console.log('initialized FCM');
                 }
               }}

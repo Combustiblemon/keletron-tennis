@@ -5,6 +5,8 @@ import { QueryClient } from '@tanstack/react-query';
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
 
+import { APIResponse } from './api/responseTypes';
+import { endpoints } from './api/utils';
 import { useTranslation } from './i18n/i18n';
 import { firebaseCloudMessaging } from './webPush';
 
@@ -32,68 +34,57 @@ export const isInstalled = () => {
   return installed;
 };
 
-/**
- * Logout function for Clerk authentication
- *
- * Performs a complete logout with cleanup:
- * 1. Deletes FCM (Firebase Cloud Messaging) token
- * 2. Signs out from Clerk (clears session)
- * 3. Clears React Query cache
- * 4. Executes optional callback
- * 5. Redirects to home page
- *
- * @param signOut - Clerk's signOut function from useClerk() hook
- * @param queryClient - React Query client to clear cache
- * @param callback - Optional callback to execute before redirect
- *
- * @example
- * ```tsx
- * const { signOut } = useClerk();
- * const queryClient = useQueryClient();
- *
- * await logout(signOut, queryClient);
- * ```
- */
 export const logout = async (
-  signOut: () => Promise<void>,
   queryClient: QueryClient,
   callback?: () => void | Promise<void>
 ) => {
   try {
-    // Step 1: Delete FCM token from Firebase and backend
-    // This prevents push notifications from being sent to logged-out users
+    await endpoints.auth.logout();
+
     await firebaseCloudMessaging.deleteToken();
 
-    // Step 2: Clear React Query cache
-    // Remove all cached user data, reservations, etc.
     queryClient.clear();
 
-    // Step 3: Sign out with Clerk
-    // This clears the Clerk session and authentication state
-    await signOut();
-
-    // Step 4: Execute optional callback
     if (callback) {
       await callback();
     }
 
-    // Step 5: Redirect to home page
-    // Force a full page reload to ensure clean state
-    window.location.href = '/';
+    window.location.reload();
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('Logout error:', error);
-
-    // Even if there's an error, try to redirect
-    // This ensures user sees logged-out state
-    window.location.href = '/';
+    console.log('error', error);
   }
 };
 
-// Legacy auth functions removed - Clerk handles authentication
-// - login() -> Use Clerk's <SignIn /> component
-// - verifyLogin() -> Use Clerk's <SignIn /> component
-// - Clerk automatically handles token management
+export const login = async (
+  data?: Record<string, string | undefined>,
+  callback?: () => void | Promise<void>
+): Promise<APIResponse<unknown, 'login'> | undefined> => {
+  const res = await endpoints.auth.login(data);
+
+  await firebaseCloudMessaging.saveToken();
+
+  if (callback) {
+    await callback();
+  }
+
+  return res;
+};
+
+export const verifyLogin = async (
+  data?: Record<string, string | undefined>,
+  callback?: () => void | Promise<void>
+): Promise<APIResponse<unknown, 'login'> | undefined> => {
+  const res = await endpoints.auth.verifyLogin(data);
+
+  await firebaseCloudMessaging.saveToken();
+
+  if (callback) {
+    await callback();
+  }
+
+  return res;
+};
 
 export const formatDate = (date: Date) =>
   `${date

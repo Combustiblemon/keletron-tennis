@@ -1,4 +1,5 @@
 /* eslint-disable no-new */
+import { notifications } from '@mantine/notifications';
 import { FirebaseApp, initializeApp } from 'firebase/app';
 import {
   deleteToken as deleteFCMToken,
@@ -10,12 +11,7 @@ import {
   Unsubscribe,
 } from 'firebase/messaging';
 
-/**
- * Firebase Cloud Messaging (FCM) configuration
- *
- * FCM is used for push notifications in the app.
- * With Clerk authentication, tokens are automatically sent with authenticated requests.
- */
+import { endpoints } from './api/utils';
 
 const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_KEY || '';
 
@@ -109,28 +105,30 @@ const firebaseCloudMessagingBuilder = () => {
 
       return getToken(messaging, { vapidKey: VAPID_KEY });
     },
-    /**
-     * Save FCM token to backend
-     *
-     * This function is called by UserProvider after user authentication.
-     * The UserProvider uses the hook-based API client which automatically
-     * includes Clerk authentication tokens.
-     *
-     * @deprecated Use the saveToken method from UserProvider instead
-     */
     async saveToken() {
-      // This method is deprecated and no longer used directly.
-      // Token saving is now handled in UserProvider using the authenticated
-      // API client (useApiClient hook) which includes Clerk JWT tokens.
-      //
-      // See: components/UserProvider/UserProvider.tsx
-      //   - Calls: api.notifications.PUT(fcmToken)
-      //   - Automatically authenticated via Clerk
+      if (!messaging) {
+        return;
+      }
 
-      // eslint-disable-next-line no-console
-      console.warn(
-        'webPush.saveToken() is deprecated. Token saving is handled in UserProvider.'
+      const res = await endpoints.notifications.PUT(
+        await getToken(messaging, { vapidKey: VAPID_KEY })
       );
+
+      if (!res?.success) {
+        await this.deleteToken();
+        await this.init();
+
+        const res2 = await endpoints.notifications.PUT(
+          await getToken(messaging, { vapidKey: VAPID_KEY })
+        );
+
+        if (!res2?.success) {
+          notifications.show({
+            message: 'Failed to save notification token',
+            color: 'red',
+          });
+        }
+      }
     },
   };
 };

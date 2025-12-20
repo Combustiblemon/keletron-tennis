@@ -3,7 +3,7 @@ import { useDisclosure, useFocusTrap } from '@mantine/hooks';
 import { useQuery } from '@tanstack/react-query';
 import React, { useMemo, useState } from 'react';
 
-import { useApiClient } from '@/lib/api/hooks';
+import { endpoints } from '@/lib/api/utils';
 import { formatDate } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 
@@ -12,11 +12,10 @@ const Announcements = () => {
   const [modalInfo, setModalInfo] = useState<number>(-1);
   const focusTrapRef = useFocusTrap();
   const { t } = useTranslation();
-  const api = useApiClient();
 
   const announcements = useQuery({
     queryKey: ['announcements'],
-    queryFn: () => api.announcements.GET(),
+    queryFn: () => endpoints.announcements.GET(),
   });
 
   const announcementData = useMemo(
