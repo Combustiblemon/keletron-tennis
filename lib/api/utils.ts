@@ -24,18 +24,15 @@ import { APIResponse } from './responseTypes';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const publicPages = ['/auth', '/', '/sign-in', '/sign-up'];
-
 const handleResponse = async <ReturnDataType, Endpoint extends string>(
   res: Response
 ): Promise<APIResponse<ReturnDataType, Endpoint> | undefined> => {
   try {
     if (!res.ok) {
       if (res.status === 401) {
-        // Redirect to Clerk sign-in page if unauthorized
-        if (window && !publicPages.includes(window.location.pathname)) {
-          window.location.pathname = '/sign-in';
-        }
+        // Do not redirect here: this legacy client has no Clerk context.
+        // Callers should use useApiClient() which only redirects when Clerk
+        // confirms the session is invalid (see lib/api/hooks.ts).
 
         return {
           success: false,

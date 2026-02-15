@@ -51,20 +51,23 @@ self.addEventListener('notificationclick', (event) => {
   // eslint-disable-next-line no-console
   console.log('notification clicked', { data: event.notification.data });
 
-  switch (event.notification.data?.type) {
+  const { data } = event.notification;
+  let url = websiteURL;
+
+  // API sends reservationid (lowercase); admin page expects reservationId in query
+  const reservationId = data?.reservationId ?? data?.reservationid ?? '';
+
+  switch (data?.type) {
     case 'new':
     case 'update':
-      self.clients.openWindow(
-        `${websiteURL}/admin?reservationId=${event.notification.data?.reservationId}&datetime=${event.notification.data?.datetime}`
-      );
+      url = `${websiteURL}/admin?reservationId=${reservationId}&datetime=${data?.datetime ?? ''}`;
       break;
     case 'delete':
-      self.clients.openWindow(
-        `${websiteURL}/admin?datetime=${event.notification.data?.datetime}`
-      );
+      url = `${websiteURL}/admin?datetime=${data?.datetime ?? ''}`;
       break;
     default:
-      self.clients.openWindow(websiteURL);
       break;
   }
+
+  event.waitUntil(self.clients.openWindow(url));
 });
