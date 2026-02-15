@@ -47,9 +47,15 @@ export const useApiClient = () => {
     try {
       if (!res.ok) {
         if (res.status === 401) {
-          // Redirect to sign-in if unauthorized
+          // Only redirect if Clerk says the user has no valid session.
+          // Backend 401 can be due to token expiry, backend bug, or network issues;
+          // we should not log the user out unless their session is actually invalid.
           if (window && !publicPages.includes(window.location.pathname)) {
-            window.location.pathname = '/sign-in';
+            const token = await getToken({ skipCache: true });
+
+            if (token == null) {
+              window.location.pathname = '/sign-in';
+            }
           }
 
           return {
@@ -419,6 +425,6 @@ export const useApiClient = () => {
         },
       },
     }),
-    [getHeaders]
+    [getHeaders, handleResponse]
   );
 };
