@@ -15,23 +15,21 @@ import { IconTrash, IconX } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import React, { useMemo, useState } from 'react';
 
-import { endpoints } from '@/lib/api/utils';
+import { useApiClient } from '@/lib/api/hooks';
 import { iconStyles } from '@/lib/common';
 
 import NewAnnouncementForm from './NewAnnouncementForm';
-
-const deleteAnnouncement = (_id: string) =>
-  endpoints.admin.announcements.DELETE(_id);
 
 const AdminAnnouncements = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [opened, { close, open }] = useDisclosure();
   const forceUpdate = useForceUpdate();
+  const api = useApiClient();
 
   const announcements = useQuery({
     queryKey: ['announcements'],
-    queryFn: async () => endpoints.admin.announcements.GET(),
+    queryFn: async () => api.admin.announcements.GET(),
   });
 
   const announcementData = useMemo(
@@ -52,7 +50,7 @@ const AdminAnnouncements = () => {
         onSubmit={async (values) => {
           setIsLoading(true);
 
-          const res = await endpoints.admin.announcements.POST(values);
+          const res = await api.admin.announcements.POST(values);
 
           if (res?.success) {
             showNotification({
@@ -132,7 +130,7 @@ const AdminAnnouncements = () => {
                     const removed = announcementData.splice(index);
                     forceUpdate();
 
-                    const res = await deleteAnnouncement(a._id);
+                    const res = await api.admin.announcements.DELETE(a._id);
 
                     if (!res?.success) {
                       announcementData.push(...removed);

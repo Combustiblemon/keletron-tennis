@@ -33,7 +33,7 @@ import React, { useMemo, useRef, useState } from 'react';
 
 import NewReservationForm from '@/components/forms/NewReservationForm/NewReservationForm';
 import { useUser } from '@/components/UserProvider/UserProvider';
-import { endpoints } from '@/lib/api/utils';
+import { useApiClient } from '@/lib/api/hooks';
 import { addMinutesToTime, iconStyles } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { CourtDataType } from '@/models/Court';
@@ -53,6 +53,7 @@ const AdminCourts = () => {
   const { ref: wrapperRef, height: wrapperHeight } = useElementSize();
   const { user } = useUser();
   const queryClient = useQueryClient();
+  const api = useApiClient();
 
   const courtForm = useForm({
     initialValues: {
@@ -100,7 +101,7 @@ const AdminCourts = () => {
 
   const courts = useQuery({
     queryKey: ['courts'],
-    queryFn: async () => endpoints.admin.courts(undefined).GET(),
+    queryFn: async () => api.admin.courts(undefined).GET(),
   });
 
   const courtData = useMemo(
@@ -176,9 +177,20 @@ const AdminCourts = () => {
 
   const saveCourt = async () => {
     setIsLoading(true);
-    const res = await endpoints.admin
-      .courts(courtForm.getValues()._id)
-      .PUT(courtForm.getValues());
+    const formValues = courtForm.getValues();
+    const isNewCourt = !formValues._id || formValues._id.trim() === '';
+
+    let res;
+
+    if (isNewCourt) {
+      // Create new court using POST
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { _id: _, ...courtDataToPost } = formValues; // Exclude _id for new courts
+      res = await api.admin.courts().POST(courtDataToPost);
+    } else {
+      // Update existing court using PUT
+      res = await api.admin.courts(formValues._id).PUT(formValues);
+    }
 
     if (!res?.success) {
       notifications.show({
@@ -194,6 +206,11 @@ const AdminCourts = () => {
         message: 'Αποθήκευση επιτυχής',
         color: 'green',
       });
+
+      // If it was a new court, update the form with the returned _id
+      if (isNewCourt && res.data?._id) {
+        courtForm.setFieldValue('_id', res.data._id);
+      }
     }
 
     setIsLoading(false);

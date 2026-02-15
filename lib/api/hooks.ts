@@ -47,9 +47,15 @@ export const useApiClient = () => {
     try {
       if (!res.ok) {
         if (res.status === 401) {
-          // Redirect to sign-in if unauthorized
+          // Only redirect if Clerk says the user has no valid session.
+          // Backend 401 can be due to token expiry, backend bug, or network issues;
+          // we should not log the user out unless their session is actually invalid.
           if (window && !publicPages.includes(window.location.pathname)) {
-            window.location.pathname = '/sign-in';
+            const token = await getToken({ skipCache: true });
+
+            if (token == null) {
+              window.location.pathname = '/sign-in';
+            }
           }
 
           return {
@@ -223,7 +229,7 @@ export const useApiClient = () => {
         PUT: async (token: string, userId?: string) => {
           const headers = await getHeaders();
           return handleResponse<never, `notifications`>(
-            await fetch(`${API_URL}/notifications/`, {
+            await fetch(`${API_URL}/notifications`, {
               method: 'PUT',
               headers,
               credentials: 'include',
@@ -320,11 +326,15 @@ export const useApiClient = () => {
           },
           PUT: async (body: z.infer<typeof CourtValidatorPartial>) => {
             const headers = await getHeaders();
+
+            if (!id) {
+              throw new Error('Court ID is required for PUT operation');
+            }
             return handleResponse<
               CourtDataType,
               `courts${IDString extends undefined ? '' : '/id'}`
             >(
-              await fetch(`${API_URL}/admin/courts/${id ? `${id}` : ''}`, {
+              await fetch(`${API_URL}/admin/courts/${id}`, {
                 method: 'PUT',
                 headers,
                 credentials: 'include',
@@ -415,6 +425,6 @@ export const useApiClient = () => {
         },
       },
     }),
-    [getHeaders]
+    [getHeaders, handleResponse]
   );
 };

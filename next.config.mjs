@@ -1,7 +1,7 @@
 // @ts-check
 import withPWAInit from 'next-pwa';
 
-const withWPA = withPWAInit({
+const withPWA = withPWAInit({
   dest: 'public',
   disable: false,
   cacheOnFrontEndNav: true,
@@ -10,7 +10,7 @@ const withWPA = withPWAInit({
   sw: 'firebase-messaging-sw.js',
 });
 
-export default withWPA({
+export default withPWA({
   reactStrictMode: true,
   swcMinify: true,
   webpack: (config, { webpack }) => {
@@ -21,6 +21,9 @@ export default withWPA({
         ...config.plugins,
         new webpack.DefinePlugin({
           'process.env.WEBSITE_URL': JSON.stringify(process.env.WEBSITE_URL),
+          'process.env.NEXT_PUBLIC_FIREBASE_CONFIG': JSON.stringify(
+            process.env.NEXT_PUBLIC_FIREBASE_CONFIG || '{}'
+          ),
         }),
       ],
     };

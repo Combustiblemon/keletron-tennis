@@ -24,18 +24,15 @@ import { APIResponse } from './responseTypes';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const publicPages = ['/auth', '/', '/sign-in', '/sign-up'];
-
 const handleResponse = async <ReturnDataType, Endpoint extends string>(
   res: Response
 ): Promise<APIResponse<ReturnDataType, Endpoint> | undefined> => {
   try {
     if (!res.ok) {
       if (res.status === 401) {
-        // Redirect to Clerk sign-in page if unauthorized
-        if (window && !publicPages.includes(window.location.pathname)) {
-          window.location.pathname = '/sign-in';
-        }
+        // Do not redirect here: this legacy client has no Clerk context.
+        // Callers should use useApiClient() which only redirects when Clerk
+        // confirms the session is invalid (see lib/api/hooks.ts).
 
         return {
           success: false,
@@ -205,7 +202,7 @@ export const endpoints = {
   notifications: {
     PUT: async (token: string, userId?: string) =>
       handleResponse<never, `notifications`>(
-        await fetch(`${API_URL}/notifications/`, {
+        await fetch(`${API_URL}/notifications`, {
           method: 'PUT',
           headers,
           credentials: 'include',
@@ -289,19 +286,23 @@ export const endpoints = {
             body: JSON.stringify(body),
           })
         ),
-      PUT: async (body: z.infer<typeof CourtValidatorPartial>) =>
-        handleResponse<
+      PUT: async (body: z.infer<typeof CourtValidatorPartial>) => {
+        if (!id) {
+          throw new Error('Court ID is required for PUT operation');
+        }
+        return handleResponse<
           CourtDataType,
           `courts${IDString extends undefined ? '' : '/id'}`
         >(
-          await fetch(`${API_URL}/admin/courts/${id ? `${id}` : ''}`, {
+          await fetch(`${API_URL}/admin/courts/${id}`, {
             method: 'PUT',
             headers,
             credentials: 'include',
 
             body: JSON.stringify(body),
           })
-        ),
+        );
+      },
       DELETE: async (idToDelete: string) => {
         if (!idToDelete) {
           return null;
