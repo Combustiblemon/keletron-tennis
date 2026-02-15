@@ -21,6 +21,9 @@ export default withPWA({
         ...config.plugins,
         new webpack.DefinePlugin({
           'process.env.WEBSITE_URL': JSON.stringify(process.env.WEBSITE_URL),
+          'process.env.NEXT_PUBLIC_FIREBASE_CONFIG': JSON.stringify(
+            process.env.NEXT_PUBLIC_FIREBASE_CONFIG || '{}'
+          ),
         }),
       ],
     };

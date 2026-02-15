@@ -1,6 +1,7 @@
 import {
   Box,
   Group,
+  Loader,
   LoadingOverlay,
   ScrollArea,
   Stack,
@@ -9,7 +10,7 @@ import {
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useDisclosure, useElementSize, useToggle } from '@mantine/hooks';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import ReservationDetails from '@/components/Reservation/ReservationDetails';
@@ -83,12 +84,23 @@ const AdminReservations = () => {
   const reservations = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => api.admin.reservations.GET(),
+    staleTime: 5 * 60 * 1000, // 5 min – avoid refetch on date change / focus
+    placeholderData: keepPreviousData,
   });
 
   const reservationData = useMemo(
     () => (reservations.data?.success ? reservations.data?.data : []),
-    [reservations]
+    [reservations.data]
   );
+
+  const reservationCountByDate = useMemo(() => {
+    const map: Record<string, number> = {};
+    reservationData.forEach((r) => {
+      const key = r.datetime.split('T')[0];
+      map[key] = (map[key] ?? 0) + 1;
+    });
+    return map;
+  }, [reservationData]);
 
   const courts = useQuery({
     queryKey: ['courts'],
@@ -157,7 +169,7 @@ const AdminReservations = () => {
   return (
     <Stack pt="sm" flex={1}>
       <LoadingOverlay
-        visible={isLoading || reservations.isPending || courts.isPending}
+        visible={isLoading || courts.isPending}
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
       />
@@ -176,10 +188,8 @@ const AdminReservations = () => {
           label="Ημερομηνια"
           value={selectedDate}
           renderDay={(date) => {
-            const reservationCount = reservationData.filter(
-              (r) => r.datetime.split('T')[0] === formatDate(date).split('T')[0]
-            ).length;
-
+            const dateKey = formatDate(date).split('T')[0];
+            const reservationCount = reservationCountByDate[dateKey] ?? 0;
             return (
               <Stack justify="center" align="center" gap="0px">
                 <Text size="sm">{date.getDate()}</Text>
@@ -192,28 +202,42 @@ const AdminReservations = () => {
           }}
         />
       </Group>
-      <Box flex={1} w="100%" ref={calendarWrapperRef}>
-        <ScrollArea h={`${calendarWrapperHeight}px`} type="never" w="100%">
-          <Table stickyHeader stickyHeaderOffset={0} withColumnBorders>
-            <Table.Thead
-              styles={{
-                thead: {
-                  zIndex: 2,
-                },
-              }}
-            >
-              <Table.Tr>
-                <Table.Th w="50px">Ώρα</Table.Th>
-                {courtData
-                  .sort((a, b) => (a.name > b.name ? 1 : -1))
-                  .map((c) => {
-                    return <Table.Th key={c._id}>{c.name}</Table.Th>;
-                  })}
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{rows}</Table.Tbody>
-          </Table>
-        </ScrollArea>
+      <Box flex={1} w="100%" ref={calendarWrapperRef} pos="relative">
+        {reservations.isPending ? (
+          <Stack
+            justify="center"
+            align="center"
+            style={{ minHeight: 200 }}
+            gap="sm"
+          >
+            <Loader type="dots" />
+            <Text size="sm" c="dimmed">
+              Φόρτωση κρατήσεων…
+            </Text>
+          </Stack>
+        ) : (
+          <ScrollArea h={`${calendarWrapperHeight}px`} type="never" w="100%">
+            <Table stickyHeader stickyHeaderOffset={0} withColumnBorders>
+              <Table.Thead
+                styles={{
+                  thead: {
+                    zIndex: 2,
+                  },
+                }}
+              >
+                <Table.Tr>
+                  <Table.Th w="50px">Ώρα</Table.Th>
+                  {courtData
+                    .sort((a, b) => (a.name > b.name ? 1 : -1))
+                    .map((c) => {
+                      return <Table.Th key={c._id}>{c.name}</Table.Th>;
+                    })}
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{rows}</Table.Tbody>
+            </Table>
+          </ScrollArea>
+        )}
       </Box>
     </Stack>
   );
