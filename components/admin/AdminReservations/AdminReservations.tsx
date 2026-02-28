@@ -130,8 +130,8 @@ const AdminReservations = () => {
           .map((c) => {
             const reservation = reservationData.filter(
               (r) =>
-                // same court
-                r.court._id === c._id &&
+                // same court (convert to string in case _id is ObjectId)
+                r.court._id?.toString() === c._id?.toString() &&
                 // same day
                 r.datetime.split('T')[0] === formatedDate &&
                 // reservation time starts with current time
