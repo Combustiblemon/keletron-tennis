@@ -41,70 +41,73 @@ export type AdminReservationType = ReservationType & {
 export const useApiClient = () => {
   const { getToken } = useAuth();
 
-  const handleResponse = async <ReturnDataType, Endpoint extends string>(
-    res: Response
-  ): Promise<APIResponse<ReturnDataType, Endpoint> | undefined> => {
-    try {
-      if (!res.ok) {
-        if (res.status === 401) {
-          // Only redirect if Clerk says the user has no valid session.
-          // Backend 401 can be due to token expiry, backend bug, or network issues;
-          // we should not log the user out unless their session is actually invalid.
-          if (window && !publicPages.includes(window.location.pathname)) {
-            const token = await getToken({ skipCache: true });
+  const handleResponse = useCallback(
+    async <ReturnDataType, Endpoint extends string>(
+      res: Response
+    ): Promise<APIResponse<ReturnDataType, Endpoint> | undefined> => {
+      try {
+        if (!res.ok) {
+          if (res.status === 401) {
+            // Only redirect if Clerk says the user has no valid session.
+            // Backend 401 can be due to token expiry, backend bug, or network issues;
+            // we should not log the user out unless their session is actually invalid.
+            if (window && !publicPages.includes(window.location.pathname)) {
+              const token = await getToken({ skipCache: true });
 
-            if (token == null) {
-              window.location.pathname = '/sign-in';
+              if (token == null) {
+                window.location.pathname = '/sign-in';
+              }
             }
+
+            return {
+              success: false,
+              errors: [{ message: Errors.UNAUTHORIZED }],
+              endpoint: '' as Endpoint,
+            };
+          }
+
+          if (res.status === 404) {
+            return {
+              success: false,
+              errors: [{ message: Errors.NOT_FOUND }],
+              endpoint: '' as Endpoint,
+            };
+          }
+
+          let body: ReturnType<typeof onError> = {
+            endpoint: '',
+            errors: [],
+            success: false,
+          };
+
+          try {
+            body = (await res.json()) as ReturnType<typeof onError>;
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error(`Error on server response: `, err);
           }
 
           return {
-            success: false,
-            errors: [{ message: Errors.UNAUTHORIZED }],
-            endpoint: '' as Endpoint,
+            ...body,
+            endpoint: body.endpoint as Endpoint,
           };
-        }
-
-        if (res.status === 404) {
-          return {
-            success: false,
-            errors: [{ message: Errors.NOT_FOUND }],
-            endpoint: '' as Endpoint,
-          };
-        }
-
-        let body: ReturnType<typeof onError> = {
-          endpoint: '',
-          errors: [],
-          success: false,
-        };
-
-        try {
-          body = (await res.json()) as ReturnType<typeof onError>;
-        } catch (err) {
-          // eslint-disable-next-line no-console
-          console.error(`Error on server response: `, err);
         }
 
         return {
-          ...body,
-          endpoint: body.endpoint as Endpoint,
-        };
+          ...((await res.json()) as ReturnType<
+            typeof onSuccess<ReturnDataType, Endpoint>
+          >),
+          success: true,
+        } as APIResponse<ReturnDataType, Endpoint>;
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(err);
       }
 
-      return {
-        ...((await res.json()) as ReturnType<
-          typeof onSuccess<ReturnDataType, Endpoint>
-        >),
-        success: true,
-      } as APIResponse<ReturnDataType, Endpoint>;
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(err);
-    }
-
-    return undefined;
-  };
+      return undefined;
+    },
+    [getToken]
+  );
 
   const getHeaders = useCallback(async () => {
     const token = await getToken();

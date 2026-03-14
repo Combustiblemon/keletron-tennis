@@ -234,7 +234,9 @@ const AdminReservations = () => {
                 ))}
               </Table.Tr>
             </Table.Thead>
-            <Table.Tbody key={`${formatedDate}-${paintReservations}`}>{rows}</Table.Tbody>
+            <Table.Tbody key={`${formatedDate}-${paintReservations}`}>
+              {rows}
+            </Table.Tbody>
           </Table>
         </ScrollArea>
       </Box>
