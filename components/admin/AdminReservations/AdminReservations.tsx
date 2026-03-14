@@ -1,7 +1,6 @@
 import {
   Box,
   Group,
-  Loader,
   LoadingOverlay,
   ScrollArea,
   Stack,
@@ -110,51 +109,48 @@ const AdminReservations = () => {
   const courtData = useMemo(
     () =>
       courts.data?.success ? (courts.data?.data as Array<CourtDataType>) : [],
-    [courts]
+    [courts.data]
   );
 
   const [formatedDate] = formatDate(selectedDate).split('T');
 
-  const rows = useMemo(() => {
-    return times.map((time) => (
-      <Table.Tr
-        key={time}
-        h={`${TABLE_CELL_HEIGHT}px`}
-        w={`${TABLE_CELL_WIDTH}px`}
-      >
-        <Table.Td p="xs" align="right">
-          {time}
-        </Table.Td>
-        {courtData
-          .sort((a, b) => (a.name > b.name ? 1 : -1))
-          .map((c) => {
-            const reservation = reservationData.filter(
-              (r) =>
-                // same court (convert to string in case _id is ObjectId)
-                r.court._id?.toString() === c._id?.toString() &&
-                // same day
-                r.datetime.split('T')[0] === formatedDate &&
-                // reservation time starts with current time
-                r.datetime.split('T')[1].substring(0, 2) ===
-                  time.substring(0, 2)
-            )[0];
+  const rows = times.map((time) => (
+    <Table.Tr
+      key={time}
+      h={`${TABLE_CELL_HEIGHT}px`}
+      w={`${TABLE_CELL_WIDTH}px`}
+    >
+      <Table.Td p="xs" align="right">
+        {time}
+      </Table.Td>
+      {courtData
+        .sort((a, b) => (a.name > b.name ? 1 : -1))
+        .map((c) => {
+          const reservation = reservationData.filter(
+            (r) =>
+              // same court (convert to string in case _id is ObjectId)
+              r.court._id?.toString() === c._id?.toString() &&
+              // same day
+              r.datetime.split('T')[0] === formatedDate &&
+              // reservation time starts with current time
+              r.datetime.split('T')[1].substring(0, 2) === time.substring(0, 2)
+          )[0];
 
-            return (
-              <Table.Td key={`${c._id}${time}`} p={0} pos="relative">
-                {reservation ? (
-                  <ReservationVisual
-                    reservation={reservation}
-                    width={`${TABLE_CELL_WIDTH}px`}
-                  />
-                ) : (
-                  ''
-                )}
-              </Table.Td>
-            );
-          })}
-      </Table.Tr>
-    ));
-  }, [courtData, formatedDate, reservationData]);
+          return (
+            <Table.Td key={`${c._id}${time}`} p={0} pos="relative">
+              {reservation ? (
+                <ReservationVisual
+                  reservation={reservation}
+                  width={`${TABLE_CELL_WIDTH}px`}
+                />
+              ) : (
+                ''
+              )}
+            </Table.Td>
+          );
+        })}
+    </Table.Tr>
+  ));
 
   const res = useMemo(
     () => reservationData.find((v) => v._id.toString() === reservationId),
@@ -169,7 +165,7 @@ const AdminReservations = () => {
   return (
     <Stack pt="sm" flex={1}>
       <LoadingOverlay
-        visible={isLoading || courts.isPending}
+        visible={isLoading || courts.isPending || reservations.isPending}
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
       />
@@ -202,42 +198,38 @@ const AdminReservations = () => {
           }}
         />
       </Group>
-      <Box flex={1} w="100%" ref={calendarWrapperRef} pos="relative">
-        {reservations.isPending ? (
-          <Stack
-            justify="center"
-            align="center"
-            style={{ minHeight: 200 }}
-            gap="sm"
-          >
-            <Loader type="dots" />
-            <Text size="sm" c="dimmed">
-              Φόρτωση κρατήσεων…
-            </Text>
-          </Stack>
-        ) : (
-          <ScrollArea h={`${calendarWrapperHeight}px`} type="never" w="100%">
-            <Table stickyHeader stickyHeaderOffset={0} withColumnBorders>
-              <Table.Thead
-                styles={{
-                  thead: {
-                    zIndex: 2,
-                  },
-                }}
-              >
-                <Table.Tr>
-                  <Table.Th w="50px">Ώρα</Table.Th>
-                  {courtData
-                    .sort((a, b) => (a.name > b.name ? 1 : -1))
-                    .map((c) => {
-                      return <Table.Th key={c._id}>{c.name}</Table.Th>;
-                    })}
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>{rows}</Table.Tbody>
-            </Table>
-          </ScrollArea>
-        )}
+      <Box
+        flex={1}
+        w="100%"
+        ref={calendarWrapperRef}
+        pos="relative"
+        style={{ minHeight: 300 }}
+      >
+        <ScrollArea
+          h={`${Math.max(calendarWrapperHeight, 300)}px`}
+          type="never"
+          w="100%"
+        >
+          <Table stickyHeader stickyHeaderOffset={0} withColumnBorders>
+            <Table.Thead
+              styles={{
+                thead: {
+                  zIndex: 2,
+                },
+              }}
+            >
+              <Table.Tr>
+                <Table.Th w="50px">Ώρα</Table.Th>
+                {courtData
+                  .sort((a, b) => (a.name > b.name ? 1 : -1))
+                  .map((c) => {
+                    return <Table.Th key={c._id}>{c.name}</Table.Th>;
+                  })}
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>{rows}</Table.Tbody>
+          </Table>
+        </ScrollArea>
       </Box>
     </Stack>
   );
