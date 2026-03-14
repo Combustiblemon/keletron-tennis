@@ -10,7 +10,7 @@ import {
 import { DateInput } from '@mantine/dates';
 import { useDisclosure, useElementSize, useToggle } from '@mantine/hooks';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 import ReservationDetails from '@/components/Reservation/ReservationDetails';
 import { useApiClient } from '@/lib/api/hooks';
@@ -58,6 +58,13 @@ const AdminReservations = () => {
   const [reservationId, setReservationId] = useState<string>('');
   const [opened, { close, open }] = useDisclosure();
   const [isLoading, toggleIsLoading] = useToggle();
+
+  // Defer painting reservation cells until after client mount to avoid PWA/cache
+  // serving stale shell where first paint shows empty table
+  const [paintReservations, setPaintReservations] = useState(false);
+  useLayoutEffect(() => {
+    setPaintReservations(true);
+  }, []);
 
   useEffect(() => {
     toggleIsLoading(true);
@@ -129,6 +136,9 @@ const AdminReservations = () => {
         {time}
       </Table.Td>
       {sortedCourts.map((c) => {
+        if (!paintReservations) {
+          return <Table.Td key={`${c._id}${time}`} p={0} pos="relative" />;
+        }
         const reservation = reservationData.filter(
           (r) =>
             r.court._id?.toString() === c._id?.toString() &&
@@ -224,7 +234,7 @@ const AdminReservations = () => {
                 ))}
               </Table.Tr>
             </Table.Thead>
-            <Table.Tbody key={formatedDate}>{rows}</Table.Tbody>
+            <Table.Tbody key={`${formatedDate}-${paintReservations}`}>{rows}</Table.Tbody>
           </Table>
         </ScrollArea>
       </Box>
