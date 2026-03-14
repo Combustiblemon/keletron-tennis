@@ -114,6 +114,11 @@ const AdminReservations = () => {
 
   const [formatedDate] = formatDate(selectedDate).split('T');
 
+  const sortedCourts = useMemo(
+    () => [...courtData].sort((a, b) => (a.name > b.name ? 1 : -1)),
+    [courtData]
+  );
+
   const rows = times.map((time) => (
     <Table.Tr
       key={time}
@@ -123,32 +128,26 @@ const AdminReservations = () => {
       <Table.Td p="xs" align="right">
         {time}
       </Table.Td>
-      {courtData
-        .sort((a, b) => (a.name > b.name ? 1 : -1))
-        .map((c) => {
-          const reservation = reservationData.filter(
-            (r) =>
-              // same court (convert to string in case _id is ObjectId)
-              r.court._id?.toString() === c._id?.toString() &&
-              // same day
-              r.datetime.split('T')[0] === formatedDate &&
-              // reservation time starts with current time
-              r.datetime.split('T')[1].substring(0, 2) === time.substring(0, 2)
-          )[0];
+      {sortedCourts.map((c) => {
+        const reservation = reservationData.filter(
+          (r) =>
+            r.court._id?.toString() === c._id?.toString() &&
+            r.datetime.split('T')[0] === formatedDate &&
+            r.datetime.split('T')[1].substring(0, 2) === time.substring(0, 2)
+        )[0];
 
-          return (
-            <Table.Td key={`${c._id}${time}`} p={0} pos="relative">
-              {reservation ? (
-                <ReservationVisual
-                  reservation={reservation}
-                  width={`${TABLE_CELL_WIDTH}px`}
-                />
-              ) : (
-                ''
-              )}
-            </Table.Td>
-          );
-        })}
+        return (
+          <Table.Td key={`${c._id}${time}`} p={0} pos="relative">
+            {reservation ? (
+              <ReservationVisual
+                key={reservation._id?.toString() ?? `${c._id}-${time}`}
+                reservation={reservation}
+                width={`${TABLE_CELL_WIDTH}px`}
+              />
+            ) : null}
+          </Table.Td>
+        );
+      })}
     </Table.Tr>
   ));
 
@@ -220,14 +219,12 @@ const AdminReservations = () => {
             >
               <Table.Tr>
                 <Table.Th w="50px">Ώρα</Table.Th>
-                {courtData
-                  .sort((a, b) => (a.name > b.name ? 1 : -1))
-                  .map((c) => {
-                    return <Table.Th key={c._id}>{c.name}</Table.Th>;
-                  })}
+                {sortedCourts.map((c) => (
+                  <Table.Th key={c._id}>{c.name}</Table.Th>
+                ))}
               </Table.Tr>
             </Table.Thead>
-            <Table.Tbody>{rows}</Table.Tbody>
+            <Table.Tbody key={formatedDate}>{rows}</Table.Tbody>
           </Table>
         </ScrollArea>
       </Box>
