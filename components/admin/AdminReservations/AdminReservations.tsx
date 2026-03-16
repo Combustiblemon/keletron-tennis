@@ -88,7 +88,7 @@ const AdminReservations = () => {
   }, []);
 
   const reservations = useQuery({
-    queryKey: ['reservations'],
+    queryKey: ['admin', 'reservations'],
     queryFn: async () => api.admin.reservations.GET(),
     staleTime: 5 * 60 * 1000, // 5 min – avoid refetch on date change / focus
     placeholderData: keepPreviousData,

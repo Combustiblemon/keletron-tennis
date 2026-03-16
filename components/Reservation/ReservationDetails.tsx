@@ -134,7 +134,7 @@ const ReservationDetails = ({
     await api.reservations.DELETE([updatedReservation.getValues()._id || '']);
     setIsLoading(false);
 
-    queryClient.invalidateQueries({ queryKey: ['reservations'] });
+    queryClient.invalidateQueries({ queryKey: ['user', 'reservations'] });
     close();
   };
 
@@ -161,7 +161,7 @@ const ReservationDetails = ({
         });
       }
 
-      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['user', 'reservations'] });
       close();
     } catch (err) {
       // eslint-disable-next-line no-console

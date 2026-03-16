@@ -18,7 +18,7 @@ const LoggedInHomepage = () => {
   const api = useApiClient();
 
   const userReservations = useQuery({
-    queryKey: ['reservations'],
+    queryKey: ['user', 'reservations'],
     queryFn: async () => api.reservations.GET(undefined, undefined, 0),
     retry: 3,
   });
