@@ -6,6 +6,8 @@ import { initializeApp } from 'firebase/app';
 // import { onMessage } from 'firebase/messaging';
 import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
 
+import { CLERK_PERIODIC_GET_TOKEN_MESSAGE } from '../lib/clerkSwRefresh';
+
 // eslint-disable-next-line import/no-anonymous-default-export
 export default null;
 declare let self: ServiceWorkerGlobalScope;
@@ -40,6 +42,29 @@ onBackgroundMessage(messaging, (payload) => {
         ...payload.data,
       },
     }
+  );
+});
+
+/** Ping open tabs so the main thread can call Clerk `getToken()` (SW cannot). */
+function broadcastClerkTokenRefresh() {
+  self.clients
+    .matchAll({ type: 'window', includeUncontrolled: true })
+    .then((clientList) => {
+      clientList.forEach((client) => {
+        client.postMessage({ type: CLERK_PERIODIC_GET_TOKEN_MESSAGE });
+      });
+    });
+}
+
+/** While the messaging SW is alive, nudge Clerk refresh on an interval. */
+const CLERK_TOKEN_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+setInterval(broadcastClerkTokenRefresh, CLERK_TOKEN_REFRESH_INTERVAL_MS);
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    self.clients.claim().then(() => {
+      broadcastClerkTokenRefresh();
+    })
   );
 });
 
