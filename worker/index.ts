@@ -60,10 +60,10 @@ self.addEventListener('notificationclick', (event) => {
   switch (data?.type) {
     case 'new':
     case 'update':
-      url = `${websiteURL}/admin?reservationId=${reservationId}&datetime=${data?.datetime ?? ''}`;
+      url = `${websiteURL}/admin-legacy?reservationId=${reservationId}&datetime=${data?.datetime ?? ''}`;
       break;
     case 'delete':
-      url = `${websiteURL}/admin?datetime=${data?.datetime ?? ''}`;
+      url = `${websiteURL}/admin-legacy?datetime=${data?.datetime ?? ''}`;
       break;
     default:
       break;

@@ -4,7 +4,7 @@ import AdminCourts from '@/components/admin/AdminCourts/AdminCourts';
 import AdminReservations from '@/components/admin/AdminReservations/AdminReservations';
 import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute';
 
-const Admin = () => {
+const AdminLegacy = () => {
   return (
     <ProtectedRoute requireAdmin>
       <Tabs
@@ -71,4 +71,4 @@ const Admin = () => {
   );
 };
 
-export default Admin;
+export default AdminLegacy;
