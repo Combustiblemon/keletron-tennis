@@ -1,17 +1,8 @@
-import {
-  Box,
-  Group,
-  Loader,
-  LoadingOverlay,
-  ScrollArea,
-  Stack,
-  Table,
-  Text,
-} from '@mantine/core';
+import { Box, Group, LoadingOverlay, Stack, Table, Text } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useDisclosure, useElementSize, useToggle } from '@mantine/hooks';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 import ReservationDetails from '@/components/Reservation/ReservationDetails';
 import { useApiClient } from '@/lib/api/hooks';
@@ -47,18 +38,25 @@ const times = [
   '23:00',
 ];
 
-const TABLE_CELL_HEIGHT = 60;
-const TABLE_CELL_WIDTH = 90;
+/** Minimum px per hour so reservation cards fit name + meta without clipping. */
+const MIN_HOUR_ROW_HEIGHT = 120;
 
 const AdminReservations = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const { ref: calendarWrapperRef, height: calendarWrapperHeight } =
-    useElementSize();
+  const { ref: tableWrapRef, height: tableWrapHeight } = useElementSize();
+  const { ref: theadRef, height: theadHeight } = useElementSize();
   const api = useApiClient();
 
   const [reservationId, setReservationId] = useState<string>('');
   const [opened, { close, open }] = useDisclosure();
   const [isLoading, toggleIsLoading] = useToggle();
+
+  // Defer painting reservation cells until after client mount to avoid PWA/cache
+  // serving stale shell where first paint shows empty table
+  const [paintReservations, setPaintReservations] = useState(false);
+  useLayoutEffect(() => {
+    setPaintReservations(true);
+  }, []);
 
   useEffect(() => {
     toggleIsLoading(true);
@@ -82,7 +80,7 @@ const AdminReservations = () => {
   }, []);
 
   const reservations = useQuery({
-    queryKey: ['reservations'],
+    queryKey: ['admin', 'reservations'],
     queryFn: async () => api.admin.reservations.GET(),
     staleTime: 5 * 60 * 1000, // 5 min – avoid refetch on date change / focus
     placeholderData: keepPreviousData,
@@ -110,51 +108,54 @@ const AdminReservations = () => {
   const courtData = useMemo(
     () =>
       courts.data?.success ? (courts.data?.data as Array<CourtDataType>) : [],
-    [courts]
+    [courts.data]
   );
 
   const [formatedDate] = formatDate(selectedDate).split('T');
 
-  const rows = useMemo(() => {
-    return times.map((time) => (
-      <Table.Tr
-        key={time}
-        h={`${TABLE_CELL_HEIGHT}px`}
-        w={`${TABLE_CELL_WIDTH}px`}
-      >
-        <Table.Td p="xs" align="right">
-          {time}
-        </Table.Td>
-        {courtData
-          .sort((a, b) => (a.name > b.name ? 1 : -1))
-          .map((c) => {
-            const reservation = reservationData.filter(
-              (r) =>
-                // same court
-                r.court._id === c._id &&
-                // same day
-                r.datetime.split('T')[0] === formatedDate &&
-                // reservation time starts with current time
-                r.datetime.split('T')[1].substring(0, 2) ===
-                  time.substring(0, 2)
-            )[0];
+  const sortedCourts = useMemo(
+    () => [...courtData].sort((a, b) => (a.name > b.name ? 1 : -1)),
+    [courtData]
+  );
 
-            return (
-              <Table.Td key={`${c._id}${time}`} p={0} pos="relative">
-                {reservation ? (
-                  <ReservationVisual
-                    reservation={reservation}
-                    width={`${TABLE_CELL_WIDTH}px`}
-                  />
-                ) : (
-                  ''
-                )}
-              </Table.Td>
-            );
-          })}
-      </Table.Tr>
-    ));
-  }, [courtData, formatedDate, reservationData]);
+  const rowHeight =
+    tableWrapHeight > 0 && theadHeight > 0
+      ? Math.max(
+          (tableWrapHeight - theadHeight) / times.length,
+          MIN_HOUR_ROW_HEIGHT
+        )
+      : MIN_HOUR_ROW_HEIGHT;
+
+  const rows = times.map((time) => (
+    <Table.Tr key={time} h={`${rowHeight}px`}>
+      <Table.Td p="xs" align="right">
+        {time}
+      </Table.Td>
+      {sortedCourts.map((c) => {
+        if (!paintReservations) {
+          return <Table.Td key={`${c._id}${time}`} p={0} pos="relative" />;
+        }
+        const reservation = reservationData.filter(
+          (r) =>
+            r.court._id?.toString() === c._id?.toString() &&
+            r.datetime.split('T')[0] === formatedDate &&
+            r.datetime.split('T')[1].substring(0, 2) === time.substring(0, 2)
+        )[0];
+
+        return (
+          <Table.Td key={`${c._id}${time}`} p={0} pos="relative">
+            {reservation ? (
+              <ReservationVisual
+                key={reservation._id?.toString() ?? `${c._id}-${time}`}
+                reservation={reservation}
+                hourRowHeight={rowHeight}
+              />
+            ) : null}
+          </Table.Td>
+        );
+      })}
+    </Table.Tr>
+  ));
 
   const res = useMemo(
     () => reservationData.find((v) => v._id.toString() === reservationId),
@@ -167,9 +168,9 @@ const AdminReservations = () => {
   );
 
   return (
-    <Stack pt="sm" flex={1}>
+    <Stack pt="sm" flex={1} h="100%" miw={0} mih={0} style={{ minHeight: 0 }}>
       <LoadingOverlay
-        visible={isLoading || courts.isPending}
+        visible={isLoading || courts.isPending || reservations.isPending}
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
       />
@@ -202,42 +203,37 @@ const AdminReservations = () => {
           }}
         />
       </Group>
-      <Box flex={1} w="100%" ref={calendarWrapperRef} pos="relative">
-        {reservations.isPending ? (
-          <Stack
-            justify="center"
-            align="center"
-            style={{ minHeight: 200 }}
-            gap="sm"
+      <Box
+        flex={1}
+        w="100%"
+        ref={tableWrapRef}
+        pos="relative"
+        mih={0}
+        style={{ minHeight: 0, overflowY: 'auto' }}
+      >
+        <Table
+          withColumnBorders
+          style={{ width: '100%', tableLayout: 'fixed' }}
+        >
+          <Table.Thead
+            ref={theadRef}
+            styles={{
+              thead: {
+                zIndex: 2,
+              },
+            }}
           >
-            <Loader type="dots" />
-            <Text size="sm" c="dimmed">
-              Φόρτωση κρατήσεων…
-            </Text>
-          </Stack>
-        ) : (
-          <ScrollArea h={`${calendarWrapperHeight}px`} type="never" w="100%">
-            <Table stickyHeader stickyHeaderOffset={0} withColumnBorders>
-              <Table.Thead
-                styles={{
-                  thead: {
-                    zIndex: 2,
-                  },
-                }}
-              >
-                <Table.Tr>
-                  <Table.Th w="50px">Ώρα</Table.Th>
-                  {courtData
-                    .sort((a, b) => (a.name > b.name ? 1 : -1))
-                    .map((c) => {
-                      return <Table.Th key={c._id}>{c.name}</Table.Th>;
-                    })}
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>{rows}</Table.Tbody>
-            </Table>
-          </ScrollArea>
-        )}
+            <Table.Tr>
+              <Table.Th w={56}>Ώρα</Table.Th>
+              {sortedCourts.map((c) => (
+                <Table.Th key={c._id}>{c.name}</Table.Th>
+              ))}
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody key={`${formatedDate}-${paintReservations}`}>
+            {rows}
+          </Table.Tbody>
+        </Table>
       </Box>
     </Stack>
   );

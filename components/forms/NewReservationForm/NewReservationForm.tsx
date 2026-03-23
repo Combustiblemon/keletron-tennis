@@ -257,7 +257,7 @@ const NewReservationForm = ({
         color: 'green',
       });
 
-      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['user', 'reservations'] });
     } catch {
       notifications.show({
         message: 'error creating reservation',

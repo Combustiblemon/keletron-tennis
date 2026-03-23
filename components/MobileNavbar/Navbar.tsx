@@ -21,7 +21,7 @@ import { useRouter } from 'next/router';
 import { useMemo } from 'react';
 
 import { Language, useLanguage } from '@/context/LanguageContext';
-import { isInstalled, isIOS, isMobile, logout } from '@/lib/common';
+import { isInstalled, isMobile, logout } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { firebaseCloudMessaging } from '@/lib/webPush';
 
@@ -165,16 +165,16 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
               onClick={async () => {
                 toggle();
 
-                if (!isIOS() || firebaseCloudMessaging.isInitialized()) {
+                if (firebaseCloudMessaging.isInitialized()) {
                   return;
                 }
 
                 const token = await firebaseCloudMessaging.init();
 
                 if (token) {
-                  await firebaseCloudMessaging.saveToken();
-                  // eslint-disable-next-line no-console
-                  console.log('initialized FCM');
+                  await queryClient.invalidateQueries({
+                    queryKey: ['fcm-token'],
+                  });
                 }
               }}
               hiddenFrom="sm"

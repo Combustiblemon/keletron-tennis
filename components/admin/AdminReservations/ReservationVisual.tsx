@@ -9,25 +9,32 @@ import { iconStyles } from '@/lib/common';
 
 export interface ReservationVisualProps {
   reservation: AdminReservationType;
-  width: number | string;
+  /** Pixel height of one hour row (positions scale with this). */
+  hourRowHeight?: number;
 }
 
 const ReservationVisual = ({
   reservation: r,
-  width,
+  hourRowHeight = 120,
 }: ReservationVisualProps) => {
   const [opened, { close, open }] = useDisclosure();
+  const minutesIntoHour = Number(r.datetime.substring(14, 16));
+  const topPx = (minutesIntoHour / 60) * hourRowHeight;
+  const heightPx = (r.duration / 60) * hourRowHeight;
+
   return (
     <Paper
       p="xs"
       withBorder
       shadow="xs"
-      w={width}
       pos="absolute"
-      top={`${Number(r.datetime.substring(14, 16))}px`}
+      left={rem(2)}
+      right={rem(2)}
+      w="auto"
+      top={`${topPx}px`}
       radius="sm"
       bg="teal"
-      h={`${r.duration}px`}
+      h={`${Math.max(heightPx, 2)}px`}
       onClick={(e) => {
         e.stopPropagation();
         open();

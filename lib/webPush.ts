@@ -15,6 +15,9 @@ import {
  *
  * FCM is used for push notifications in the app.
  * With Clerk authentication, tokens are automatically sent with authenticated requests.
+ *
+ * iOS: Web Push (Safari 16.4+) only works in a PWA added to the Home Screen;
+ * `init()` returns null in a normal Safari tab without prompting for notifications.
  */
 
 const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_KEY || '';
@@ -22,6 +25,31 @@ const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_KEY || '';
 const firebaseConfig = JSON.parse(
   process.env.NEXT_PUBLIC_FIREBASE_CONFIG || '{}'
 );
+
+/** Detect iPhone / iPod / iPad (classic UA). */
+function isIOSUserAgent(): boolean {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+/**
+ * iOS only delivers Web Push for PWAs added to Home Screen (Safari 16.4+).
+ * In a normal Safari tab, requesting a push subscription fails or misleads users.
+ */
+function isIOSWebPushEligible(): boolean {
+  if (typeof window === 'undefined' || !isIOSUserAgent()) {
+    return true;
+  }
+
+  const standalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+  return standalone;
+}
 
 const firebaseCloudMessagingBuilder = () => {
   let firebaseapp: FirebaseApp | null = null;
@@ -32,6 +60,10 @@ const firebaseCloudMessagingBuilder = () => {
     // initializing firebase app
     async init(): Promise<string | null> {
       if (!(await isSupported())) {
+        return null;
+      }
+
+      if (!isIOSWebPushEligible()) {
         return null;
       }
 
