@@ -1,12 +1,4 @@
-import {
-  Box,
-  Group,
-  LoadingOverlay,
-  ScrollArea,
-  Stack,
-  Table,
-  Text,
-} from '@mantine/core';
+import { Box, Group, LoadingOverlay, Stack, Table, Text } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useDisclosure, useElementSize, useToggle } from '@mantine/hooks';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -46,13 +38,13 @@ const times = [
   '23:00',
 ];
 
-const TABLE_CELL_HEIGHT = 60;
-const TABLE_CELL_WIDTH = 90;
+/** Minimum px per hour so reservation cards fit name + meta without clipping. */
+const MIN_HOUR_ROW_HEIGHT = 120;
 
 const AdminReservations = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const { ref: calendarWrapperRef, height: calendarWrapperHeight } =
-    useElementSize();
+  const { ref: tableWrapRef, height: tableWrapHeight } = useElementSize();
+  const { ref: theadRef, height: theadHeight } = useElementSize();
   const api = useApiClient();
 
   const [reservationId, setReservationId] = useState<string>('');
@@ -126,12 +118,16 @@ const AdminReservations = () => {
     [courtData]
   );
 
+  const rowHeight =
+    tableWrapHeight > 0 && theadHeight > 0
+      ? Math.max(
+          (tableWrapHeight - theadHeight) / times.length,
+          MIN_HOUR_ROW_HEIGHT
+        )
+      : MIN_HOUR_ROW_HEIGHT;
+
   const rows = times.map((time) => (
-    <Table.Tr
-      key={time}
-      h={`${TABLE_CELL_HEIGHT}px`}
-      w={`${TABLE_CELL_WIDTH}px`}
-    >
+    <Table.Tr key={time} h={`${rowHeight}px`}>
       <Table.Td p="xs" align="right">
         {time}
       </Table.Td>
@@ -152,7 +148,7 @@ const AdminReservations = () => {
               <ReservationVisual
                 key={reservation._id?.toString() ?? `${c._id}-${time}`}
                 reservation={reservation}
-                width={`${TABLE_CELL_WIDTH}px`}
+                hourRowHeight={rowHeight}
               />
             ) : null}
           </Table.Td>
@@ -172,7 +168,7 @@ const AdminReservations = () => {
   );
 
   return (
-    <Stack pt="sm" flex={1}>
+    <Stack pt="sm" flex={1} h="100%" miw={0} mih={0} style={{ minHeight: 0 }}>
       <LoadingOverlay
         visible={isLoading || courts.isPending || reservations.isPending}
         zIndex={1000}
@@ -210,35 +206,34 @@ const AdminReservations = () => {
       <Box
         flex={1}
         w="100%"
-        ref={calendarWrapperRef}
+        ref={tableWrapRef}
         pos="relative"
-        style={{ minHeight: 300 }}
+        mih={0}
+        style={{ minHeight: 0, overflowY: 'auto' }}
       >
-        <ScrollArea
-          h={`${Math.max(calendarWrapperHeight, 300)}px`}
-          type="never"
-          w="100%"
+        <Table
+          withColumnBorders
+          style={{ width: '100%', tableLayout: 'fixed' }}
         >
-          <Table stickyHeader stickyHeaderOffset={0} withColumnBorders>
-            <Table.Thead
-              styles={{
-                thead: {
-                  zIndex: 2,
-                },
-              }}
-            >
-              <Table.Tr>
-                <Table.Th w="50px">Ώρα</Table.Th>
-                {sortedCourts.map((c) => (
-                  <Table.Th key={c._id}>{c.name}</Table.Th>
-                ))}
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody key={`${formatedDate}-${paintReservations}`}>
-              {rows}
-            </Table.Tbody>
-          </Table>
-        </ScrollArea>
+          <Table.Thead
+            ref={theadRef}
+            styles={{
+              thead: {
+                zIndex: 2,
+              },
+            }}
+          >
+            <Table.Tr>
+              <Table.Th w={56}>Ώρα</Table.Th>
+              {sortedCourts.map((c) => (
+                <Table.Th key={c._id}>{c.name}</Table.Th>
+              ))}
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody key={`${formatedDate}-${paintReservations}`}>
+            {rows}
+          </Table.Tbody>
+        </Table>
       </Box>
     </Stack>
   );

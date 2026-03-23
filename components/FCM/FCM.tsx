@@ -1,6 +1,7 @@
+import { useAuth } from '@clerk/nextjs';
 import { useEffect } from 'react';
 
-import { isIOS } from '@/lib/common';
+import { CLERK_PERIODIC_GET_TOKEN_MESSAGE } from '@/lib/clerkSwRefresh';
 import { firebaseCloudMessaging } from '@/lib/webPush';
 
 import { useUser } from '../UserProvider/UserProvider';
@@ -23,15 +24,16 @@ import { useUser } from '../UserProvider/UserProvider';
  * 5. UserProvider sends token to backend (with Clerk JWT)
  * 6. Backend associates token with user
  *
- * Note: iOS doesn't support PWA push notifications
+ * iOS (16.4+): Web Push works only when the app is installed (Add to Home Screen);
+ * init() is a no-op in a regular Safari tab (see lib/webPush.ts).
  */
 const FCM = () => {
   const { isAuthenticated } = useUser();
+  const { getToken, isSignedIn } = useAuth();
 
   useEffect(() => {
     (async () => {
-      // Skip FCM initialization on iOS (not supported) or if not authenticated
-      if (isIOS() || !isAuthenticated) {
+      if (!isAuthenticated) {
         return;
       }
 
@@ -57,6 +59,30 @@ const FCM = () => {
       }
     })();
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      return undefined;
+    }
+
+    if (!isAuthenticated || !isSignedIn) {
+      return undefined;
+    }
+
+    const onSwMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string } | undefined;
+
+      if (data?.type === CLERK_PERIODIC_GET_TOKEN_MESSAGE) {
+        getToken().catch(() => {
+          /* best-effort Clerk session touch from SW ping */
+        });
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', onSwMessage);
+    return () =>
+      navigator.serviceWorker.removeEventListener('message', onSwMessage);
+  }, [getToken, isAuthenticated, isSignedIn]);
 
   // This component doesn't render anything
   return null;
