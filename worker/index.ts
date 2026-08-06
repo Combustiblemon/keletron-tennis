@@ -25,14 +25,17 @@ const firebaseConfig = JSON.parse(
 const firebaseApp = initializeApp(firebaseConfig);
 const messaging = getMessaging(firebaseApp);
 
-onBackgroundMessage(messaging, (payload) => {
+// The firebase SW awaits this handler inside the push event's waitUntil, so
+// returning the showNotification promise keeps the SW alive until the
+// notification is shown (iOS revokes subscriptions after silent pushes).
+onBackgroundMessage(messaging, async (payload) => {
   // eslint-disable-next-line no-console
   console.log(
     '[firebase-messaging-sw.js] Received background message ',
     payload
   );
 
-  self.registration.showNotification(
+  await self.registration.showNotification(
     payload.notification?.title || payload.data?.title || '',
     {
       body: payload.notification?.body || payload.data?.body,

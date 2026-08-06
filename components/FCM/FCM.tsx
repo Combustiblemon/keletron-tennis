@@ -2,63 +2,28 @@ import { useAuth } from '@clerk/nextjs';
 import { useEffect } from 'react';
 
 import { CLERK_PERIODIC_GET_TOKEN_MESSAGE } from '@/lib/clerkSwRefresh';
-import { firebaseCloudMessaging } from '@/lib/webPush';
 
 import { useUser } from '../UserProvider/UserProvider';
 
 /**
  * FCM (Firebase Cloud Messaging) Component
  *
- * Initializes push notifications when user is authenticated.
+ * Bridges service-worker pings to Clerk session refreshes.
  *
- * Integration with Clerk:
- * - Waits for user authentication before initializing
- * - Token is saved to backend via UserProvider (with Clerk auth)
- * - Token is deleted on logout via logout() function
+ * FCM initialization is NOT done here:
+ * - Silent auto path: UserProvider's ['fcm-token'] query calls
+ *   firebaseCloudMessaging.init() (only when permission already granted)
+ *   and registers the token with the backend.
+ * - Permission prompting: user-gesture paths only — the mobile burger menu
+ *   (Navbar) and the notification settings panel (NotificationSettings).
  *
- * Flow:
- * 1. User signs in (Clerk)
- * 2. FCM component detects authentication
- * 3. Requests notification permission
- * 4. Gets FCM token from Firebase
- * 5. UserProvider sends token to backend (with Clerk JWT)
- * 6. Backend associates token with user
- *
- * iOS (16.4+): Web Push works only when the app is installed (Add to Home Screen);
- * init() is a no-op in a regular Safari tab (see lib/webPush.ts).
+ * This component only listens for the service worker's periodic
+ * CLERK_PERIODIC_GET_TOKEN_MESSAGE and touches the Clerk session so the
+ * backend keeps receiving fresh tokens from open tabs.
  */
 const FCM = () => {
   const { isAuthenticated } = useUser();
   const { getToken, isSignedIn } = useAuth();
-
-  useEffect(() => {
-    (async () => {
-      if (!isAuthenticated) {
-        return;
-      }
-
-      // Check if FCM is already initialized (e.g., by UserProvider)
-      if (firebaseCloudMessaging.isInitialized()) {
-        // eslint-disable-next-line no-console
-        console.log('FCM already initialized');
-        return;
-      }
-
-      // Initialize FCM and get token
-      // Note: Token registration to backend is handled by UserProvider
-      // This ensures it works for all roles (USER, ADMIN, DEVELOPER)
-      const token = await firebaseCloudMessaging.init();
-
-      if (token) {
-        // Token registration to backend is handled by UserProvider
-        // which will detect the token and send it via api.notifications.PUT()
-        // eslint-disable-next-line no-console
-        console.log(
-          'FCM initialized successfully, token will be registered by UserProvider'
-        );
-      }
-    })();
-  }, [isAuthenticated]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {

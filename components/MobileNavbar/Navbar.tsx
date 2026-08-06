@@ -21,6 +21,7 @@ import { useRouter } from 'next/router';
 import { useMemo } from 'react';
 
 import { Language, useLanguage } from '@/context/LanguageContext';
+import { useApiClient } from '@/lib/api/hooks';
 import { isInstalled, isMobile, logout } from '@/lib/common';
 import { useTranslation } from '@/lib/i18n/i18n';
 import { firebaseCloudMessaging } from '@/lib/webPush';
@@ -53,6 +54,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
   const mounted = useMounted();
   const queryClient = useQueryClient();
   const { signOut } = useClerk();
+  const api = useApiClient();
 
   function getNavItems(items: Array<NavItem>) {
     return items.map((item, index) => {
@@ -114,7 +116,7 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
         ? {
             title: t('auth.logout'),
             onClick: () => {
-              logout(signOut, queryClient);
+              logout(signOut, queryClient, api);
             },
           }
         : { title: t('auth.login'), href: '/sign-in' },
@@ -165,11 +167,16 @@ export const Navbar = ({ children }: { children: React.ReactNode }) => {
               onClick={async () => {
                 toggle();
 
-                if (firebaseCloudMessaging.isInitialized()) {
+                if (firebaseCloudMessaging.getPermission() === 'denied') {
                   return;
                 }
 
-                const token = await firebaseCloudMessaging.init();
+                if (firebaseCloudMessaging.hasToken()) {
+                  return;
+                }
+
+                // Gesture path: prompts for permission when still 'default'.
+                const token = await firebaseCloudMessaging.enable();
 
                 if (token) {
                   await queryClient.invalidateQueries({

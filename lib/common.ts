@@ -5,6 +5,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { CourtDataType } from '@/models/Court';
 import { ReservationDataType } from '@/models/Reservation';
 
+import type { ApiClient } from './api/hooks';
 import { useTranslation } from './i18n/i18n';
 import { firebaseCloudMessaging } from './webPush';
 
@@ -14,7 +15,7 @@ export const isIOS = () =>
 export const isAndroid = () =>
   /android/.test(window.navigator.userAgent.toLowerCase());
 
-export const isMobile = isIOS || isAndroid;
+export const isMobile = () => isIOS() || isAndroid();
 
 let installed: boolean | undefined;
 
@@ -36,48 +37,57 @@ export const isInstalled = () => {
  * Logout function for Clerk authentication
  *
  * Performs a complete logout with cleanup:
- * 1. Deletes FCM (Firebase Cloud Messaging) token
- * 2. Signs out from Clerk (clears session)
+ * 1. Removes the FCM token from the backend (best-effort, needs auth)
+ * 2. Deletes the FCM (Firebase Cloud Messaging) token from Firebase
  * 3. Clears React Query cache
- * 4. Executes optional callback
- * 5. Redirects to home page
+ * 4. Signs out from Clerk (clears session)
+ * 5. Executes optional callback
+ * 6. Redirects to home page
  *
  * @param signOut - Clerk's signOut function from useClerk() hook
  * @param queryClient - React Query client to clear cache
+ * @param api - Authenticated API client from useApiClient()
  * @param callback - Optional callback to execute before redirect
  *
  * @example
  * ```tsx
  * const { signOut } = useClerk();
  * const queryClient = useQueryClient();
+ * const api = useApiClient();
  *
- * await logout(signOut, queryClient);
+ * await logout(signOut, queryClient, api);
  * ```
  */
 export const logout = async (
   signOut: () => Promise<void>,
   queryClient: QueryClient,
+  api: ApiClient,
   callback?: () => void | Promise<void>
 ) => {
   try {
-    // Step 1: Delete FCM token from Firebase and backend
-    // This prevents push notifications from being sent to logged-out users
+    // Best-effort: server cleanup must never block logout. Runs before
+    // signOut because the DELETE needs the Clerk Bearer token.
+    try {
+      const token = await firebaseCloudMessaging.getToken();
+
+      if (token) {
+        await api.notifications.DELETE(token);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to remove FCM token from server:', error);
+    }
+
     await firebaseCloudMessaging.deleteToken();
 
-    // Step 2: Clear React Query cache
-    // Remove all cached user data, reservations, etc.
     queryClient.clear();
 
-    // Step 3: Sign out with Clerk
-    // This clears the Clerk session and authentication state
     await signOut();
 
-    // Step 4: Execute optional callback
     if (callback) {
       await callback();
     }
 
-    // Step 5: Redirect to home page
     // Force a full page reload to ensure clean state
     window.location.href = '/';
   } catch (error) {

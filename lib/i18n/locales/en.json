@@ -133,6 +133,20 @@
     "nameInput": {
       "label": "Name"
     },
+    "notifications": {
+      "deniedHint": "To enable them, allow notifications in your browser or device settings, then reopen the app.",
+      "description": "Receive reservation notifications on this device.",
+      "enableButton": "Enable notifications",
+      "error": "Could not enable notifications. Please try again.",
+      "header": "Push notifications",
+      "installFirst": "To receive notifications on iPhone/iPad, add the app to your Home Screen first.",
+      "label": "Notifications",
+      "status": {
+        "denied": "Notifications are blocked for this app.",
+        "granted": "Notifications are enabled on this device."
+      },
+      "unsupported": "This browser does not support notifications."
+    },
     "toast": {
       "fail": "Failed to save settings.",
       "success": "Settings saved successfully."

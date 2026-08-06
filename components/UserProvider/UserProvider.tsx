@@ -68,29 +68,28 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         return { success: false };
       }
 
-      // Get FCM token - initialize if not already initialized
-      // This ensures FCM works for all users including admin/developer roles
-      let fcmToken: string | null | undefined;
+      // Silent auto path: init() only proceeds when notification permission
+      // is already granted (never prompts) and returns the cached token when
+      // one exists. Prompting happens via gesture paths (burger, settings).
+      const fcmToken = await firebaseCloudMessaging.init();
 
-      if (firebaseCloudMessaging.isInitialized()) {
-        // FCM already initialized, just get the token
-        fcmToken = await firebaseCloudMessaging.getToken();
-      } else {
-        // FCM not initialized yet, initialize it (this will also get the token)
-        fcmToken = await firebaseCloudMessaging.init();
+      if (!fcmToken) {
+        return { success: false };
       }
 
-      // Send token to backend if we have one
-      if (fcmToken) {
-        try {
-          await api.notifications.PUT(fcmToken);
-          // eslint-disable-next-line no-console
-          console.log('FCM token registered successfully');
-        } catch (error) {
-          // eslint-disable-next-line no-console
-          console.error('Failed to register FCM token:', error);
-        }
+      const response = await api.notifications.PUT(fcmToken);
+
+      if (!response?.success) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to register FCM token:', response?.errors);
+
+        // Throw so react-query retries (retry: 2), and refetch-on-focus keeps
+        // self-healing tokens the server pruned.
+        throw new Error('FCM token registration failed');
       }
+
+      // eslint-disable-next-line no-console
+      console.log('FCM token registered successfully');
 
       return { success: true };
     },
@@ -122,7 +121,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       lastname: (publicMetadata.lastname as string) || clerkUser.lastName || '',
       role,
       language: (publicMetadata.language as Language) || lang || 'en',
-      FCMTokens: (publicMetadata.FCMTokens as string[]) || [],
     };
   }
 

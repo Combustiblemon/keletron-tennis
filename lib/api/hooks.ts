@@ -243,6 +243,19 @@ export const useApiClient = () => {
             })
           );
         },
+        DELETE: async (token: string) => {
+          const headers = await getHeaders();
+          return handleResponse<never, `notifications`>(
+            await fetch(`${API_URL}/notifications`, {
+              method: 'DELETE',
+              headers,
+              credentials: 'include',
+              body: JSON.stringify({
+                token,
+              }),
+            })
+          );
+        },
       },
       admin: {
         announcements: {
@@ -431,3 +444,5 @@ export const useApiClient = () => {
     [getHeaders, handleResponse]
   );
 };
+
+export type ApiClient = ReturnType<typeof useApiClient>;
