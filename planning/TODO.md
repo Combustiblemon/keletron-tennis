@@ -30,11 +30,16 @@ CLAUDE.md/planning setup.
 
 - [ ] Verify the two admin phones (Android + iPhone) receive pushes after deploying the
       2026-08-06 notification fix (server first, then FE)
-- [ ] Server repo pre-existing: `server:typecheck` fails (`tsconfig.spec.json` file list missing
-      `src/modules/clerk.ts`) and `server:lint` errors in files unrelated to the fix
+- [x] Server repo pre-existing: `server:typecheck` fails (`tsconfig.spec.json` file list) — fixed
+      2026-08-06 with the server test batch (include collapsed to `src/**/*.ts`)
+- [ ] Server repo pre-existing: `server:lint` errors in files unrelated to the notification fix
+      (global.d.ts, authConfig, reservation handlers, helpers, email)
 - [ ] Server: `addFCMToken` read-modify-write race on Clerk metadata can drop a token on
       concurrent registration (self-heals via focus-refetch re-PUT)
 - [ ] Extend unit tests: React component tests (NotificationSettings, UserProvider, Navbar) —
       needs `@vitejs/plugin-react` in `vitest.config.ts` (tsconfig `jsx: preserve`); see
       [implementations/2026-08-06-pwa-unit-tests.md](implementations/2026-08-06-pwa-unit-tests.md)
-- [ ] Server test suite (notification handler, prune logic) — PWA batch done 2026-08-06
+- [x] Server test suite (notification handler, prune logic) — done 2026-08-06, 25 tests; see
+      [implementations/2026-08-06-server-unit-tests.md](implementations/2026-08-06-server-unit-tests.md)
+- [ ] Server tests: reservation-handler send paths (admin targeting, developer error fan-out) —
+      needs Mongoose model mocking
