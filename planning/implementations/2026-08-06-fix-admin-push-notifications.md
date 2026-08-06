@@ -57,8 +57,11 @@ Frontend (`/home/combustiblemon/dev/keletron-tennis`, branch `main`):
   (deadlock fix); passes api client to `logout`.
 - `components/NotificationSettings/NotificationSettings.tsx` — new panel: permission state, enable
   button (gesture), denied/unsupported/install-first hints; invalidates `['fcm-token']` on success.
-- `pages/settings.tsx` — wraps `<UserProfile>` with a custom `<UserProfile.Page url="notifications">`
-  hosting the panel.
+- `pages/settings.tsx` → `pages/settings/[[...index]].tsx` — wraps `<UserProfile>` with a custom
+  `<UserProfile.Page url="notifications">` hosting the panel. Converted to a catch-all route with
+  `routing="path" path="/settings"` (matches the sign-in/up page idiom): Clerk custom pages
+  error out on a non-catch-all route ("The `<UserProfile/>` component is not configured
+  correctly"), found in manual testing.
 - `lib/i18n/locales/el.json`, `en.json` — new `settings.notifications.*` keys (parity checked).
 
 ## Key decisions
