@@ -35,9 +35,6 @@ const makeFakeSelf = () => {
       }),
       clients: {
         claim: vi.fn(async () => undefined),
-        matchAll: vi.fn(
-          async (): Promise<Array<{ postMessage: (m: unknown) => void }>> => []
-        ),
         openWindow: vi.fn(async () => null),
       },
       registration: {
@@ -81,13 +78,9 @@ const clickEvent = (data: Record<string, string> | undefined) => {
 describe('worker/index.ts', () => {
   beforeEach(() => {
     vi.resetModules();
-    // The module starts a 5-minute Clerk-refresh interval on import.
-    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    vi.clearAllTimers();
-    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
     vi.clearAllMocks();
@@ -222,11 +215,9 @@ describe('worker/index.ts', () => {
     });
   });
 
-  describe('Clerk refresh ping', () => {
-    it('claims clients and pings them on activate', async () => {
+  describe('activate', () => {
+    it('claims clients on activate', async () => {
       const { listeners, self: fakeSelf } = await loadWorker();
-      const client = { postMessage: vi.fn() };
-      fakeSelf.clients.matchAll.mockResolvedValue([client]);
 
       const waitUntil = vi.fn();
       listeners.get('activate')?.({ waitUntil });
@@ -235,26 +226,8 @@ describe('worker/index.ts', () => {
 
       const [claimPromise] = waitUntil.mock.calls[0] as [Promise<void>];
       await claimPromise;
-      await Promise.resolve();
 
       expect(fakeSelf.clients.claim).toHaveBeenCalledTimes(1);
-      expect(client.postMessage).toHaveBeenCalledWith({
-        type: expect.stringContaining('CLERK'),
-      });
-    });
-
-    it('pings window clients on the periodic interval', async () => {
-      const { self: fakeSelf } = await loadWorker();
-      const client = { postMessage: vi.fn() };
-      fakeSelf.clients.matchAll.mockResolvedValue([client]);
-
-      await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
-
-      expect(fakeSelf.clients.matchAll).toHaveBeenCalledWith({
-        includeUncontrolled: true,
-        type: 'window',
-      });
-      expect(client.postMessage).toHaveBeenCalledTimes(1);
     });
   });
 });

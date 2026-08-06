@@ -87,13 +87,24 @@ NEXT_PUBLIC_API_URL=http://localhost:2000      # Your backend URL
 
 **Why?**: Your backend will sync user roles and FCM tokens to Clerk metadata.
 
-#### 7. Configure Session Settings (Optional)
-1. In Clerk Dashboard, go to: **Settings** → **Sessions**
-2. Recommended settings:
-   - **Session lifetime**: 7 days
-   - **Inactivity timeout**: 1 day
+#### 7. Configure Session Settings (Important — persistent login)
+1. In Clerk Dashboard, go to: **Configure** → **Sessions**
+2. Desired settings (decision 2026-08-06: users stay signed in until manual
+   logout, "Facebook-style"):
+   - **Inactivity timeout**: **disabled** (Clerk's default) — an enabled
+     timeout logs users out after a day of not opening the app
+   - **Maximum lifetime**: as long as the plan allows. Clerk requires at least
+     one of the two settings to stay enabled, so lifetime cannot also be
+     disabled.
    - **Multi-session handling**: Allow multiple sessions
 3. Click **Save**
+
+**Plan constraint (verified in dashboard 2026-08-06): the app is on Clerk's
+free tier, where session settings are locked at the 7-day default and cannot
+be changed.** A user who opens the app less often than weekly must sign in
+again, and no frontend code can change that (sessions are server-controlled).
+Truly persistent login requires a paid Clerk plan — apply the settings above
+after any future upgrade.
 
 #### 8. Localization (Greek Support)
 1. In Clerk Dashboard, go to: **Settings** → **Localization**

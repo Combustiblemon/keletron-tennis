@@ -43,3 +43,18 @@ CLAUDE.md/planning setup.
       [implementations/2026-08-06-server-unit-tests.md](implementations/2026-08-06-server-unit-tests.md)
 - [ ] Server tests: reservation-handler send paths (admin targeting, developer error fan-out) —
       needs Mongoose model mocking
+
+## Surfaced 2026-08-06 (persistent-login fix)
+
+See [implementations/2026-08-06-persistent-pwa-login.md](implementations/2026-08-06-persistent-pwa-login.md).
+
+- [x] Manual: Clerk Dashboard session settings — verified 2026-08-06: free plan locks the session
+      window at 7 days (not changeable). Sessions expire after a 7-day gap; extending (true
+      "Facebook-style" persistence) requires a paid Clerk plan — developer decision whether to
+      upgrade, tracked below.
+- [x] Verify the deployed production build uses `pk_live_`/`sk_live_` Clerk keys — confirmed
+      2026-08-06
+- [ ] Decide: upgrade Clerk to paid plan to extend session lifetime beyond 7 days (users visiting
+      less often than weekly must re-login until then)
+- [ ] Soak test after the dashboard change: leave the PWA closed >1 day, reopen, confirm still
+      signed in

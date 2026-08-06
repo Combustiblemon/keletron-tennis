@@ -35,7 +35,7 @@ reservations, announcements.
 - Mantine v7 full suite + `@tabler/icons-react`. PostCSS `postcss-preset-mantine`. No Tailwind.
 - TanStack React Query v5 (client in `pages/_app.tsx`).
 - Clerk auth (`@clerk/nextjs`): `middleware.ts` + `<ClerkProvider>` + prebuilt sign-in/up/profile pages.
-- FCM push (`firebase`): client `lib/webPush.ts`, mount `components/FCM/FCM.tsx`.
+- FCM push (`firebase`): client `lib/webPush.ts`; init/registration in `UserProvider` + user-gesture paths (Navbar, NotificationSettings).
 - next-pwa 5.6: custom SW source `worker/index.ts`, compiled to `public/firebase-messaging-sw.js`
   (SW filename overridden so FCM SW = workbox SW). `WEBSITE_URL` + `NEXT_PUBLIC_FIREBASE_CONFIG`
   injected into SW via `webpack.DefinePlugin` in `next.config.mjs`.

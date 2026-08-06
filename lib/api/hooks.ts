@@ -29,6 +29,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const publicPages = ['/auth', '/', '/sign-in', '/sign-up'];
 
+export const isPublicPage = (pathname: string) =>
+  publicPages.some(
+    (page) =>
+      pathname === page || (page !== '/' && pathname.startsWith(`${page}/`))
+  );
+
 export type AdminReservationType = ReservationType & {
   owner: UserType;
   court: CourtType;
@@ -51,11 +57,15 @@ export const useApiClient = () => {
             // Only redirect if Clerk says the user has no valid session.
             // Backend 401 can be due to token expiry, backend bug, or network issues;
             // we should not log the user out unless their session is actually invalid.
-            if (window && !publicPages.includes(window.location.pathname)) {
-              const token = await getToken({ skipCache: true });
+            if (window && !isPublicPage(window.location.pathname)) {
+              try {
+                const token = await getToken({ skipCache: true });
 
-              if (token == null) {
-                window.location.pathname = '/sign-in';
+                if (token == null && navigator.onLine) {
+                  window.location.pathname = '/sign-in';
+                }
+              } catch {
+                // Clerk unreachable (offline / FAPI down) — not a logout.
               }
             }
 

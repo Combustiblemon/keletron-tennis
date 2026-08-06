@@ -21,7 +21,6 @@ import type { AppProps } from 'next/app';
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 
 import DateProvider from '@/components/DateProvider/DateProvider';
-import FCM from '@/components/FCM/FCM';
 import HeadInfo from '@/components/HeadInfo/HeadInfo';
 import { Navbar } from '@/components/MobileNavbar/Navbar';
 import { ProfileCheck } from '@/components/ProfileCheck/ProfileCheck';
@@ -61,7 +60,6 @@ const App = ({ Component, pageProps }: AppProps) => {
                 <DateProvider>
                   <UserProvider>
                     <ProfileCheck>
-                      <FCM />
                       <Notifications position="bottom-center" zIndex={1000} />
                       <HeadInfo title="Keletron Tennis Academy" />
                       <Navbar>

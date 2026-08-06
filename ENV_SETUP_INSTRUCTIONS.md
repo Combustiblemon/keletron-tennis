@@ -43,6 +43,12 @@ WEBSITE_URL=http://localhost:3000
    - Secret Key (starts with `sk_test_` or `sk_live_`)
 5. **Paste** them into your `.env.local` file
 
+> **Production must use `pk_live_` / `sk_live_` keys.** `pk_test_` development
+> instances authenticate through Clerk's short-lived dev-browser JWT handshake
+> instead of a durable first-party session cookie — sessions do not survive in
+> Safari / iOS PWA standalone mode and users get logged out repeatedly,
+> regardless of the dashboard session settings.
+
 ## Verification
 
 After creating `.env.local`, verify:

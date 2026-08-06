@@ -7,7 +7,9 @@ not fixed — do not build on top of anything listed as dead or deprecated.
 
 - [lib/api/hooks.ts](../lib/api/hooks.ts) — `useApiClient()`. **The one to use.** Wraps Clerk's
   `useAuth().getToken()` and sets `Authorization: Bearer <token>` on every request. On 401 it
-  re-checks `getToken({ skipCache: true })` and redirects to `/sign-in` only from non-public pages.
+  re-checks `getToken({ skipCache: true })` and redirects to `/sign-in` only from non-public pages
+  (prefix-aware via `isPublicPage()`), only while `navigator.onLine`, and never when the Clerk
+  check itself fails (2026-08-06 persistent-login fix).
 - [lib/api/utils.ts](../lib/api/utils.ts) — `endpoints` object, explicitly `@deprecated`. No auth
   header, never redirects on 401. Roughly 90% duplicated from `hooks.ts`; kept only for migration.
   Do not add new endpoints here. `GET /user` / `PUT /user` currently exist only in this deprecated
